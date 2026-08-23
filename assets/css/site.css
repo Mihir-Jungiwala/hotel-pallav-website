@@ -15,9 +15,10 @@
   --ease:cubic-bezier(.22,.9,.28,1);
   --wrap:1200px;
 }
-*,*::before,*::after{ box-sizing:border-box; }
+*,*::before,*::after{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 [hidden]{ display:none !important; }
-html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent; }
+a,button,input,select,textarea,.btn,.fab,.mbar a{ -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
 body{
   margin:0; background:var(--white); color:var(--ink);
   font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -808,6 +809,6 @@ body.menu-open .mbar{ opacity:0; pointer-events:none; transition:opacity .2s eas
   .foot-bar{ flex-direction:column; gap:14px; text-align:center; padding:20px 0 26px; font-size:12.5px; }
   .dev{ font-size:12.5px; padding:10px 16px; flex-wrap:wrap; justify-content:center; gap:8px; }
   .dev-tx{ white-space:nowrap; }
-  .dev-soc{ margin-left:0; padding-left:11px; }
+  .dev-soc{ margin-left:0; padding-left:0; border-left:none; }
   .dev-soc a{ width:32px; height:32px; }
 }

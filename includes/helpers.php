@@ -210,11 +210,13 @@ function fetch_google_reviews(): ?array
         ]);
         $body = curl_exec($ch);
         $ok = $body !== false && curl_errno($ch) === 0;
+        $curlErr = curl_error($ch);
         curl_close($ch);
 
         if ($ok) {
             $json = json_decode((string) $body, true);
-            if (($json['status'] ?? '') === 'OK') {
+            $status = $json['status'] ?? 'UNKNOWN';
+            if ($status === 'OK') {
                 $result = $json['result'] ?? [];
                 $reviews = [];
                 foreach ($result['reviews'] ?? [] as $r) {
@@ -237,7 +239,11 @@ function fetch_google_reviews(): ?array
                     'url' => $result['url'] ?? null,
                     'reviews' => $reviews,
                 ];
+            } else {
+                error_log('Google Places lookup failed — status: ' . $status . ', error_message: ' . ($json['error_message'] ?? 'none'));
             }
+        } else {
+            error_log('Google Places curl request failed: ' . $curlErr);
         }
     } catch (\Throwable $e) {
         error_log('Google Places request errored: ' . $e->getMessage());

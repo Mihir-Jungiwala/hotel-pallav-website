@@ -16,4 +16,8 @@
     }
   }
 </script>
-<style>[x-cloak]{display:none!important}</style>
+<style>
+[x-cloak]{display:none!important}
+*{ -webkit-tap-highlight-color:transparent; }
+html,body{ -webkit-tap-highlight-color:transparent; }
+</style>
