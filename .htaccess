@@ -1,0 +1,81 @@
+# ============================================================
+# Hotel Pallav — root .htaccess (Apache / Hostinger)
+# ============================================================
+
+# ----- Directory listing -----
+Options -Indexes -MultiViews
+<IfModule mod_negotiation.c>
+  Options -MultiViews
+</IfModule>
+
+# ----- Block direct access to sensitive files/folders -----
+# .git/ (entire folder, recursively) — matches /.git/anything
+RewriteEngine On
+RewriteRule (^|/)\.git - [F,L]
+
+<IfModule mod_authz_core.c>
+  # Apache 2.4+
+  <FilesMatch "\.(sql|env|gitignore|gitattributes|htaccess|htpasswd)$">
+    Require all denied
+  </FilesMatch>
+  <FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json|database\.sql|error\.log)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  # Apache 2.2 fallback
+  <FilesMatch "\.(sql|env|gitignore|gitattributes|htaccess|htpasswd)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+  <FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json|database\.sql|error\.log)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
+
+# Note: direct access to includes/*.php is blocked via includes/.htaccess,
+# and script execution inside uploads/ is blocked via uploads/.htaccess —
+# <Location>/<LocationMatch> are not permitted inside .htaccess context, so
+# per-folder .htaccess files (using <FilesMatch>, which IS permitted) are
+# used instead. Putting <LocationMatch> here would 500 the entire site.
+
+# ----- Compression (mod_deflate) -----
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript
+  AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+  AddOutputFilterByType DEFLATE application/json application/xml application/rss+xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ----- Cache-Control / Expires for static assets -----
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/gif "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/x-icon "access plus 1 month"
+  ExpiresByType text/css "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+  ExpiresByType text/javascript "access plus 1 week"
+  ExpiresByType font/woff2 "access plus 1 month"
+  ExpiresByType font/woff "access plus 1 month"
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType application/json "access plus 0 seconds"
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|woff|woff2)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
+
+# ----- Sensible defaults -----
+<IfModule mod_php.c>
+  php_flag display_errors off
+</IfModule>

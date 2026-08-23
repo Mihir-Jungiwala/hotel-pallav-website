@@ -84,7 +84,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
   <?php if ($totalPages > 1): ?>
   <div class="mt-6 flex justify-center gap-2">
     <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-      <a href="<?= e(APP_URL) ?>/admin/bookings.php?status=<?= $status ?>&page=<?= $p ?>" class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold <?= $p === $page ? 'bg-pallav-700 text-white' : 'bg-white text-pallav-600 ring-1 ring-pallav-100' ?>"><?= $p ?></a>
+      <a href="<?= e(APP_URL) ?>/admin/bookings.php?status=<?= e($status) ?>&page=<?= $p ?>" class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold <?= $p === $page ? 'bg-pallav-700 text-white' : 'bg-white text-pallav-600 ring-1 ring-pallav-100' ?>"><?= $p ?></a>
     <?php endfor; ?>
   </div>
   <?php endif; ?>

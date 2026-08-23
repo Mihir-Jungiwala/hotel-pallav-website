@@ -11,6 +11,13 @@ if (!strtotime($checkin) || !strtotime($checkout) || strtotime($checkout) <= str
     exit;
 }
 
+// Cap the range to something a real stay would need — also guards against a crafted
+// request (e.g. a multi-year span) forcing an unbounded number of per-day queries.
+if ((strtotime($checkout) - strtotime($checkin)) > 60 * 86400) {
+    echo json_encode(['ok' => false, 'message' => 'Please choose a shorter date range (max 60 nights).']);
+    exit;
+}
+
 $rooms = db_all('SELECT * FROM rooms WHERE available = 1 ORDER BY id');
 $results = [];
 $anyAvailable = false;

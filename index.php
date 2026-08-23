@@ -625,7 +625,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <div class="pol-card rv<?= $i % 3 ? ' d' . ($i % 3) : '' ?>">
         <div class="ic"><svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= POLICY_ICONS_SVG[$i % count(POLICY_ICONS_SVG)] ?></svg></div>
         <h4><?= e($card['title']) ?></h4>
-        <ul><?php foreach (($card['lines'] ?? []) as $line): ?><li><?= $line ?></li><?php endforeach; ?></ul>
+        <ul><?php foreach (($card['lines'] ?? []) as $line): ?><li><?= e($line) ?></li><?php endforeach; ?></ul>
       </div>
       <?php endforeach; ?>
     </div>
@@ -751,6 +751,9 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <div><?= $content['footer_credit'] ?: ('© <span id="yr">' . date('Y') . '</span> ' . e(APP_NAME) . '. All rights reserved.') ?></div>
     <div class="dev"><i></i><span class="dev-tx">Developed and managed by <b><a href="https://mihirjungi.com" target="_blank" rel="noopener" style="color:inherit">Mihir Jungi</a></b></span>
       <span class="dev-soc">
+        <a href="https://mihirjungi.com" target="_blank" rel="noopener" aria-label="Mihir Jungi — Portfolio">
+          <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"/></svg>
+        </a>
         <a href="https://www.instagram.com/mihir_jungi?igsi=MTVsaGliN2Z5YTd3Ng==" target="_blank" rel="noopener" aria-label="Mihir Jungi on Instagram">
           <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
         </a>

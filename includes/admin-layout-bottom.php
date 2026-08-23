@@ -1,4 +1,5 @@
   </main>
+  </div>
 
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script>

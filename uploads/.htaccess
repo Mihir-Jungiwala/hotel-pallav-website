@@ -1,0 +1,21 @@
+# Never execute scripts from the uploads folder, no matter what gets
+# written here. Upload handlers already whitelist image extensions and
+# generate random filenames — this is defense-in-depth in case that
+# ever changes or a misconfigured server tries to execute uploaded files.
+<IfModule mod_authz_core.c>
+  <FilesMatch "\.(php|phtml|php\d|php\.|phar|cgi|pl|py|sh|exe)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "\.(php|phtml|php\d|php\.|phar|cgi|pl|py|sh|exe)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+
+Options -ExecCGI -Indexes

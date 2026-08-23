@@ -1,0 +1,14 @@
+# Block all direct web access to includes/*.php — these are only ever
+# require()'d by front-controller scripts (index.php, admin/*.php, etc.)
+# and should never be requested directly by a browser. Defense-in-depth.
+<IfModule mod_authz_core.c>
+  <FilesMatch "\.php$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "\.php$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>

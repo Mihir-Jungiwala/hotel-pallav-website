@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /includes/
+Disallow: /book-submit.php
+Disallow: /enquire-submit.php
+Disallow: /check-availability.php
+
+Sitemap: https://hotelpallav.com/sitemap.xml
