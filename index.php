@@ -234,33 +234,40 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 
 <!-- ===================== BOOKING CARD ===================== -->
 <div class="wrap book-wrap">
-  <div class="book" id="quickForm">
-    <div class="book-hd">
-      <div>
-        <h3>Check availability</h3>
-        <p>Pick your dates, then call or send an enquiry — we'll confirm the best rate.</p>
+  <div class="book" id="quickForm" style="padding:18px 24px">
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;flex:none">
+        <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(140deg,var(--p500),var(--p700));display:flex;align-items:center;justify-content:center;flex:none;box-shadow:var(--glow)">
+          <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.6"/><path d="M3.5 10h17M8.5 3v3.4M15.5 3v3.4"/></svg>
+        </div>
+        <div>
+          <h3 style="font-size:16px;line-height:1.2">Check availability</h3>
+          <p style="color:var(--muted);font-size:12.5px;font-weight:600">No payment — we call you back</p>
+        </div>
       </div>
-    </div>
-    <div class="fgrid">
-      <div class="f"><label for="q-in">Check in</label><div class="ctl plain"><input id="q-in" name="checkin" type="date"></div></div>
-      <div class="f"><label for="q-out">Check out</label><div class="ctl plain"><input id="q-out" name="checkout" type="date"></div></div>
-      <div class="f full" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
-        <a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-o" style="flex:1;min-width:150px">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:260px;flex-wrap:wrap">
+        <div class="ctl plain" style="flex:1;min-width:130px"><input id="q-in" name="checkin" type="date" placeholder="Check in"></div>
+        <div class="ctl plain" style="flex:1;min-width:130px"><input id="q-out" name="checkout" type="date" placeholder="Check out"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex:none;width:100%;max-width:100%;">
+        <a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-o" style="flex:1;white-space:nowrap">
           <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg>
           Call Now
         </a>
-        <a href="#enquire" class="btn btn-p" style="flex:1;min-width:150px">
+        <a href="#enquire" class="btn btn-p" style="flex:1;white-space:nowrap">
           <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
           Enquire Now
         </a>
       </div>
     </div>
-    <div class="book-note">
-      <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 3.2v5c0 4.6-3.1 8.6-7.5 9.8-4.4-1.2-7.5-5.2-7.5-9.8v-5z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg>
-      No payment now. Your details stay with us and are never shared.
-    </div>
   </div>
 </div>
+<style>
+@media (min-width:900px){
+  #quickForm > div{ flex-wrap:nowrap !important; }
+  #quickForm > div > div:last-child{ width:auto !important; max-width:340px !important; }
+}
+</style>
 
 <!-- ===================== ROOMS (zig-zag) ===================== -->
 <section class="pad" id="rooms" aria-labelledby="h-rooms">
