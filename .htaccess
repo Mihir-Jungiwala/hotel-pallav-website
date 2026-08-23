@@ -1,21 +1,14 @@
 # ============================================================
 # Hotel Pallav — root .htaccess (Apache / Hostinger)
+# Kept deliberately conservative: every directive here is either
+# module-guarded or in the "FilesMatch/Limit" context that shared
+# hosts almost always permit via AllowOverride. Nothing here should
+# ever 500 the site, even on a restrictive AllowOverride policy.
 # ============================================================
 
-# ----- Directory listing -----
-Options -Indexes -MultiViews
-<IfModule mod_negotiation.c>
-  Options -MultiViews
-</IfModule>
-
-# ----- Block direct access to sensitive files/folders -----
-# .git/ (entire folder, recursively) — matches /.git/anything
-RewriteEngine On
-RewriteRule (^|/)\.git - [F,L]
-
+# ----- Block direct access to sensitive files -----
 <IfModule mod_authz_core.c>
-  # Apache 2.4+
-  <FilesMatch "\.(sql|env|gitignore|gitattributes|htaccess|htpasswd)$">
+  <FilesMatch "\.(sql|env|gitignore|gitattributes|htpasswd)$">
     Require all denied
   </FilesMatch>
   <FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json|database\.sql|error\.log)$">
@@ -23,8 +16,7 @@ RewriteRule (^|/)\.git - [F,L]
   </FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
-  # Apache 2.2 fallback
-  <FilesMatch "\.(sql|env|gitignore|gitattributes|htaccess|htpasswd)$">
+  <FilesMatch "\.(sql|env|gitignore|gitattributes|htpasswd)$">
     Order allow,deny
     Deny from all
   </FilesMatch>
@@ -34,11 +26,11 @@ RewriteRule (^|/)\.git - [F,L]
   </FilesMatch>
 </IfModule>
 
-# Note: direct access to includes/*.php is blocked via includes/.htaccess,
-# and script execution inside uploads/ is blocked via uploads/.htaccess —
-# <Location>/<LocationMatch> are not permitted inside .htaccess context, so
-# per-folder .htaccess files (using <FilesMatch>, which IS permitted) are
-# used instead. Putting <LocationMatch> here would 500 the entire site.
+# ----- Block .git/ (only if mod_rewrite is actually available) -----
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule (^|/)\.git - [F,L]
+</IfModule>
 
 # ----- Compression (mod_deflate) -----
 <IfModule mod_deflate.c>
@@ -61,21 +53,12 @@ RewriteRule (^|/)\.git - [F,L]
   ExpiresByType text/css "access plus 1 week"
   ExpiresByType application/javascript "access plus 1 week"
   ExpiresByType text/javascript "access plus 1 week"
-  ExpiresByType font/woff2 "access plus 1 month"
-  ExpiresByType font/woff "access plus 1 month"
-  ExpiresByType text/html "access plus 0 seconds"
-  ExpiresByType application/json "access plus 0 seconds"
 </IfModule>
 <IfModule mod_headers.c>
-  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|woff|woff2)$">
+  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">
     Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
   <FilesMatch "\.(css|js)$">
     Header set Cache-Control "public, max-age=604800"
   </FilesMatch>
-</IfModule>
-
-# ----- Sensible defaults -----
-<IfModule mod_php.c>
-  php_flag display_errors off
 </IfModule>
