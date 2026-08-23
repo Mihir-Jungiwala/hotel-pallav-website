@@ -237,7 +237,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
   <div class="book" id="quickForm" style="padding:18px 24px">
     <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:10px;flex:none">
-        <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(140deg,var(--p500),var(--p700));display:flex;align-items:center;justify-content:center;flex:none;box-shadow:var(--glow)">
+        <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(140deg,var(--p700),var(--p900));display:flex;align-items:center;justify-content:center;flex:none;box-shadow:var(--glow)">
           <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.6"/><path d="M3.5 10h17M8.5 3v3.4M15.5 3v3.4"/></svg>
         </div>
         <div>
@@ -250,24 +250,81 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <div class="ctl plain" style="flex:1;min-width:130px"><input id="q-out" name="checkout" type="date" placeholder="Check out"></div>
       </div>
       <div style="display:flex;gap:10px;flex:none;width:100%;max-width:100%;">
+        <button type="button" id="qCheckBtn" class="btn btn-p" style="flex:1.3;white-space:nowrap">
+          <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.6"/><path d="M20 20l-4.4-4.4"/></svg>
+          Check Availability
+        </button>
         <a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-o" style="flex:1;white-space:nowrap">
           <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg>
           Call Now
         </a>
-        <a href="#enquire" class="btn btn-p" style="flex:1;white-space:nowrap">
+        <a href="#enquire" class="btn btn-o" style="flex:1;white-space:nowrap">
           <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
           Enquire Now
         </a>
       </div>
     </div>
+    <div id="qResult" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)"></div>
   </div>
 </div>
 <style>
 @media (min-width:900px){
-  #quickForm > div{ flex-wrap:nowrap !important; }
-  #quickForm > div > div:last-child{ width:auto !important; max-width:340px !important; }
+  #quickForm > div:first-child{ flex-wrap:nowrap !important; }
+  #quickForm > div:first-child > div:last-child{ width:auto !important; max-width:420px !important; }
 }
+@keyframes qPop{ from{ opacity:0; transform:translateY(8px) scale(.98) } to{ opacity:1; transform:none } }
+.q-chip{ display:inline-flex; align-items:center; gap:8px; padding:9px 15px; border-radius:100px; font-size:13px; font-weight:700; animation:qPop .4s var(--ease) backwards; }
+.q-chip.yes{ background:#E9F9F1; color:#0E8A5F; box-shadow:inset 0 0 0 1.5px #BDE9D5; }
+.q-chip.no{ background:#FEF1F1; color:#D6373C; box-shadow:inset 0 0 0 1.5px #F7C9CB; }
 </style>
+<script>
+(function(){
+  var btn = document.getElementById('qCheckBtn');
+  var box = document.getElementById('qResult');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    var checkin = document.getElementById('q-in').value;
+    var checkout = document.getElementById('q-out').value;
+    if(!checkin || !checkout){
+      box.style.display = 'block';
+      box.innerHTML = '<div class="q-chip no">Please pick both check-in and check-out dates first.</div>';
+      return;
+    }
+    var original = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = 'Checking…';
+    fetch('check-availability.php', {method:'POST', body: JSON.stringify({checkin: checkin, checkout: checkout})})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        box.style.display = 'block';
+        if(!d.ok){
+          box.innerHTML = '<div class="q-chip no">' + d.message + '</div>';
+          return;
+        }
+        var chips = d.results.map(function(r, i){
+          var cls = r.available ? 'yes' : 'no';
+          var icon = r.available
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+          var txt = r.available ? (r.name + ' — available') : (r.name + ' — fully booked');
+          return '<span class="q-chip ' + cls + '" style="animation-delay:' + (i*.08) + 's">' + icon + txt + '</span>';
+        }).join(' ');
+        var headline = d.anyAvailable
+          ? '<p style="font-weight:800;color:var(--p700);margin-bottom:10px">Good news — we have rooms for your dates!</p>'
+          : '<p style="font-weight:800;color:#D6373C;margin-bottom:10px">Those exact rooms look full, but call us — dates shift often and we may still fit you in.</p>';
+        box.innerHTML = headline + '<div style="display:flex;gap:8px;flex-wrap:wrap">' + chips + '</div>' +
+          '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">' +
+            '<a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-p">Call to Book</a>' +
+            '<a href="#enquire" class="btn btn-o">Send Enquiry</a>' +
+          '</div>';
+      })
+      .catch(function(){
+        box.style.display = 'block';
+        box.innerHTML = '<div class="q-chip no">Could not check right now — please call us instead.</div>';
+      })
+      .finally(function(){ btn.disabled = false; btn.innerHTML = original; });
+  });
+})();
+</script>
 
 <!-- ===================== ROOMS (zig-zag) ===================== -->
 <section class="pad" id="rooms" aria-labelledby="h-rooms">
