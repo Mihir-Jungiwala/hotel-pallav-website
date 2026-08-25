@@ -53,7 +53,7 @@ if (!empty($_FILES['favicon']['name']) && $_FILES['favicon']['error'] === UPLOAD
 }
 
 db_run(
-    'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, show_prices=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, google_rating=?, google_review_count=? WHERE id=?',
+    'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, show_prices=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, google_rating=?, google_review_count=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=? WHERE id=?',
     [
         (int) $_POST['opened_year'], trim($_POST['gm_phone']), trim($_POST['reception_phone']), trim($_POST['whatsapp']),
         trim($_POST['email']), trim($_POST['address']), trim($_POST['checkin_time']), trim($_POST['checkout_time']),
@@ -64,6 +64,7 @@ db_run(
         $_POST['google_maps_api_key'] ?: null, $_POST['google_place_id'] ?: null,
         max(1, min(5, (int) ($_POST['google_min_review_rating'] ?? 3))),
         trim($_POST['google_rating']), (int) ($_POST['google_review_count'] ?? 0),
+        trim($_POST['gbp_oauth_client_id'] ?? '') ?: null, trim($_POST['gbp_oauth_client_secret'] ?? '') ?: null,
         $settings['id'],
     ]
 );

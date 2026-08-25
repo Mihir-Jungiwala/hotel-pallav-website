@@ -164,6 +164,48 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       </div>
     </div>
 
+    <?php require_once __DIR__ . '/../includes/gbp.php'; ?>
+    <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
+      <div class="flex items-center gap-2.5 mb-1">
+        <h2 class="font-display font-bold text-lg text-pallav-900">Full Review History <span class="font-normal text-pallav-400">(all reviews, not just 5)</span></h2>
+        <?php if (gbp_is_connected()): ?>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-700 rounded-full px-2.5 py-1">Connected</span>
+        <?php else: ?>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 rounded-full px-2.5 py-1">Not connected</span>
+        <?php endif; ?>
+      </div>
+      <p class="text-xs text-pallav-400 mb-5">The Places API above is capped at 5 reviews by Google — no way around that. Showing every review requires connecting your actual Google Business Profile account below, which uses a separate, restricted Google API.</p>
+      <div class="rounded-xl bg-amber-50 ring-1 ring-amber-100 p-4 text-xs text-amber-800 mb-5 leading-relaxed">
+        <b>Before this will work</b>, your Google Cloud project needs approval for the "Google My Business API" — this is a manual review by Google, separate from just enabling an API, and can take time or be declined. See
+        <a href="https://developers.google.com/my-business/content/prereqs" target="_blank" class="font-bold underline">Google's access request form</a>.
+        You'll also need an OAuth 2.0 Client ID (Web application type) from
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="font-bold underline">Cloud Console → Credentials</a>,
+        with this exact Authorized redirect URI:
+        <code class="block mt-1 bg-white rounded-lg px-3 py-2 ring-1 ring-amber-200 select-all"><?= e(APP_URL . '/admin/gbp-callback.php') ?></code>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-5 mb-5">
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">OAuth Client ID</label>
+          <input type="text" name="gbp_oauth_client_id" value="<?= e($settings['gbp_oauth_client_id'] ?? '') ?>" placeholder="xxxxx.apps.googleusercontent.com" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">OAuth Client Secret</label>
+          <input type="password" name="gbp_oauth_client_secret" value="<?= e($settings['gbp_oauth_client_secret'] ?? '') ?>" placeholder="GOCSPX-..." class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+      </div>
+      <p class="text-[11px] text-pallav-400 mb-4">Save this form first after entering the Client ID/Secret above, then use Connect below — it needs those saved to build the Google login link.</p>
+      <div class="flex items-center gap-3 flex-wrap">
+        <?php if (gbp_is_connected()): ?>
+          <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php?action=refresh" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-pallav-50 text-pallav-700 hover:bg-pallav-100 transition">Refresh All Reviews Now</a>
+          <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php?action=disconnect" class="px-5 py-2.5 rounded-xl text-sm font-bold text-rose-600 hover:bg-rose-50 transition" onclick="return confirm('Disconnect Google Business Profile? The site will fall back to the 5-review Places API display.')">Disconnect</a>
+        <?php elseif (gbp_is_configured()): ?>
+          <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">Connect Google Business Profile</a>
+        <?php else: ?>
+          <span class="text-xs text-pallav-400 font-semibold">Save your Client ID/Secret above first to enable the Connect button.</span>
+        <?php endif; ?>
+      </div>
+    </div>
+
     <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
       <div class="flex items-center gap-2.5 mb-1">
         <h2 class="font-display font-bold text-lg text-pallav-900">SEO</h2>

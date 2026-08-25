@@ -28,6 +28,19 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/** Display-only formatting: "+919825735404" -> "+91 98257 35404". tel: hrefs should keep the raw value. */
+function phone_display(?string $raw): string
+{
+    $digits = preg_replace('/\D/', '', $raw ?? '');
+    if (strlen($digits) === 12 && substr($digits, 0, 2) === '91') {
+        return '+91 ' . substr($digits, 2, 5) . ' ' . substr($digits, 7, 5);
+    }
+    if (strlen($digits) === 10) {
+        return '+91 ' . substr($digits, 0, 5) . ' ' . substr($digits, 5, 5);
+    }
+    return $raw ?? '';
+}
+
 function old(string $key, $default = '')
 {
     return $_SESSION['_old'][$key] ?? $default;

@@ -109,87 +109,123 @@
     var prev  = document.getElementById('revPrev');
     var next  = document.getElementById('revNext');
     var dots  = document.getElementById('revDots');
-    if(!track || !prev || !next || !track.children.length) return;
+    var kids  = track ? Array.prototype.slice.call(track.children) : [];
+    if(!track || !prev || !next || !kids.length) return;
 
     var timer = null, paused = false;
+    var n = kids.length;
+    var hasMore = track.getAttribute('data-more') === '1';
+    var loadedCount = parseInt(track.getAttribute('data-loaded'), 10) || n;
+    var totalAvailable = parseInt(track.getAttribute('data-total'), 10) || n;
+    var loadingMore = false;
 
-    function pages(){
-      var per = perPage();
-      return Math.max(1, Math.ceil(track.children.length / per));
+    function step(){
+      var w = kids[0].getBoundingClientRect().width;
+      var gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || 16);
+      return w + gap;
     }
-    function perPage(){
-      var kids = track.children;
-      if(!kids.length) return 1;
-      var w = kids[0].getBoundingClientRect().width + 16;
-      return Math.max(1, Math.round(track.clientWidth / w));
+    function center(){
+      track.style.setProperty('--peek', '0px');
+      var pad = Math.max(0, (track.clientWidth - kids[0].getBoundingClientRect().width) / 2);
+      track.style.setProperty('--peek', pad + 'px');
     }
-    function page(){
-      var kids = track.children;
-      if(!kids.length) return 0;
-      var w = kids[0].getBoundingClientRect().width + 18;
-      return Math.round(track.scrollLeft / (w * perPage()));
+    function collapseAll(){
+      kids.forEach(function(card){
+        card.classList.remove('expanded');
+        var btn = card.querySelector('.rev-more');
+        if(btn) btn.textContent = 'Read more';
+      });
     }
-    function goto(p){
-      var kids = track.children;
-      if(!kids.length) return;
-      var w = kids[0].getBoundingClientRect().width + 18;
-      track.scrollTo({ left: p * w * perPage(), behavior: reduce ? 'auto' : 'smooth' });
+    function index(){
+      return Math.max(0, Math.min(n - 1, Math.round(track.scrollLeft / step())));
+    }
+    function goto(i){
+      i = Math.max(0, Math.min(n - 1, i));
+      collapseAll();
+      track.scrollTo({ left: i * step(), behavior: reduce ? 'auto' : 'smooth' });
+    }
+    function loadMoreIfNeeded(){
+      if(!hasMore || loadingMore || loadedCount >= totalAvailable) return;
+      if(index() < n - 3) return; // only fetch once the visitor nears the tail
+      loadingMore = true;
+      fetch('reviews-more.php?offset=' + loadedCount + '&limit=15')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d.ok && d.count){
+            track.insertAdjacentHTML('beforeend', d.html);
+            kids = Array.prototype.slice.call(track.children);
+            n = kids.length;
+            loadedCount += d.count;
+          } else {
+            hasMore = false;
+          }
+        })
+        .catch(function(){ hasMore = false; })
+        .finally(function(){ loadingMore = false; paint(); });
     }
     function paint(){
-      var n = pages(), at = Math.min(page(), n - 1);
+      var at = index();
       prev.disabled = at <= 0;
-      next.disabled = at >= n - 1;
+      next.disabled = at >= n - 1 && !hasMore;
+      kids.forEach(function(card, i){ card.classList.toggle('active', i === at); });
       if(dots){
         if(n < 2){ dots.innerHTML = ''; }
         else if(dots.children.length !== n){
           var html = '';
-          for(var i = 0; i < n; i++) html += '<button type="button" data-p="' + i + '" aria-label="Reviews page ' + (i+1) + '"></button>';
+          for(var i2 = 0; i2 < n; i2++) html += '<button type="button" data-p="' + i2 + '" aria-label="Show review ' + (i2+1) + '"></button>';
           dots.innerHTML = html;
         }
-        Array.prototype.forEach.call(dots.children, function(d,i){ d.classList.toggle('on', i === at); });
+        Array.prototype.forEach.call(dots.children, function(d,i2){ d.classList.toggle('on', i2 === at); });
       }
+      loadMoreIfNeeded();
     }
     function play(){
       stop();
-      if(reduce) return;
+      if(reduce || (n < 2 && !hasMore)) return;
       timer = setInterval(function(){
         if(paused) return;
-        var n = pages(), at = page();
+        var at = index();
         goto(at >= n - 1 ? 0 : at + 1);
       }, 5200);
     }
     function stop(){ if(timer){ clearInterval(timer); timer = null; } }
 
-    prev.addEventListener('click', function(){ stop(); goto(Math.max(0, page() - 1)); play(); });
-    next.addEventListener('click', function(){ stop(); goto(page() + 1); play(); });
+    prev.addEventListener('click', function(){ stop(); goto(index() - 1); play(); });
+    next.addEventListener('click', function(){ stop(); goto(index() + 1); play(); });
     if(dots) dots.addEventListener('click', function(e){
       var b = e.target.closest('button'); if(!b) return;
       stop(); goto(parseInt(b.getAttribute('data-p'), 10)); play();
     });
     track.addEventListener('scroll', function(){
       clearTimeout(track._t);
-      track._t = setTimeout(paint, 90);
+      track._t = setTimeout(function(){ collapseAll(); paint(); }, 90);
     }, {passive:true});
     track.addEventListener('mouseenter', function(){ paused = true; });
     track.addEventListener('mouseleave', function(){ paused = false; });
     track.addEventListener('touchstart', function(){ paused = true; }, {passive:true});
     track.addEventListener('touchend', function(){ setTimeout(function(){ paused = false; }, 3000); }, {passive:true});
-    window.addEventListener('resize', function(){ clearTimeout(window._rvR); window._rvR = setTimeout(paint, 160); });
+    window.addEventListener('resize', function(){
+      clearTimeout(window._rvR);
+      window._rvR = setTimeout(function(){ center(); goto(index()); paint(); }, 160);
+    });
+    // Event delegation so newly lazy-loaded cards' Read More buttons work
+    // without needing to rebind listeners after each fetch.
+    track.addEventListener('click', function(e){
+      var btn = e.target.closest('.rev-more');
+      if(!btn) return;
+      var card = btn.closest('.rev');
+      var expanded = card.classList.toggle('expanded');
+      btn.textContent = expanded ? 'Show less' : 'Read more';
+      if(window.__revPaint) setTimeout(window.__revPaint, 0);
+    });
 
     window.__revPaint = paint;
+    center();
+    goto(0);
     paint();
     if('IntersectionObserver' in window){
       new IntersectionObserver(function(en){ en[0].isIntersecting ? play() : stop(); }, {threshold:.2}).observe(track);
     } else { play(); }
-
-    track.querySelectorAll('.rev-more').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var card = btn.closest('.rev');
-        var expanded = card.classList.toggle('expanded');
-        btn.textContent = expanded ? 'Show less' : 'Read more';
-        if(window.__revPaint) setTimeout(window.__revPaint, 0);
-      });
-    });
   })();
 
   var revealables = document.querySelectorAll('.rv,.rv-l,.rv-r');

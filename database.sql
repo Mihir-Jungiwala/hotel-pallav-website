@@ -43,6 +43,13 @@ CREATE TABLE IF NOT EXISTS settings (
   google_min_review_rating TINYINT UNSIGNED NOT NULL DEFAULT 3,
   google_rating VARCHAR(4) NOT NULL DEFAULT '4.1',
   google_review_count INT UNSIGNED NOT NULL DEFAULT 938,
+  gbp_oauth_client_id VARCHAR(255) NULL,
+  gbp_oauth_client_secret VARCHAR(255) NULL,
+  gbp_oauth_refresh_token TEXT NULL,
+  gbp_oauth_access_token TEXT NULL,
+  gbp_oauth_token_expires DATETIME NULL,
+  gbp_account_id VARCHAR(150) NULL,
+  gbp_location_id VARCHAR(150) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
