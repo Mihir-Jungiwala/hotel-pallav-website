@@ -37,6 +37,12 @@ $wa = $settings['whatsapp'] ?? '';
 $gmDigits = preg_replace('/\D/', '', $gm);
 $rcDigits = preg_replace('/\D/', '', $rc);
 
+// Generic "Call" buttons that don't name a specific person: if both numbers
+// are configured, let the visitor pick (data-dial popup). If only one is
+// configured, skip the popup and dial that one directly.
+$mainPhone = $gm ?: $rc;
+$dialAttr = ($gm && $rc) ? ' data-dial="call"' : '';
+
 /** Price ladder for a rate plan — occupancy_prices JSON with fallback to legacy columns. Mirrors admin/pricing.php price_ladder(). */
 function price_ladder(array $plan): array
 {
@@ -72,6 +78,10 @@ $rating = $liveReviews['rating'] ?? ($settings['google_rating'] ?? null);
 $reviewCount = (int) ($liveReviews['total'] ?? ($settings['google_review_count'] ?? 0));
 $fullStars = $rating !== null ? (int) round((float) $rating) : 0;
 $gbpLink = $liveReviews['url'] ?? ($settings['gbp_link'] ?? '');
+$placeId = $settings['google_place_id'] ?? '';
+$writeReviewLink = $placeId
+    ? 'https://search.google.com/local/writereview?placeid=' . rawurlencode($placeId)
+    : $gbpLink;
 $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 ?><!DOCTYPE html>
 <html lang="en">
@@ -146,12 +156,12 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <?php endforeach; ?>
     </nav>
     <div class="nav-cta">
-      <a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-o">
+      <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> class="btn btn-o">
         <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg>
         Call
       </a>
       <a href="#enquire" class="btn btn-p">Book Now</a>
-      <a href="tel:<?= e($gm) ?>" data-dial="call" class="nav-phone" aria-label="Call the hotel">
+      <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> class="nav-phone" aria-label="Call the hotel">
         <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg>
       </a>
     </div>
@@ -183,7 +193,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
       <div class="mnav-call">
-        <a href="tel:<?= e($gm) ?>" data-dial="call"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg> Call</a>
+        <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?>><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg> Call</a>
         <a href="https://wa.me/<?= e($wa) ?>" data-dial="wa" target="_blank" rel="noopener"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1a13 13 0 01-5.6-4.9c-.4-.6-1-1.5-1-2.9s.7-2 1-2.3c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2 0 .4-.1.5l-.4.5c-.1.2-.3.3-.1.6.3.5.8 1.3 1.6 2 .9.8 1.7 1.1 2 1.2.2.1.4.1.6-.1l.8-1c.2-.2.3-.2.6-.1l2 1c.3.1.4.2.5.3v.9z"/></svg> WhatsApp</a>
       </div>
       <div class="mnav-tag"><?= e(APP_NAME) ?> · Serving guests since <?= e((string) ($settings['opened_year'] ?? '')) ?></div>
@@ -254,7 +264,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
           <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.6"/><path d="M20 20l-4.4-4.4"/></svg>
           Check Availability
         </button>
-        <a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-o" style="flex:1;white-space:nowrap">
+        <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> class="btn btn-o" style="flex:1;white-space:nowrap">
           <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg>
           Call Now
         </a>
@@ -313,7 +323,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
           : '<p style="font-weight:800;color:#D6373C;margin-bottom:10px">Those exact rooms look full, but call us — dates shift often and we may still fit you in.</p>';
         box.innerHTML = headline + '<div style="display:flex;gap:8px;flex-wrap:wrap">' + chips + '</div>' +
           '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">' +
-            '<a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-p">Call to Book</a>' +
+            '<a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> class="btn btn-p">Call to Book</a>' +
             '<a href="#enquire" class="btn btn-o">Send Enquiry</a>' +
           '</div>';
       })
@@ -338,7 +348,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <?php if (!$rooms): ?>
     <div class="pol-card" style="max-width:520px;margin:0 auto;text-align:center">
       <p style="color:var(--muted);font-weight:600">Our room categories are being updated — please call us and we'll help you find the perfect room.</p>
-      <a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-p" style="margin-top:16px">Call <?= e($gm) ?></a>
+      <a href="tel:<?= e($mainPhone) ?>" class="btn btn-p" style="margin-top:16px">Call <?= e($mainPhone) ?></a>
     </div>
     <?php else: foreach ($rooms as $i => $room):
       $badge = room_badge($room);
@@ -408,7 +418,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
           <?php else: ?>
             <button class="btn btn-p pick" data-room="<?= e($room['name']) ?>">Enquire About <?= e($room['name']) ?></button>
           <?php endif; ?>
-          <a href="tel:<?= e($gm) ?>" data-dial="call" class="btn btn-o">Call to Book</a>
+          <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> class="btn btn-o">Call to Book</a>
         </div>
       </div>
     </article>
@@ -515,64 +525,62 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <h2 id="h-reviews">What our guests <em>say on Google</em></h2>
       <p>Read every review, straight from our Google Business Profile.</p>
     </div>
-    <div class="rev-top rv">
-      <div class="g-score">
-        <div class="n"><?= $rating !== null ? e(number_format((float) $rating, 1)) : '—' ?></div>
-        <div>
+    <div class="rev-top2 rv">
+      <div class="rev-top2-l">
+        <div class="g-word">
+          <svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 48 48"><path fill="#4285F4" d="M45 24.5c0-1.6-.1-2.7-.4-4H24v7.6h12c-.2 2-1.5 5-4.4 7l6.7 5.2c4-3.7 6.7-9.1 6.7-15.8z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.7-3.8-12.4-9.1l-7.1 5.5C8.1 41 15.5 46 24 46z"/><path fill="#FBBC05" d="M11.6 28.4c-.5-1.4-.8-2.8-.8-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9z"/><path fill="#EA4335" d="M24 10.2c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4 29.9 2 24 2 15.5 2 8.1 7 4.4 14.1l7.1 5.5C13.3 14.3 18.2 10.2 24 10.2z"/></svg>
+          <b>Reviews</b>
+          <?php if ($isLiveReviews): ?>
+            <span class="g-live"><span></span>LIVE</span>
+          <?php endif; ?>
+        </div>
+        <div class="rev-top2-score">
+          <b><?= $rating !== null ? e(number_format((float) $rating, 1)) : '—' ?></b>
           <div class="stars">
             <?php for ($i = 1; $i <= 5; $i++): ?>
-            <svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" opacity="<?= $i > $fullStars ? '.22' : '1' ?>"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.1 6.1 20.2l1.2-6.6L2.5 9l6.6-.9z"/></svg>
+            <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="<?= $i > $fullStars ? '.22' : '1' ?>"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.1 6.1 20.2l1.2-6.6L2.5 9l6.6-.9z"/></svg>
             <?php endfor; ?>
           </div>
-          <div class="cnt">Based on <?= number_format($reviewCount) ?> Google reviews</div>
+          <span class="cnt">(<?= number_format($reviewCount) ?>)</span>
         </div>
       </div>
-      <div class="g-badge">
-        <svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 48 48"><path fill="#4285F4" d="M45 24.5c0-1.6-.1-2.7-.4-4H24v7.6h12c-.2 2-1.5 5-4.4 7l6.7 5.2c4-3.7 6.7-9.1 6.7-15.8z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.7-3.8-12.4-9.1l-7.1 5.5C8.1 41 15.5 46 24 46z"/><path fill="#FBBC05" d="M11.6 28.4c-.5-1.4-.8-2.8-.8-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9z"/><path fill="#EA4335" d="M24 10.2c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4 29.9 2 24 2 15.5 2 8.1 7 4.4 14.1l7.1 5.5C13.3 14.3 18.2 10.2 24 10.2z"/></svg>
-        Reviews on Google
-        <?php if ($isLiveReviews): ?>
-          <span style="display:inline-flex;align-items:center;gap:6px;margin-left:9px;padding:4px 10px;border-radius:100px;background:#E9F9F1;color:#0E8A5F;font-size:11px;font-weight:800;letter-spacing:.04em">
-            <span style="width:6px;height:6px;border-radius:50%;background:#12A46E;display:block;animation:pulseRing 2.4s ease-out infinite"></span>LIVE
-          </span>
-        <?php endif; ?>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
-        <?php if ($gbpLink): ?><a href="<?= e($gbpLink) ?>" target="_blank" rel="noopener" class="btn btn-o">See All Reviews</a><?php endif; ?>
-      </div>
+      <?php if ($writeReviewLink): ?><a href="<?= e($writeReviewLink) ?>" target="_blank" rel="noopener" class="btn btn-o rev-write">Write a Review</a><?php endif; ?>
     </div>
 
     <?php if ($isLiveReviews): ?>
     <div class="rev-wrap">
+      <button type="button" class="rev-side prev" id="revPrev" aria-label="Previous reviews">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
       <div class="rev-grid" id="revGrid">
-        <?php foreach ($liveReviews['reviews'] as $i => $r): ?>
+        <?php foreach ($liveReviews['reviews'] as $i => $r):
+          $long = mb_strlen($r['text']) > 150; ?>
         <div class="rev rv<?= $i === 1 ? ' d1' : ($i === 2 ? ' d2' : '') ?>">
-          <span class="q">"</span>
           <div class="rev-who">
             <?php if (!empty($r['photo'])): ?>
               <span class="rev-av"><img src="<?= e($r['photo']) ?>" alt="" loading="lazy" referrerpolicy="no-referrer"></span>
             <?php else: ?>
               <span class="rev-av"><?= e($r['initials']) ?></span>
             <?php endif; ?>
-            <div><b><?= e($r['author']) ?></b><small><?= e($r['when']) ?></small></div>
+            <div class="rev-who-tx">
+              <b><?= e($r['author']) ?> <svg class="rev-g" aria-hidden="true" focusable="false" width="13" height="13" viewBox="0 0 48 48"><path fill="#4285F4" d="M45 24.5c0-1.6-.1-2.7-.4-4H24v7.6h12c-.2 2-1.5 5-4.4 7l6.7 5.2c4-3.7 6.7-9.1 6.7-15.8z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.7-3.8-12.4-9.1l-7.1 5.5C8.1 41 15.5 46 24 46z"/><path fill="#FBBC05" d="M11.6 28.4c-.5-1.4-.8-2.8-.8-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9z"/><path fill="#EA4335" d="M24 10.2c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4 29.9 2 24 2 15.5 2 8.1 7 4.4 14.1l7.1 5.5C13.3 14.3 18.2 10.2 24 10.2z"/></svg></b>
+              <small><?= e($r['when']) ?></small>
+            </div>
           </div>
           <div class="stars">
             <?php for ($s = 1; $s <= 5; $s++): ?>
-              <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" opacity="<?= $s > $r['rating'] ? '.3' : '1' ?>"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.1 6.1 20.2l1.2-6.6L2.5 9l6.6-.9z"/></svg>
+              <svg aria-hidden="true" focusable="false" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" opacity="<?= $s > $r['rating'] ? '.3' : '1' ?>"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.1 6.1 20.2l1.2-6.6L2.5 9l6.6-.9z"/></svg>
             <?php endfor; ?>
           </div>
-          <p><?= e($r['text']) ?></p>
+          <p<?= $long ? ' class="clamp"' : '' ?>><?= e($r['text']) ?></p>
+          <?php if ($long): ?><button type="button" class="rev-more">Read more</button><?php endif; ?>
         </div>
         <?php endforeach; ?>
       </div>
-      <div class="rev-nav">
-        <button type="button" class="rev-arw" id="revPrev" aria-label="Previous reviews">
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-        </button>
-        <div class="rev-dots" id="revDots"></div>
-        <button type="button" class="rev-arw" id="revNext" aria-label="More reviews">
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-        </button>
-      </div>
+      <button type="button" class="rev-side next" id="revNext" aria-label="More reviews">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <div class="rev-dots" id="revDots"></div>
     </div>
     <?php else: ?>
     <!-- Individual review cards omitted — no fabricated reviews and no live Google Reviews API
@@ -593,8 +601,8 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <div class="loc">
       <div class="loc-card rv-l">
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></i><div><b>Address</b><span><?= e($settings['address'] ?? '') ?></span></div></div>
-        <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5.6 19.5c0-3.3 2.9-5.7 6.4-5.7s6.4 2.4 6.4 5.7"/></svg></i><div><b>General Manager</b><span><a href="tel:<?= e($gm) ?>" data-dial="call"><?= e($gm) ?></a></span></div></div>
-        <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></i><div><b>Reception · 24 × 7</b><span><a href="tel:<?= e($rc) ?>" data-dial="call"><?= e($rc) ?></a></span></div></div>
+        <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5.6 19.5c0-3.3 2.9-5.7 6.4-5.7s6.4 2.4 6.4 5.7"/></svg></i><div><b>General Manager</b><span><a href="tel:<?= e($gm) ?>"><?= e($gm) ?></a></span></div></div>
+        <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></i><div><b>Reception · 24 × 7</b><span><a href="tel:<?= e($rc) ?>"><?= e($rc) ?></a></span></div></div>
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.6 7l8.4 6 8.4-6"/></svg></i><div><b>Email</b><span><a href="mailto:<?= e($settings['email'] ?? '') ?>"><?= e($settings['email'] ?? '') ?></a></span></div></div>
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/></svg></i><div><b>Check in / Check out</b><span><?= e($settings['checkin_time'] ?? '') ?> &nbsp;—&nbsp; <?= e($settings['checkout_time'] ?? '') ?></span></div></div>
         <a href="<?= e($settings['gbp_link'] ?: ('https://www.google.com/maps/dir/?api=1&destination=' . urlencode($settings['address'] ?? APP_NAME))) ?>" target="_blank" rel="noopener" class="btn btn-p" style="margin-top:24px">
@@ -654,12 +662,12 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <?php endif; ?>
       <div class="big-calls">
         <span class="lbl">Prefer to talk? Call us direct</span>
-        <a class="big-call primary" href="tel:<?= e($gm) ?>" data-dial="call">
+        <a class="big-call primary" href="tel:<?= e($gm) ?>">
           <i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></i>
           <div><small>General Manager</small><b><?= e($gm) ?></b></div>
           <span class="arw"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
         </a>
-        <a class="big-call second" href="tel:<?= e($rc) ?>" data-dial="call">
+        <a class="big-call second" href="tel:<?= e($rc) ?>">
           <i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></i>
           <div><small>Reception · 24 × 7</small><b><?= e($rc) ?></b></div>
           <span class="arw"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
@@ -770,7 +778,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
   <a class="fab wa" href="https://wa.me/<?= e($wa) ?>" data-dial="wa" target="_blank" rel="noopener" aria-label="WhatsApp">
     <svg aria-hidden="true" focusable="false" width="25" height="25" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1a13 13 0 01-5.6-4.9c-.4-.6-1-1.5-1-2.9s.7-2 1-2.3c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2 0 .4-.1.5l-.4.5c-.1.2-.3.3-.1.6.3.5.8 1.3 1.6 2 .9.8 1.7 1.1 2 1.2.2.1.4.1.6-.1l.8-1c.2-.2.3-.2.6-.1l2 1c.3.1.4.2.5.3v.9z"/></svg>
   </a>
-  <a class="fab call" href="tel:<?= e($gm) ?>" data-dial="call" aria-label="Call">
+  <a class="fab call" href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> aria-label="Call">
     <svg aria-hidden="true" focusable="false" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg>
   </a>
   <button class="fab top" id="toTop" aria-label="Back to top">
@@ -780,7 +788,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 
 <div class="mbar" id="mbar">
   <div class="mbar-in">
-    <a href="tel:<?= e($gm) ?>" data-dial="call">
+    <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?>>
       <svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg>
       Call
     </a>

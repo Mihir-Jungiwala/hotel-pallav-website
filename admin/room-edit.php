@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $size = trim($_POST['size'] ?? '');
     $bedType = trim($_POST['bed_type'] ?? '');
     $maxGuests = max(1, (int) ($_POST['max_guests'] ?? 2));
+    $totalCount = max(1, (int) ($_POST['total_count'] ?? 1));
     $showPrice = !empty($_POST['show_price']) ? 1 : 0;
     $note = trim($_POST['note'] ?? '');
 
@@ -64,14 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $photosJson = json_encode(array_values($photos));
 
         if ($room) {
-            db_run('UPDATE rooms SET name=?, size=?, bed_type=?, max_guests=?, show_price=?, note=?, photos=? WHERE id=?',
-                [$name, $size, $bedType, $maxGuests, $showPrice, $note ?: null, $photosJson, $room['id']]);
+            db_run('UPDATE rooms SET name=?, size=?, bed_type=?, max_guests=?, total_count=?, show_price=?, note=?, photos=? WHERE id=?',
+                [$name, $size, $bedType, $maxGuests, $totalCount, $showPrice, $note ?: null, $photosJson, $room['id']]);
             log_activity('room.updated', "Updated room {$name}", 'room', $room['id']);
             flash('success', "{$name} updated.");
         } else {
             $slug = unique_room_slug($name);
-            db_insert('INSERT INTO rooms (slug, name, size, bed_type, max_guests, show_price, note, photos, total_count, rooms_left, available) VALUES (?,?,?,?,?,?,?,?,1,1,1)',
-                [$slug, $name, $size, $bedType, $maxGuests, $showPrice, $note ?: null, $photosJson]);
+            db_insert('INSERT INTO rooms (slug, name, size, bed_type, max_guests, show_price, note, photos, total_count, rooms_left, available) VALUES (?,?,?,?,?,?,?,?,?,?,1)',
+                [$slug, $name, $size, $bedType, $maxGuests, $showPrice, $note ?: null, $photosJson, $totalCount, $totalCount]);
             log_activity('room.created', "Added room category \"{$name}\"");
             flash('success', "{$name} added.");
         }
@@ -110,6 +111,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <div>
         <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Max Guests</label>
         <input type="number" name="max_guests" min="1" max="20" value="<?= e((string) ($room['max_guests'] ?? 2)) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Total Rooms in this Category</label>
+        <input type="number" name="total_count" min="1" max="255" value="<?= e((string) ($room['total_count'] ?? 1)) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        <p class="text-[11px] text-pallav-400 mt-1">How many physical rooms of this type exist. Used for the "Rooms" count shown on the website.</p>
       </div>
     </div>
 

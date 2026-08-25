@@ -120,7 +120,7 @@
     function perPage(){
       var kids = track.children;
       if(!kids.length) return 1;
-      var w = kids[0].getBoundingClientRect().width + 18;
+      var w = kids[0].getBoundingClientRect().width + 16;
       return Math.max(1, Math.round(track.clientWidth / w));
     }
     function page(){
@@ -181,6 +181,15 @@
     if('IntersectionObserver' in window){
       new IntersectionObserver(function(en){ en[0].isIntersecting ? play() : stop(); }, {threshold:.2}).observe(track);
     } else { play(); }
+
+    track.querySelectorAll('.rev-more').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.rev');
+        var expanded = card.classList.toggle('expanded');
+        btn.textContent = expanded ? 'Show less' : 'Read more';
+        if(window.__revPaint) setTimeout(window.__revPaint, 0);
+      });
+    });
   })();
 
   var revealables = document.querySelectorAll('.rv,.rv-l,.rv-r');
