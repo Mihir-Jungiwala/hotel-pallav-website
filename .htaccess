@@ -6,6 +6,9 @@
 # ever 500 the site, even on a restrictive AllowOverride policy.
 # ============================================================
 
+# ----- Custom error pages -----
+ErrorDocument 404 /404.php
+
 # ----- Block direct access to sensitive files -----
 <IfModule mod_authz_core.c>
   <FilesMatch "\.(sql|env|gitignore|gitattributes|htpasswd)$">

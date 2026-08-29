@@ -7,7 +7,13 @@ verify_csrf();
 
 $id = (int) ($_POST['id'] ?? 0);
 $title = trim($_POST['title'] ?? '');
+$title = mb_substr($title, 0, 60);
 $lines = array_values(array_filter(array_map('trim', explode("\n", $_POST['lines'] ?? ''))));
+$lines = array_map(static function (string $line): string {
+    $clean = mb_convert_encoding($line, 'UTF-8', 'UTF-8');
+    return mb_substr($clean, 0, 255);
+}, $lines);
+$lines = array_slice($lines, 0, 50);
 
 if ($title === '') {
     flash('error', 'Card title is required.');
@@ -15,6 +21,10 @@ if ($title === '') {
 }
 
 $linesJson = json_encode($lines);
+if ($linesJson === false) {
+    flash('error', 'One of the rule lines had invalid characters — please retype it.');
+    redirect('admin/policies.php');
+}
 
 if ($id) {
     $card = db_one('SELECT * FROM policy_cards WHERE id = ?', [$id]);

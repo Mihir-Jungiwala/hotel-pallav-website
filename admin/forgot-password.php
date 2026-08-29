@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/helpers.php';
 
 $status = null;
-$resetLink = null;
+$resetLinkFallback = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -19,8 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $resetLink = rtrim(APP_URL, '/') . '/admin/reset-password.php?email=' . urlencode($email) . '&token=' . $token;
 
-        // Best-effort email send — silently ignored if the host has no mail server configured.
-        @mail($email, 'Reset your Hotel Pallav admin password', "Reset your password here:\n" . $resetLink, 'From: no-reply@hotelpallav.com');
+        $sent = smtp_is_configured() && mail_password_reset($email, $resetLink);
+        if (!$sent) {
+            // No SMTP configured (or send failed) — fall back to showing the link directly.
+            $resetLinkFallback = $resetLink;
+        }
     }
 }
 
@@ -34,10 +37,10 @@ include __DIR__ . '/../includes/guest-layout-top.php';
     <div class="mb-5 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-4 py-3 text-sm font-semibold"><?= e($status) ?></div>
   <?php endif; ?>
 
-  <?php if ($resetLink): ?>
+  <?php if ($resetLinkFallback): ?>
     <div class="mb-5 rounded-xl bg-pallav-50 ring-1 ring-pallav-200 px-4 py-3 text-xs break-all">
-      <b class="block text-pallav-700 mb-1">Reset link (shown here because this server has no email/SMTP configured — on a live site with mail set up, this would only be emailed, not shown):</b>
-      <a href="<?= e($resetLink) ?>" class="text-pallav-600 font-bold underline"><?= e($resetLink) ?></a>
+      <b class="block text-pallav-700 mb-1">Reset link (shown here because SMTP email isn't configured yet in Settings — once configured, this would only be emailed, not shown):</b>
+      <a href="<?= e($resetLinkFallback) ?>" class="text-pallav-600 font-bold underline"><?= e($resetLinkFallback) ?></a>
     </div>
   <?php endif; ?>
 

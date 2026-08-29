@@ -672,7 +672,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <div class="pol-card rv<?= $i % 3 ? ' d' . ($i % 3) : '' ?>">
         <div class="ic"><svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= POLICY_ICONS_SVG[$i % count(POLICY_ICONS_SVG)] ?></svg></div>
         <h4><?= e($card['title']) ?></h4>
-        <ul><?php foreach (($card['lines'] ?? []) as $line): ?><li><?= e($line) ?></li><?php endforeach; ?></ul>
+        <ul><?php foreach (($card['lines'] ?? []) as $line): ?><li><?= e(is_string($line) ? $line : '') ?></li><?php endforeach; ?></ul>
       </div>
       <?php endforeach; ?>
     </div>

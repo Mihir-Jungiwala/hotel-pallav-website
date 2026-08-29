@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/mailer.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -123,7 +124,7 @@ function json_decode_field($value, $default = [])
         return $default;
     }
     $decoded = json_decode($value, true);
-    return $decoded === null ? $default : $decoded;
+    return is_array($decoded) ? $decoded : $default;
 }
 
 function log_activity(string $action, string $description, ?string $subjectType = null, ?int $subjectId = null, array $meta = []): void

@@ -27,7 +27,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <?= csrf_field() ?>
       <div>
         <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Card Title</label>
-        <input type="text" name="title" placeholder="e.g. Pets &amp; Smoking" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        <input type="text" name="title" maxlength="60" placeholder="e.g. Pets &amp; Smoking" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
       </div>
       <div>
         <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Rules <span class="normal-case font-semibold text-pallav-300">(one per line)</span></label>
@@ -63,15 +63,15 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <?php if (!$card['lines']): ?>
             <li class="text-sm text-pallav-300 italic">No rules added yet.</li>
           <?php else: foreach ($card['lines'] as $line): ?>
-            <li class="text-sm text-pallav-600 flex items-start gap-2"><span class="w-1.5 h-1.5 rounded-full bg-pallav-400 mt-1.5 shrink-0"></span><?= e($line) ?></li>
+            <li class="text-sm text-pallav-600 flex items-start gap-2"><span class="w-1.5 h-1.5 rounded-full bg-pallav-400 mt-1.5 shrink-0"></span><?= e(is_string($line) ? $line : '') ?></li>
           <?php endforeach; endif; ?>
         </ul>
       </div>
 
       <form x-show="editing" x-cloak method="POST" action="<?= e(APP_URL) ?>/admin/policy-save.php" class="space-y-3">
         <?= csrf_field() ?><input type="hidden" name="id" value="<?= $card['id'] ?>">
-        <input type="text" name="title" value="<?= e($card['title']) ?>" required class="w-full rounded-lg border border-pallav-200 px-3 py-2 text-sm font-bold focus:border-pallav-500 outline-none">
-        <textarea name="lines" rows="5" class="w-full rounded-lg border border-pallav-200 px-3 py-2 text-xs font-semibold focus:border-pallav-500 outline-none"><?= e(implode("\n", $card['lines'])) ?></textarea>
+        <input type="text" name="title" value="<?= e($card['title']) ?>" maxlength="60" required class="w-full rounded-lg border border-pallav-200 px-3 py-2 text-sm font-bold focus:border-pallav-500 outline-none">
+        <textarea name="lines" rows="5" class="w-full rounded-lg border border-pallav-200 px-3 py-2 text-xs font-semibold focus:border-pallav-500 outline-none"><?= e(implode("\n", array_map(static fn ($l) => is_string($l) ? $l : '', $card['lines']))) ?></textarea>
         <div class="flex justify-end gap-2">
           <button type="button" @click="editing = false" class="text-xs font-bold text-pallav-500 px-3 py-1.5">Cancel</button>
           <button type="submit" class="text-xs font-bold bg-pallav-700 hover:bg-pallav-800 text-white rounded-lg px-3.5 py-1.5 transition">Save</button>

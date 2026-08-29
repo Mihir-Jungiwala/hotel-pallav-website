@@ -69,7 +69,7 @@ function generate_booking_reference(): string
 
 $reference = generate_booking_reference();
 
-db_insert(
+$bookingId = db_insert(
     'INSERT INTO bookings (reference, room_id, guest_name, guest_phone, guest_email, check_in, check_out, guests, message, status, ip_address, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "pending", ?, NOW(), NOW())',
     [
@@ -85,6 +85,14 @@ db_insert(
         $_SERVER['REMOTE_ADDR'] ?? null,
     ]
 );
+
+if (smtp_is_configured()) {
+    $booking = db_one('SELECT * FROM bookings WHERE id = ?', [$bookingId]);
+    if ($booking) {
+        mail_booking_guest($booking, $room);
+        mail_booking_owner($booking, $room);
+    }
+}
 
 flash('success', "Thank you! Your enquiry reference is {$reference}. We will call you shortly to confirm.");
 redirect('index.php#enquire');

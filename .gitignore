@@ -2,3 +2,4 @@
 error.log
 .DS_Store
 Thumbs.db
+includes/config.php

@@ -52,19 +52,32 @@ if (!empty($_FILES['favicon']['name']) && $_FILES['favicon']['error'] === UPLOAD
     }
 }
 
+$smtpPassword = trim($_POST['smtp_password'] ?? '');
+if ($smtpPassword === '') {
+    // Blank means "leave unchanged" — the field is masked and re-rendered blank on every load.
+    $smtpPassword = $settings['smtp_password'] ?? null;
+}
+
 db_run(
-    'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, show_prices=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, google_rating=?, google_review_count=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=? WHERE id=?',
+    'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, show_prices=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, google_rating=?, google_review_count=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_email=? WHERE id=?',
     [
         (int) $_POST['opened_year'], trim($_POST['gm_phone']), trim($_POST['reception_phone']), trim($_POST['whatsapp']),
         trim($_POST['email']), trim($_POST['address']), trim($_POST['checkin_time']), trim($_POST['checkout_time']),
         !empty($_POST['show_prices']) ? 1 : 0,
-        $_POST['meta_title'] ?: null, $_POST['meta_description'] ?: null, $_POST['meta_keywords'] ?: null,
-        $logoPath, $faviconPath, $_POST['gbp_link'] ?: null,
-        $_POST['facebook_link'] ?: null, $_POST['instagram_link'] ?: null,
-        $_POST['google_maps_api_key'] ?: null, $_POST['google_place_id'] ?: null,
+        ($_POST['meta_title'] ?? '') ?: null, ($_POST['meta_description'] ?? '') ?: null, ($_POST['meta_keywords'] ?? '') ?: null,
+        $logoPath, $faviconPath, ($_POST['gbp_link'] ?? '') ?: null,
+        ($_POST['facebook_link'] ?? '') ?: null, ($_POST['instagram_link'] ?? '') ?: null,
+        ($_POST['google_maps_api_key'] ?? '') ?: null, ($_POST['google_place_id'] ?? '') ?: null,
         max(1, min(5, (int) ($_POST['google_min_review_rating'] ?? 3))),
         trim($_POST['google_rating']), (int) ($_POST['google_review_count'] ?? 0),
         trim($_POST['gbp_oauth_client_id'] ?? '') ?: null, trim($_POST['gbp_oauth_client_secret'] ?? '') ?: null,
+        trim($_POST['smtp_host'] ?? '') ?: null,
+        (int) ($_POST['smtp_port'] ?? 587) ?: 587,
+        trim($_POST['smtp_username'] ?? '') ?: null,
+        $smtpPassword,
+        trim($_POST['smtp_from_email'] ?? '') ?: null,
+        trim($_POST['smtp_from_name'] ?? '') ?: null,
+        trim($_POST['notify_email'] ?? '') ?: null,
         $settings['id'],
     ]
 );

@@ -229,6 +229,55 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     </div>
 
     <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
+      <div class="flex items-center gap-2.5 mb-1">
+        <h2 class="font-display font-bold text-lg text-pallav-900">Email Notifications</h2>
+        <?php if ($settings['smtp_host'] ?? null): ?>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-700 rounded-full px-2.5 py-1">Configured</span>
+        <?php else: ?>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 rounded-full px-2.5 py-1">Not configured</span>
+        <?php endif; ?>
+      </div>
+      <p class="text-xs text-pallav-400 mb-5">Send password-reset emails, booking/enquiry alerts to you, and booking confirmations to guests — using Gmail SMTP.</p>
+      <div class="rounded-xl bg-pallav-50 ring-1 ring-pallav-100 p-4 text-xs text-pallav-600 mb-5 leading-relaxed">
+        <b class="text-pallav-800">Using Gmail:</b> enable 2-Step Verification on the Google account, then create an
+        <a href="https://myaccount.google.com/apppasswords" target="_blank" class="font-bold text-pallav-700 underline">App Password</a>
+        (Google no longer accepts your normal Gmail password here). Use <code class="bg-white rounded px-1.5 py-0.5 ring-1 ring-pallav-200">smtp.gmail.com</code>, port <code class="bg-white rounded px-1.5 py-0.5 ring-1 ring-pallav-200">587</code>, and the 16-character App Password below.
+      </div>
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">SMTP Host</label>
+          <input type="text" name="smtp_host" value="<?= e($settings['smtp_host'] ?? '') ?>" placeholder="smtp.gmail.com" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">SMTP Port</label>
+          <input type="number" name="smtp_port" value="<?= e((string) ($settings['smtp_port'] ?? 587)) ?>" placeholder="587" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Gmail Address</label>
+          <input type="email" name="smtp_username" value="<?= e($settings['smtp_username'] ?? '') ?>" placeholder="yourhotel@gmail.com" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">App Password</label>
+          <input type="password" name="smtp_password" value="" placeholder="<?= !empty($settings['smtp_password']) ? 'Saved — leave blank to keep it' : '16-character app password' ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">"From" Email</label>
+          <input type="email" name="smtp_from_email" value="<?= e($settings['smtp_from_email'] ?? '') ?>" placeholder="yourhotel@gmail.com" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Usually the same as the Gmail address above.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">"From" Name</label>
+          <input type="text" name="smtp_from_name" value="<?= e($settings['smtp_from_name'] ?? '') ?>" placeholder="<?= e(APP_NAME) ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Notify This Email (bookings &amp; enquiries)</label>
+          <input type="email" name="notify_email" value="<?= e($settings['notify_email'] ?? '') ?>" placeholder="<?= e($settings['email'] ?? '') ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Where you'll receive new booking and enquiry alerts. Leave blank to use the hotel Email above.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
       <h2 class="font-display font-bold text-lg text-pallav-900 mb-5">Reviews &amp; Display</h2>
       <div class="grid sm:grid-cols-3 gap-5">
         <div>

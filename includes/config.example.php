@@ -1,13 +1,15 @@
 <?php
 /**
- * Central config — edit these when moving to Hostinger.
- * Everything else in the app reads from here; nothing else hardcodes credentials.
+ * Central config — copy this file to config.php and fill in real values.
+ * config.php is gitignored on purpose: it holds live database credentials
+ * and must never be committed. Everything else in the app reads from it;
+ * nothing else hardcodes credentials.
  */
 
 // ===== Database =====
 define('DB_HOST', '127.0.0.1');
-define('DB_NAME', 'hotel_pallav_php');
-define('DB_USER', 'root');
+define('DB_NAME', '');
+define('DB_USER', '');
 define('DB_PASS', '');
 
 // ===== App =====

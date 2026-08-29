@@ -50,6 +50,13 @@ CREATE TABLE IF NOT EXISTS settings (
   gbp_oauth_token_expires DATETIME NULL,
   gbp_account_id VARCHAR(150) NULL,
   gbp_location_id VARCHAR(150) NULL,
+  smtp_host VARCHAR(150) NULL,
+  smtp_port SMALLINT UNSIGNED NULL,
+  smtp_username VARCHAR(150) NULL,
+  smtp_password VARCHAR(255) NULL,
+  smtp_from_email VARCHAR(150) NULL,
+  smtp_from_name VARCHAR(100) NULL,
+  notify_email VARCHAR(150) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

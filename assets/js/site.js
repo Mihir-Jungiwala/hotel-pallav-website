@@ -741,4 +741,57 @@
       }
     }, {passive:true});
   }
+
+  /* ============ FORM DRAFT AUTOSAVE (cookies) ============
+     Saves #mainForm field values to a cookie as the guest types, so a reload, a
+     validation error, or coming back later doesn't lose what they'd filled in.
+     Cleared automatically once a booking is actually submitted. */
+  (function(){
+    var form = document.getElementById('mainForm');
+    if (!form) return;
+    var COOKIE = 'hp_booking_draft', DAYS = 14;
+    var fields = ['name', 'phone', 'email', 'checkin', 'checkout', 'room', 'adults', 'children', 'message'];
+
+    function setCookie(name, value, days){
+      var d = new Date(); d.setTime(d.getTime() + days * 86400000);
+      document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+    }
+    function getCookie(name){
+      var m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+    function clearCookie(name){ document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'; }
+
+    // Restore any saved draft (only into fields the guest hasn't already filled, e.g. via browser autofill).
+    try {
+      var saved = JSON.parse(getCookie(COOKIE) || 'null');
+      if (saved) {
+        fields.forEach(function(name){
+          var el = form.elements[name];
+          if (el && !el.value && saved[name]) el.value = saved[name];
+        });
+      }
+    } catch (e) {}
+
+    var saveTimer = null;
+    function saveDraft(){
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function(){
+        var data = {};
+        fields.forEach(function(name){
+          var el = form.elements[name];
+          if (el && el.value) data[name] = el.value;
+        });
+        if (Object.keys(data).length) setCookie(COOKIE, JSON.stringify(data), DAYS);
+        else clearCookie(COOKIE);
+      }, 400);
+    }
+    fields.forEach(function(name){
+      var el = form.elements[name];
+      if (el) el.addEventListener('input', saveDraft);
+    });
+    // Only clear the draft once the server actually confirms success (a green flash after
+    // redirect) — a validation error redirects back too, and that draft should stay put.
+    if (document.querySelector('.fmsg.ok')) clearCookie(COOKIE);
+  })();
 })();

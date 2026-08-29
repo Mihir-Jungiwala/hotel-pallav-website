@@ -26,10 +26,17 @@ if ($errors) {
     redirect('index.php#enquire');
 }
 
-db_insert(
+$enquiryId = db_insert(
     'INSERT INTO enquiries (name, phone, email, message, is_read, ip_address, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, NOW(), NOW())',
     [$name, $phone !== '' ? $phone : null, $email !== '' ? $email : null, $message, $_SERVER['REMOTE_ADDR'] ?? null]
 );
+
+if (smtp_is_configured()) {
+    $enquiry = db_one('SELECT * FROM enquiries WHERE id = ?', [$enquiryId]);
+    if ($enquiry) {
+        mail_enquiry_owner($enquiry);
+    }
+}
 
 flash('success', 'Thank you! Your message has been sent — our team will get back to you shortly.');
 redirect('index.php#enquire');
