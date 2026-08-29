@@ -16,8 +16,8 @@ if ($hasBookings) {
     redirect('admin/rooms.php');
 }
 
-foreach (json_decode_field($room['photos']) as $path) {
-    $full = UPLOADS_PATH . '/rooms/' . basename($path);
+foreach (normalize_room_photos(json_decode_field($room['photos'])) as $photo) {
+    $full = UPLOADS_PATH . '/rooms/' . basename($photo['path']);
     if (is_file($full)) @unlink($full);
 }
 

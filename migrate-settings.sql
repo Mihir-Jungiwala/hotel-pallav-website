@@ -17,3 +17,6 @@ ALTER TABLE settings ADD COLUMN smtp_password VARCHAR(255) NULL;
 ALTER TABLE settings ADD COLUMN smtp_from_email VARCHAR(150) NULL;
 ALTER TABLE settings ADD COLUMN smtp_from_name VARCHAR(100) NULL;
 ALTER TABLE settings ADD COLUMN notify_email VARCHAR(150) NULL;
+
+-- Reception WhatsApp (mirrors gm/reception phone split)
+ALTER TABLE settings ADD COLUMN reception_whatsapp VARCHAR(20) NULL;

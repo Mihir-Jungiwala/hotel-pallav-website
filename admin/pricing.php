@@ -158,7 +158,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
                 <form method="POST" action="<?= e(APP_URL) ?>/admin/rate-plan-toggle.php"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $plan['id'] ?>">
                   <button class="text-[11px] font-bold bg-pallav-100 hover:bg-pallav-200 text-pallav-700 rounded-lg px-2.5 py-1 transition"><?= $plan['active'] ? 'Pause' : 'Resume' ?></button>
                 </form>
-                <form method="POST" action="<?= e(APP_URL) ?>/admin/rate-plan-delete.php" onsubmit="return confirm('Delete this tariff plan?')"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $plan['id'] ?>">
+                <form method="POST" action="<?= e(APP_URL) ?>/admin/rate-plan-delete.php" data-confirm="Delete this tariff plan?"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $plan['id'] ?>">
                   <button class="text-[11px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg px-2.5 py-1 transition">Delete</button>
                 </form>
               </div>
@@ -224,7 +224,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
                 <form method="POST" action="<?= e(APP_URL) ?>/admin/rate-period-toggle.php"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $rate['id'] ?>">
                   <button class="text-xs font-bold bg-pallav-100 hover:bg-pallav-200 text-pallav-700 rounded-lg px-3 py-1.5 transition"><?= $rate['active'] ? 'Pause' : 'Resume' ?></button>
                 </form>
-                <form method="POST" action="<?= e(APP_URL) ?>/admin/rate-period-delete.php" onsubmit="return confirm('Delete this rate plan?')"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $rate['id'] ?>">
+                <form method="POST" action="<?= e(APP_URL) ?>/admin/rate-period-delete.php" data-confirm="Delete this rate plan?"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $rate['id'] ?>">
                   <button class="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg px-3 py-1.5 transition">Delete</button>
                 </form>
               </div>

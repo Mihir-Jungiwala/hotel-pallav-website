@@ -2,9 +2,9 @@
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
 
-$rooms = db_all('SELECT * FROM rooms ORDER BY id');
+$rooms = db_all('SELECT * FROM rooms ORDER BY sort_order, id');
 foreach ($rooms as &$r) {
-    $r['photos'] = json_decode_field($r['photos']);
+    $r['photos'] = normalize_room_photos(json_decode_field($r['photos']));
     $r['current_rate'] = db_one("SELECT * FROM room_rates WHERE room_id = ? AND active=1 AND CURDATE() BETWEEN start_date AND end_date ORDER BY price DESC LIMIT 1", [$r['id']]);
     $default = db_one("SELECT * FROM rate_plans WHERE room_id = ? AND active=1 ORDER BY is_default DESC, sort_order LIMIT 1", [$r['id']]);
     $r['effective_price'] = $r['current_rate']['price'] ?? ($default['price_double'] ?? $r['price']);
@@ -25,11 +25,20 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     </a>
   </div>
 
-  <div class="grid sm:grid-cols-2 gap-6">
+  <?php if ($rooms): ?>
+  <p class="text-xs text-pallav-400 mb-4 flex items-center gap-1.5">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg>
+    Drag a room card by its handle to reorder — the live website updates to match.
+  </p>
+  <?php endif; ?>
+  <div class="grid sm:grid-cols-2 gap-6" id="roomGrid">
     <?php foreach ($rooms as $room): ?>
-    <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+    <div class="room-card relative rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300" data-id="<?= (int) $room['id'] ?>">
+      <span class="drag-handle absolute top-2 left-2 z-10 w-8 h-8 rounded-lg bg-pallav-900/80 hover:bg-pallav-900 text-white flex items-center justify-center cursor-grab active:cursor-grabbing transition" draggable="true" title="Drag to reorder">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+      </span>
       <?php if (!empty($room['photos'])): ?>
-        <img src="<?= e(UPLOADS_URL . '/rooms/' . $room['photos'][0]) ?>" class="w-full h-36 object-cover">
+        <img src="<?= e(UPLOADS_URL . '/rooms/' . $room['photos'][0]['path']) ?>" alt="<?= e($room['photos'][0]['alt'] ?? $room['name']) ?>" class="w-full h-36 object-cover">
       <?php else: ?>
         <div class="w-full h-36 bg-gradient-to-br from-pallav-100 to-pallav-200 flex items-center justify-center text-pallav-400 text-xs font-bold uppercase tracking-wide">No photo yet</div>
       <?php endif; ?>
@@ -55,9 +64,9 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         </div>
         <?php endif; ?>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <a href="<?= e(APP_URL) ?>/admin/room-edit.php?id=<?= $room['id'] ?>" class="inline-flex items-center gap-1.5 text-sm font-bold text-pallav-700 hover:text-pallav-900">Edit room &rarr;</a>
-          <a href="<?= e(APP_URL) ?>/admin/pricing.php" class="inline-flex items-center gap-1.5 text-sm font-bold text-gold-600 hover:text-gold-700">Manage rates &rarr;</a>
-          <form method="POST" action="<?= e(APP_URL) ?>/admin/room-delete.php" onsubmit="return confirm('Delete <?= e(addslashes($room['name'])) ?>? This cannot be undone.')" class="ml-auto">
+          <a href="<?= e(APP_URL) ?>/admin/room-edit.php?id=<?= $room['id'] ?>" class="inline-flex items-center text-sm font-bold text-pallav-700 bg-pallav-50 hover:bg-pallav-100 rounded-lg px-3.5 py-1.5 transition hover:-translate-y-0.5">Edit Room</a>
+          <a href="<?= e(APP_URL) ?>/admin/pricing.php" class="inline-flex items-center text-sm font-bold text-gold-700 bg-gold-50 hover:bg-gold-100 rounded-lg px-3.5 py-1.5 transition hover:-translate-y-0.5">Manage Rates</a>
+          <form method="POST" action="<?= e(APP_URL) ?>/admin/room-delete.php" data-confirm="Delete <?= e($room['name']) ?>? This cannot be undone." class="ml-auto">
             <?= csrf_field() ?>
             <input type="hidden" name="id" value="<?= $room['id'] ?>">
             <button class="text-xs font-bold text-rose-500 hover:text-rose-700">Delete</button>
@@ -67,4 +76,93 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     </div>
     <?php endforeach; ?>
   </div>
+<style>.room-card.dragging{ opacity:.4; }</style>
+<script>
+(function(){
+  var grid = document.getElementById('roomGrid');
+  if (!grid) return;
+  var csrf = document.querySelector('input[name="_csrf"]').value;
+  var dragging = null;
+  var lastAfter = undefined;
+
+  grid.querySelectorAll('.drag-handle').forEach(function(handle){
+    handle.addEventListener('dragstart', function(e){
+      dragging = handle.closest('.room-card');
+      lastAfter = undefined;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setDragImage(dragging, 20, 20);
+      try { e.dataTransfer.setData('text/plain', dragging.dataset.id); } catch(err) {}
+      setTimeout(function(){ dragging.classList.add('dragging'); }, 0);
+    });
+    handle.addEventListener('dragend', function(){
+      if (dragging) dragging.classList.remove('dragging');
+      dragging = null;
+      saveOrder();
+    });
+  });
+
+  grid.addEventListener('dragover', function(e){
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!dragging) return;
+    var after = getCardAfter(e.clientX, e.clientY);
+    if (after === lastAfter) return;
+    lastAfter = after;
+    move(after);
+  });
+  grid.addEventListener('drop', function(e){ e.preventDefault(); });
+
+  function move(after){
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.room-card'));
+    var firstRects = {};
+    cards.forEach(function(c){ firstRects[c.dataset.id] = c.getBoundingClientRect(); });
+
+    if (after == null) grid.appendChild(dragging);
+    else grid.insertBefore(dragging, after);
+
+    cards.forEach(function(c){
+      if (c === dragging) return;
+      var first = firstRects[c.dataset.id];
+      var last = c.getBoundingClientRect();
+      var dx = first.left - last.left, dy = first.top - last.top;
+      if (!dx && !dy) return;
+      c.style.transition = 'none';
+      c.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      requestAnimationFrame(function(){
+        c.style.transition = 'transform .28s cubic-bezier(.22,.9,.28,1)';
+        c.style.transform = '';
+        c.addEventListener('transitionend', function cleanup(){
+          c.style.transition = '';
+          c.removeEventListener('transitionend', cleanup);
+        });
+      });
+    });
+  }
+
+  function getCardAfter(x, y){
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.room-card:not(.dragging)'));
+    var closest = null, closestDist = -Infinity;
+    cards.forEach(function(card){
+      var box = card.getBoundingClientRect();
+      var dx = x - (box.left + box.width / 2);
+      var dy = y - (box.top + box.height / 2);
+      var dist = -(dx * dx + dy * dy);
+      var beforeCenter = (y < box.top + box.height / 2) || (Math.abs(y - (box.top + box.height/2)) < box.height/2 && x < box.left + box.width / 2);
+      if (dist > closestDist) { closestDist = dist; closest = beforeCenter ? card : card.nextElementSibling; }
+    });
+    return closest;
+  }
+
+  function saveOrder(){
+    var ids = Array.prototype.map.call(grid.querySelectorAll('.room-card'), function(c){ return c.dataset.id; });
+    var body = new URLSearchParams();
+    body.set('_csrf', csrf);
+    ids.forEach(function(id){ body.append('order[]', id); });
+    fetch('<?= e(APP_URL) ?>/admin/room-reorder.php', { method: 'POST', body: body })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (!d.ok) location.reload(); })
+      .catch(function(){ location.reload(); });
+  }
+})();
+</script>
 <?php include __DIR__ . '/../includes/admin-layout-bottom.php'; ?>

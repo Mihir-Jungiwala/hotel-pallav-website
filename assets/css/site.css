@@ -345,22 +345,46 @@ section{ position:relative; }
 
 /* ============ POLICIES / TERMS ============ */
 .pol{ display:flex; flex-wrap:wrap; justify-content:center; gap:16px; }
-.pol>*{ flex:0 0 calc((100% - 32px)/3); max-width:calc((100% - 32px)/3); }
-.pol-card{ background:var(--white); border-radius:var(--r-lg); padding:26px 24px; box-shadow:inset 0 0 0 1.5px var(--line), var(--sh-sm);
-  transition:transform .3s var(--ease), box-shadow .3s ease; }
-.pol-card:hover{ transform:translateY(-4px); box-shadow:inset 0 0 0 1.5px var(--p200), var(--sh-md); }
-.pol-card .ic{ width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center;
-  background:var(--p100); color:var(--p700); margin-bottom:15px; }
-.pol-card h4{ font-size:17px; margin-bottom:12px; }
-.pol-card ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+.pol>*{ flex:0 0 calc((100% - 32px)/3); max-width:calc((100% - 32px)/3); min-width:0; }
+.pol-card{ position:relative; background:var(--white); border-radius:var(--r-lg); padding:26px 24px; overflow:hidden;
+  box-shadow:inset 0 0 0 1.5px var(--line), var(--sh-sm);
+  transition:transform .35s var(--ease), box-shadow .35s ease; }
+.pol-card::after{ content:""; position:absolute; inset:auto -40% -70% -40%; height:150px; border-radius:50%; background:radial-gradient(circle,var(--p100),transparent 68%); opacity:0; transition:opacity .4s ease, transform .5s var(--ease); transform:translateY(28px); }
+.pol-card:hover{ transform:translateY(-7px); box-shadow:inset 0 0 0 1.5px var(--p300), var(--sh-lg); }
+.pol-card:hover::after{ opacity:1; transform:none; }
+.pol-head{ position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:13px; margin-bottom:14px; }
+.pol-card .ic{ flex:none; width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(140deg,var(--p100),var(--p200)); color:var(--p700);
+  transition:transform .38s cubic-bezier(.34,1.5,.64,1), background .3s ease, color .3s ease, box-shadow .3s ease; }
+.pol-card:hover .ic{ transform:scale(1.09) rotate(-5deg); background:linear-gradient(140deg,var(--p500),var(--p700)); color:#fff; box-shadow:var(--glow); }
+.pol-card .ic img,.pol-card .ic svg{ width:22px; height:22px; object-fit:contain; }
+.pol-card h4{ position:relative; z-index:1; font-size:17px; min-width:0; overflow-wrap:break-word; }
+.pol-card ul{ position:relative; z-index:1; list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
 .pol-card li{ position:relative; padding-left:19px; font-size:13.8px; line-height:1.55; color:var(--ink2); font-weight:500; }
 .pol-card li::before{ content:""; position:absolute; left:0; top:8px; width:6px; height:6px; border-radius:50%; background:var(--p400); }
 .pol-card li b{ color:var(--ink); font-weight:800; }
 .pol-foot{ margin-top:22px; padding:16px 20px; border-radius:16px; background:var(--p50); box-shadow:inset 0 0 0 1.5px var(--line2);
   display:flex; align-items:flex-start; gap:11px; font-size:13px; line-height:1.6; color:var(--ink2); font-weight:600; }
 .pol-foot svg{ color:var(--p500); flex:none; margin-top:2px; }
+.pol-dots{ display:none; align-items:center; justify-content:center; gap:8px; margin-top:16px; }
+.pol-dots button{ width:7px; height:7px; border-radius:50%; border:none; padding:0; cursor:pointer;
+  background:var(--p200); transition:width .3s var(--ease), background .3s ease, box-shadow .3s ease; }
+.pol-dots button.on{ background:var(--p600); width:26px; border-radius:100px; box-shadow:0 0 0 4px var(--p100); }
 @media (max-width:1080px){ .pol>*{ flex-basis:calc((100% - 16px)/2); max-width:calc((100% - 16px)/2); } }
-@media (max-width:640px){ .pol{ gap:11px; } .pol>*{ flex-basis:calc((100% - 11px)/2); max-width:calc((100% - 11px)/2); } .pol-card{ padding:20px 15px; } .pol-card h4{ font-size:14.5px; } .pol-card li{ font-size:12px; padding-left:15px; } .pol-card .ic{ width:36px; height:36px; margin-bottom:12px; } }
+@media (max-width:640px){
+  /* Same swipeable-carousel treatment as the reviews section on mobile — one card
+     per view, scroll-snap, dot indicators — desktop's grid layout is untouched. */
+  .pol{ flex-wrap:nowrap; justify-content:flex-start; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; padding-bottom:2px; }
+  .pol::-webkit-scrollbar{ display:none; }
+  .pol>*{ flex:0 0 88%; max-width:88%; scroll-snap-align:center; }
+  .pol-card{ padding:20px 15px; }
+  .pol-head{ gap:10px; margin-bottom:12px; }
+  .pol-card .ic{ width:36px; height:36px; }
+  .pol-card .ic img,.pol-card .ic svg{ width:18px; height:18px; }
+  .pol-card h4{ font-size:14.5px; }
+  .pol-card li{ font-size:12px; padding-left:15px; }
+  .pol-dots{ display:flex; }
+}
 
 /* ============ CALL / WHATSAPP PICKER ============ */
 .dial{ position:fixed; inset:0; z-index:320; display:flex; align-items:flex-end; justify-content:center;

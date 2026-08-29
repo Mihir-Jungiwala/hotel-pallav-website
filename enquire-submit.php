@@ -34,7 +34,8 @@ $enquiryId = db_insert(
 if (smtp_is_configured()) {
     $enquiry = db_one('SELECT * FROM enquiries WHERE id = ?', [$enquiryId]);
     if ($enquiry) {
-        mail_enquiry_owner($enquiry);
+        $adminLink = '<p><a href="' . e(APP_URL) . '/admin/bookings.php?filter=enquiry">Open in admin panel</a></p>';
+        send_templated_mail('enquiry_received', $enquiry['email'] ?? '', $enquiry['name'], enquiry_email_vars($enquiry), $adminLink);
     }
 }
 

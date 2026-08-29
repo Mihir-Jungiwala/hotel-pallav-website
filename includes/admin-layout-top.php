@@ -13,7 +13,15 @@ $me = current_user();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= e($title ?? 'Admin') ?> — Hotel Pallav</title>
+<title>Hotel Pallav - <?= e($title ?? 'Admin') ?></title>
+<script>
+(function(){
+  try {
+    var saved = localStorage.getItem('admin_theme');
+    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  } catch (e) {}
+})();
+</script>
 <?php if ($favicon): ?><link rel="icon" href="<?= e($favicon) ?>"><?php endif; ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,6 +63,75 @@ $me = current_user();
   @keyframes adminFadeIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
   .admin-fade-in{ animation:adminFadeIn .45s cubic-bezier(.22,.9,.28,1) backwards; }
   @media (prefers-reduced-motion:reduce){ .admin-fade-in{ animation:none; } }
+
+  /* ===== Dark mode ===== */
+  html[data-theme="dark"]{ color-scheme: dark; }
+  html[data-theme="dark"] body{ background:#130E22; }
+  html[data-theme="dark"] .bg-cream{ background:#130E22 !important; }
+  html[data-theme="dark"] .bg-white{ background:#1C1633 !important; }
+  html[data-theme="dark"] .bg-white\/95{ background:rgba(28,22,51,.95) !important; }
+  html[data-theme="dark"] .bg-white\/40{ background:rgba(255,255,255,.14) !important; }
+  html[data-theme="dark"] .bg-white\/15{ background:rgba(255,255,255,.1) !important; }
+  html[data-theme="dark"] .bg-white\/10{ background:rgba(255,255,255,.08) !important; }
+  html[data-theme="dark"] .bg-white\/5{ background:rgba(255,255,255,.05) !important; }
+  html[data-theme="dark"] .ring-pallav-100{ --tw-ring-color: rgba(255,255,255,.09) !important; }
+  html[data-theme="dark"] .ring-pallav-200{ --tw-ring-color: rgba(255,255,255,.14) !important; }
+  html[data-theme="dark"] .border-pallav-100,
+  html[data-theme="dark"] .border-pallav-200{ border-color: rgba(255,255,255,.12) !important; }
+  html[data-theme="dark"] .divide-pallav-50 > :not([hidden]) ~ :not([hidden]){ border-color: rgba(255,255,255,.08) !important; }
+  html[data-theme="dark"] .border-pallav-50,
+  html[data-theme="dark"] .border-t-pallav-100{ border-color: rgba(255,255,255,.08) !important; }
+  html[data-theme="dark"] .text-pallav-900{ color:#F3F0FF !important; }
+  html[data-theme="dark"] .text-pallav-800{ color:#E4DEFA !important; }
+  html[data-theme="dark"] .text-pallav-700{ color:#CFC6F0 !important; }
+  html[data-theme="dark"] .text-pallav-600{ color:#B7ACE3 !important; }
+  html[data-theme="dark"] .text-pallav-500{ color:#9C90C4 !important; }
+  html[data-theme="dark"] .text-pallav-400{ color:#8A7FB0 !important; }
+  html[data-theme="dark"] .text-pallav-300{ color:#6F6494 !important; }
+  html[data-theme="dark"] .bg-pallav-50{ background:#241C42 !important; }
+  html[data-theme="dark"] .bg-pallav-50\/40, html[data-theme="dark"] .bg-pallav-50\/50,
+  html[data-theme="dark"] .bg-pallav-50\/60, html[data-theme="dark"] .bg-pallav-50\/70,
+  html[data-theme="dark"] .bg-pallav-50\/95{ background:rgba(36,28,66,.6) !important; }
+  html[data-theme="dark"] .hover\:bg-pallav-50:hover{ background:#241C42 !important; }
+  html[data-theme="dark"] .bg-pallav-100{ background:#2E2452 !important; }
+  html[data-theme="dark"] .hover\:bg-pallav-100:hover,
+  html[data-theme="dark"] .hover\:bg-pallav-200:hover{ background:#382C63 !important; }
+  html[data-theme="dark"] .bg-emerald-50{ background:rgba(16,185,129,.14) !important; }
+  html[data-theme="dark"] .text-emerald-600, html[data-theme="dark"] .text-emerald-700{ color:#5EEAB0 !important; }
+  html[data-theme="dark"] .bg-amber-50{ background:rgba(245,158,11,.14) !important; }
+  html[data-theme="dark"] .text-amber-600, html[data-theme="dark"] .text-amber-700{ color:#FBC968 !important; }
+  html[data-theme="dark"] .bg-rose-50{ background:rgba(244,63,94,.14) !important; }
+  html[data-theme="dark"] .text-rose-500, html[data-theme="dark"] .text-rose-600, html[data-theme="dark"] .text-rose-700{ color:#FF9DB1 !important; }
+  html[data-theme="dark"] .bg-blue-50{ background:rgba(59,130,246,.14) !important; }
+  html[data-theme="dark"] .text-blue-600{ color:#8AB6FF !important; }
+  html[data-theme="dark"] .bg-gold-50{ background:rgba(201,162,39,.16) !important; }
+  html[data-theme="dark"] .text-gold-700{ color:#F0C465 !important; }
+  html[data-theme="dark"] .bg-slate-100{ background:rgba(148,163,184,.16) !important; }
+  html[data-theme="dark"] .text-slate-600{ color:#CBD5E1 !important; }
+  html[data-theme="dark"] input, html[data-theme="dark"] select, html[data-theme="dark"] textarea{
+    background:#1C1633 !important; color:#E9E4FB !important; border-color: rgba(255,255,255,.14) !important;
+  }
+  html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder{ color:#6F6494 !important; }
+  html[data-theme="dark"] input:disabled{ opacity:.6; }
+  html[data-theme="dark"] .shadow-sm, html[data-theme="dark"] .shadow,
+  html[data-theme="dark"] .shadow-lg, html[data-theme="dark"] .shadow-xl, html[data-theme="dark"] .shadow-2xl{
+    --tw-shadow-color: rgba(0,0,0,.5);
+  }
+  html[data-theme="dark"] .admin-sidebar{ background:rgba(24,18,44,.92); border-right-color: rgba(255,255,255,.08); }
+  html[data-theme="dark"] .admin-sidenav a{ color:#B7ACE3; }
+  html[data-theme="dark"] .admin-sidenav a:hover{ color:#fff; background:rgba(255,255,255,.06); }
+  html[data-theme="dark"] .admin-sidenav a.on{ color:#fff; background:linear-gradient(90deg, rgba(139,92,246,.28), rgba(91,33,182,.4) 90%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  html[data-theme="dark"] .admin-sidebar-ghost{ color:#9C90C4; }
+  html[data-theme="dark"] .admin-sidebar-ghost:hover{ color:#fff; background:rgba(255,255,255,.06); }
+  html[data-theme="dark"] ::-webkit-scrollbar{ width:10px; height:10px; }
+  html[data-theme="dark"] ::-webkit-scrollbar-track{ background:transparent; }
+  html[data-theme="dark"] ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.15); border-radius:6px; }
+
+  /* ===== Theme toggle switch ===== */
+  .theme-toggle{ position:relative; width:44px; height:24px; border-radius:999px; background:#E9E2FA; transition:background .25s ease; flex-shrink:0; cursor:pointer; }
+  .theme-toggle .knob{ position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; transition:transform .25s cubic-bezier(.22,.9,.28,1); color:#7C3AED; }
+  html[data-theme="dark"] .theme-toggle{ background:#4A3A7A; }
+  html[data-theme="dark"] .theme-toggle .knob{ transform:translateX(20px); background:#1C1633; color:#F0C465; }
 </style>
 </head>
 <body class="bg-cream text-pallav-900 antialiased min-h-screen" x-data="{ drawer: false }">
@@ -69,7 +146,7 @@ $me = current_user();
     <nav class="admin-sidenav flex-1 overflow-y-auto no-scrollbar px-3 py-5 space-y-6">
       <?php foreach ($navGroups as $group => $items): ?>
       <div>
-        <div class="px-3 mb-1.5 text-[10px] font-extrabold uppercase tracking-[.16em] text-pallav-400/80"><?= e($group) ?></div>
+        <?php if ($group !== ''): ?><div class="px-3 mb-1.5 text-[10px] font-extrabold uppercase tracking-[.16em] text-pallav-400/80"><?= e($group) ?></div><?php endif; ?>
         <div class="space-y-1">
           <?php foreach ($items as $it): ?>
           <a href="<?= e(APP_URL) ?>/<?= e($it['href']) ?>" class="<?= is_active_nav($it['match']) ? 'on' : '' ?>">
@@ -84,6 +161,13 @@ $me = current_user();
     </nav>
 
     <div class="shrink-0 border-t border-pallav-100/70 p-3">
+      <div class="flex items-center justify-between gap-2 px-2 py-1.5 mb-0.5">
+        <span class="flex items-center gap-2 text-xs font-bold text-pallav-500">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg>
+          Dark Mode
+        </span>
+        <span class="theme-toggle" role="button" tabindex="0" aria-label="Toggle dark mode"><span class="knob"></span></span>
+      </div>
       <a href="<?= e(APP_URL) ?>/index.php" target="_blank" class="admin-sidebar-ghost">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 3h7v7M21 3l-9 9M5 5h6M5 5v14h14v-6"/></svg>
         View live site
@@ -113,10 +197,13 @@ $me = current_user();
       <span class="shrink-0 rounded-lg overflow-hidden"><?php render_brand_mark(32); ?></span>
       <?= e($activeItem['label'] ?? 'Admin') ?>
     </div>
-    <form method="POST" action="<?= e(APP_URL) ?>/admin/logout.php">
-      <?= csrf_field() ?>
-      <button class="text-xs font-bold text-pallav-600">Sign out</button>
-    </form>
+    <div class="flex items-center gap-3">
+      <span class="theme-toggle" role="button" tabindex="0" aria-label="Toggle dark mode"><span class="knob"></span></span>
+      <form method="POST" action="<?= e(APP_URL) ?>/admin/logout.php">
+        <?= csrf_field() ?>
+        <button class="text-xs font-bold text-pallav-600">Sign out</button>
+      </form>
+    </div>
   </header>
 
   <div class="lg:hidden admin-mnav-backdrop" :class="{ open: drawer }" @click="drawer=false"></div>
@@ -140,7 +227,7 @@ $me = current_user();
       <nav class="flex-1 space-y-5 text-sm font-semibold" @click="drawer=false">
         <?php $mi = 0; foreach ($navGroups as $group => $items): ?>
         <div>
-          <div class="px-1 mb-1.5 text-[10px] font-extrabold uppercase tracking-[.16em] text-pallav-200/70"><?= e($group) ?></div>
+          <?php if ($group !== ''): ?><div class="px-1 mb-1.5 text-[10px] font-extrabold uppercase tracking-[.16em] text-pallav-200/70"><?= e($group) ?></div><?php endif; ?>
           <div class="space-y-1">
             <?php foreach ($items as $it): ?>
             <a href="<?= e(APP_URL) ?>/<?= e($it['href']) ?>" style="transition-delay: <?= $mi * 0.045 ?>s" class="flex items-center gap-3 px-4 py-3 rounded-xl <?= is_active_nav($it['match']) ? 'bg-white/20 text-white' : 'bg-white/5 text-pallav-100' ?>">

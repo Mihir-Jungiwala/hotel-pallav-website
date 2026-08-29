@@ -5,7 +5,7 @@ require_admin();
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 $room = $id ? db_one('SELECT * FROM rooms WHERE id = ?', [$id]) : null;
 if ($id && !$room) { flash('error', 'Room not found.'); redirect('admin/rooms.php'); }
-$photos = $room ? json_decode_field($room['photos']) : [];
+$photos = $room ? normalize_room_photos(json_decode_field($room['photos'])) : [];
 $errors = [];
 
 function slugify(string $name): string
@@ -46,9 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($_POST['remove_photos'] as $path) {
                 $full = UPLOADS_PATH . '/rooms/' . basename($path);
                 if (is_file($full)) @unlink($full);
-                $photos = array_values(array_diff($photos, [$path]));
+                $photos = array_values(array_filter($photos, static fn ($p) => $p['path'] !== $path));
             }
         }
+        // apply name / alt text edits for existing photos (keyed by path)
+        $photoNames = $_POST['photo_name'] ?? [];
+        $photoAlts = $_POST['photo_alt'] ?? [];
+        foreach ($photos as &$p) {
+            if (array_key_exists($p['path'], $photoNames)) $p['name'] = trim($photoNames[$p['path']]) ?: null;
+            if (array_key_exists($p['path'], $photoAlts)) $p['alt'] = trim($photoAlts[$p['path']]) ?: null;
+        }
+        unset($p);
         // handle new uploads
         if (!empty($_FILES['photos']['name'][0])) {
             foreach ($_FILES['photos']['tmp_name'] as $i => $tmp) {
@@ -57,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!in_array($ext, ['jpg','jpeg','png','webp','gif'])) continue;
                 $filename = bin2hex(random_bytes(16)) . '.' . $ext;
                 if (move_uploaded_file($tmp, UPLOADS_PATH . '/rooms/' . $filename)) {
-                    $photos[] = $filename;
+                    $photos[] = ['path' => $filename, 'name' => null, 'alt' => null];
                 }
             }
         }
@@ -83,17 +91,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $title = $room ? 'Edit ' . $room['name'] : 'Add Room Category';
 include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
-  <div class="mb-8">
+  <div class="mb-8 max-w-3xl mx-auto">
     <a href="<?= e(APP_URL) ?>/admin/rooms.php" class="text-xs font-bold text-pallav-500 hover:text-pallav-700">&larr; Back to rooms</a>
     <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900 mt-2"><?= $room ? 'Edit ' . e($room['name']) : 'Add Room Category' ?></h1>
     <?php if (!$room): ?><p class="text-sm text-pallav-500 mt-1">Create a new room type — it appears on the homepage automatically once saved.</p><?php endif; ?>
   </div>
 
   <?php foreach ($errors as $err): ?>
-    <div class="mb-6 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-5 py-3.5 text-sm font-semibold"><?= e($err) ?></div>
+    <div class="mb-6 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-5 py-3.5 text-sm font-semibold max-w-3xl mx-auto"><?= e($err) ?></div>
   <?php endforeach; ?>
 
-  <form method="POST" enctype="multipart/form-data" class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8 max-w-3xl">
+  <form method="POST" enctype="multipart/form-data" class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8 max-w-3xl mx-auto">
     <?= csrf_field() ?>
     <div class="grid sm:grid-cols-2 gap-5">
       <div>
@@ -134,16 +142,22 @@ include __DIR__ . '/../includes/admin-layout-top.php';
 
     <div class="mt-5">
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-2">Room Photos</label>
-      <p class="text-xs text-pallav-400 mb-3">First photo shows first in the site's photo slider.</p>
+      <p class="text-xs text-pallav-400 mb-3">First photo shows first in the site's photo slider. Give each one a name and alt text (for SEO / accessibility) — same as Gallery.</p>
       <?php if ($photos): ?>
-      <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
-        <?php foreach ($photos as $path): ?>
-        <div class="relative group">
-          <img src="<?= e(UPLOADS_URL . '/rooms/' . $path) ?>" class="w-full aspect-square object-cover rounded-xl ring-1 ring-pallav-100">
-          <label class="absolute inset-0 rounded-xl bg-rose-900/0 group-hover:bg-rose-900/50 flex items-center justify-center transition cursor-pointer">
-            <input type="checkbox" name="remove_photos[]" value="<?= e($path) ?>" class="hidden peer">
-            <span class="opacity-0 group-hover:opacity-100 peer-checked:opacity-100 peer-checked:bg-rose-600 text-white text-[10px] font-extrabold uppercase tracking-wide bg-rose-500/90 rounded-full px-2.5 py-1 transition">Remove</span>
-          </label>
+      <div class="space-y-3 mb-4">
+        <?php foreach ($photos as $photo): ?>
+        <div class="flex gap-3 items-start rounded-xl ring-1 ring-pallav-100 p-3">
+          <div class="relative shrink-0 w-20 h-20 group">
+            <img src="<?= e(UPLOADS_URL . '/rooms/' . $photo['path']) ?>" class="w-full h-full object-cover rounded-lg ring-1 ring-pallav-100">
+            <label class="absolute inset-0 rounded-lg bg-rose-900/0 group-hover:bg-rose-900/50 flex items-center justify-center transition cursor-pointer">
+              <input type="checkbox" name="remove_photos[]" value="<?= e($photo['path']) ?>" class="hidden peer">
+              <span class="opacity-0 group-hover:opacity-100 peer-checked:opacity-100 peer-checked:bg-rose-600 text-white text-[9px] font-extrabold uppercase tracking-wide bg-rose-500/90 rounded-full px-2 py-0.5 transition">Remove</span>
+            </label>
+          </div>
+          <div class="flex-1 min-w-0 space-y-1.5">
+            <input type="text" name="photo_name[<?= e($photo['path']) ?>]" value="<?= e($photo['name'] ?? '') ?>" placeholder="Image name" class="w-full rounded-lg border border-pallav-200 px-3 py-1.5 text-xs font-semibold focus:border-pallav-500 outline-none">
+            <input type="text" name="photo_alt[<?= e($photo['path']) ?>]" value="<?= e($photo['alt'] ?? '') ?>" placeholder="Alt text (for SEO / accessibility)" class="w-full rounded-lg border border-pallav-200 px-3 py-1.5 text-xs font-semibold focus:border-pallav-500 outline-none">
+          </div>
         </div>
         <?php endforeach; ?>
       </div>

@@ -4,12 +4,12 @@ require_once __DIR__ . '/includes/brand-mark.php';
 
 $settings = get_settings();
 $content = get_page_content();
-$content['services'] = json_decode_field($content['services'] ?? null);
 $content['enquire_points'] = json_decode_field($content['enquire_points'] ?? null);
+$services = db_all('SELECT * FROM services ORDER BY sort_order, id');
 
-$rooms = db_all('SELECT * FROM rooms ORDER BY id');
+$rooms = db_all('SELECT * FROM rooms ORDER BY sort_order, id');
 foreach ($rooms as &$room) {
-    $room['photos'] = json_decode_field($room['photos'] ?? null);
+    $room['photos'] = normalize_room_photos(json_decode_field($room['photos'] ?? null));
     $room['plans'] = db_all('SELECT * FROM rate_plans WHERE room_id = ? AND active = 1 ORDER BY is_default DESC, sort_order', [$room['id']]);
     foreach ($room['plans'] as &$plan) {
         $plan['occupancy_prices'] = json_decode_field($plan['occupancy_prices'] ?? null);
@@ -33,7 +33,9 @@ if ($totalRooms === 0) $totalRooms = null;
 
 $gm = $settings['gm_phone'] ?? '';
 $rc = $settings['reception_phone'] ?? '';
-$wa = $settings['whatsapp'] ?? '';
+$gmWa = $settings['whatsapp'] ?? '';
+$rcWa = $settings['reception_whatsapp'] ?? '';
+$wa = $gmWa ?: $rcWa;
 $gmDigits = preg_replace('/\D/', '', $gm);
 $rcDigits = preg_replace('/\D/', '', $rc);
 
@@ -56,8 +58,7 @@ function price_ladder(array $plan): array
 function room_badge(array $room): ?array
 {
     if (empty($room['available'])) return ['text' => 'Fully booked right now', 'class' => 'tag gone'];
-    $left = (int) ($room['rooms_left'] ?? 0);
-    return ['text' => $left > 0 ? $left . ' rooms free today' : 'Available — call to confirm', 'class' => 'tag live'];
+    return ['text' => 'Available today', 'class' => 'tag live'];
 }
 
 /** A four-letter-ish slug safe to use as a JS/HTML key for a room's photo-slider set. */
@@ -385,7 +386,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <div class="rslide" data-slider="<?= e($key) ?>">
           <div class="frame rshot" data-room-set="<?= e($key) ?>" data-i="0" role="button" tabindex="0" aria-label="Open <?= e($room['name']) ?> photos">
             <?php if ($photos): foreach ($photos as $pi => $photo): ?>
-            <img src="<?= e(UPLOADS_URL . '/rooms/' . $photo) ?>" alt="<?= e($room['name']) ?>" data-cap="<?= e($room['name']) ?>" class="<?= $pi === 0 ? 'on' : '' ?>" loading="lazy">
+            <img src="<?= e(UPLOADS_URL . '/rooms/' . $photo['path']) ?>" alt="<?= e($photo['alt'] ?: $room['name']) ?>" data-cap="<?= e($photo['name'] ?: $room['name']) ?>" class="<?= $pi === 0 ? 'on' : '' ?>" loading="lazy">
             <?php endforeach; else: ?>
             <svg role="img" aria-label="<?= e($room['name']) ?> at <?= e(APP_NAME) ?>, Rajkot" viewBox="0 0 400 300" class="on" data-cap="<?= e($room['name']) ?>">
               <rect width="400" height="300" fill="#EFE6FF"/>
@@ -456,15 +457,15 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <h2 id="h-services">Everything taken care of, <em>before you ask</em></h2>
       <p>Over <?= $years ?> years of hosting teaches you what guests actually need. This is what comes standard at <?= e(APP_NAME) ?>.</p>
     </div>
-    <?php if (!$content['services']): ?>
+    <?php if (!$services): ?>
       <p style="text-align:center;color:var(--muted)">Services list is being updated.</p>
     <?php else: ?>
     <div class="svc-grid">
-      <?php foreach ($content['services'] as $si => $svc): ?>
+      <?php foreach ($services as $si => $svc): ?>
       <div class="svc rv<?= $si % 4 ? ' d' . ($si % 4) : '' ?>">
-        <div class="svc-ic"><svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><?= SERVICE_ICONS[$svc['icon']] ?? SERVICE_ICONS['front-desk'] ?></svg></div>
+        <div class="svc-ic"><?php render_service_icon($svc); ?></div>
         <h4><?= e($svc['title'] ?? '') ?></h4>
-        <p><?= e($svc['desc'] ?? '') ?></p>
+        <p><?= e($svc['description'] ?? '') ?></p>
       </div>
       <?php endforeach; ?>
     </div>
@@ -518,7 +519,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <div class="gal rv" id="gal">
       <?php foreach ($galleryPhotos as $i => $photo): ?>
       <figure data-cap="<?= e($photo['caption'] ?? '') ?>" <?= $i >= $galInitial ? 'class="gal-more" hidden' : '' ?>>
-        <img src="<?= e(UPLOADS_URL . '/' . $photo['path']) ?>" alt="<?= e($photo['caption'] ?: APP_NAME . ' photo') ?>" loading="lazy">
+        <img src="<?= e(UPLOADS_URL . '/' . $photo['path']) ?>" alt="<?= e($photo['alt_text'] ?: $photo['caption'] ?: APP_NAME . ' photo') ?>" loading="lazy">
         <span class="zoom"><svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.6"/><path d="M20 20l-4.4-4.4M11 8.4v5.2M8.4 11h5.2"/></svg></span>
         <?php if (!empty($photo['caption'])): ?><figcaption><?= e($photo['caption']) ?></figcaption><?php endif; ?>
       </figure>
@@ -667,14 +668,19 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <?php if (!$policyCards): ?>
       <p style="text-align:center;color:var(--muted)">Policy details are being finalized — please call us for check-in terms.</p>
     <?php else: ?>
-    <div class="pol">
-      <?php foreach ($policyCards as $i => $card): ?>
-      <div class="pol-card rv<?= $i % 3 ? ' d' . ($i % 3) : '' ?>">
-        <div class="ic"><svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= POLICY_ICONS_SVG[$i % count(POLICY_ICONS_SVG)] ?></svg></div>
-        <h4><?= e($card['title']) ?></h4>
-        <ul><?php foreach (($card['lines'] ?? []) as $line): ?><li><?= e(is_string($line) ? $line : '') ?></li><?php endforeach; ?></ul>
+    <div class="pol-wrap">
+      <div class="pol" id="polGrid">
+        <?php foreach ($policyCards as $i => $card): ?>
+        <div class="pol-card rv<?= $i % 3 ? ' d' . ($i % 3) : '' ?>">
+          <div class="pol-head">
+            <div class="ic"><?php render_policy_icon($card['icon_path']); ?></div>
+            <h4><?= e($card['title']) ?></h4>
+          </div>
+          <ul><?php foreach (($card['lines'] ?? []) as $line): ?><li><?= e(is_string($line) ? $line : '') ?></li><?php endforeach; ?></ul>
+        </div>
+        <?php endforeach; ?>
       </div>
-      <?php endforeach; ?>
+      <div class="pol-dots" id="polDots"></div>
     </div>
     <?php endif; ?>
     <div class="pol-foot">
@@ -721,7 +727,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <input type="text" name="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="pgrid">
         <div class="f"><label for="m-name">Your name *</label><div class="ctl"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5.6 19.5c0-3.3 2.9-5.7 6.4-5.7s6.4 2.4 6.4 5.7"/></svg><input id="m-name" name="name" type="text" placeholder="Full name" required></div></div>
-        <div class="f"><label for="m-phone">Phone *</label><div class="ctl"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg><input id="m-phone" name="phone" type="tel" placeholder="10-digit number" required></div></div>
+        <div class="f"><label for="m-phone">Mobile Number *</label><div class="ctl"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg><input id="m-phone" name="phone" type="tel" placeholder="10-digit number" required></div></div>
         <div class="f full"><label for="m-email">Email <span>(optional — for your written confirmation)</span></label><div class="ctl"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.6 7l8.4 6 8.4-6"/></svg><input id="m-email" name="email" type="email" placeholder="you@email.com"></div></div>
         <div class="f"><label for="m-in">Check in</label><div class="ctl plain"><input id="m-in" name="checkin" type="date"></div></div>
         <div class="f"><label for="m-out">Check out</label><div class="ctl plain"><input id="m-out" name="checkout" type="date"></div></div>
@@ -761,10 +767,11 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       </a>
       <p><?= $content['footer_tagline'] ?: '' ?></p>
       <div class="socials">
-        <?php if (!empty($settings['facebook_link'])): ?><a href="<?= e($settings['facebook_link']) ?>" target="_blank" rel="noopener" aria-label="<?= e(APP_NAME) ?> on Facebook"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h3l1-3h-4v-2c0-.6.4-1 1-1z"/></svg></a><?php endif; ?>
-        <?php if (!empty($settings['instagram_link'])): ?><a href="<?= e($settings['instagram_link']) ?>" target="_blank" rel="noopener" aria-label="<?= e(APP_NAME) ?> on Instagram"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" stroke="none"/></svg></a><?php endif; ?>
-        <a href="https://wa.me/<?= e($wa) ?>" data-dial="wa" aria-label="<?= e(APP_NAME) ?> on WhatsApp"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1a13 13 0 01-5.6-4.9c-.4-.6-1-1.5-1-2.9s.7-2 1-2.3c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2 0 .4-.1.5l-.4.5c-.1.2-.3.3-.1.6.3.5.8 1.3 1.6 2 .9.8 1.7 1.1 2 1.2.2.1.4.1.6-.1l.8-1c.2-.2.3-.2.6-.1l2 1c.3.1.4.2.5.3v.9z"/></svg></a>
         <?php if ($gbpLink): ?><a href="<?= e($gbpLink) ?>" target="_blank" rel="noopener" aria-label="<?= e(APP_NAME) ?> on Google"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 48 48"><path fill="#fff" d="M45 24.5c0-1.6-.1-2.7-.4-4H24v7.6h12c-.2 2-1.5 5-4.4 7l6.7 5.2c4-3.7 6.7-9.1 6.7-15.8zM24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.7-3.8-12.4-9.1l-7.1 5.5C8.1 41 15.5 46 24 46zM11.6 28.4c-.5-1.4-.8-2.8-.8-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9zM24 10.2c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4 29.9 2 24 2 15.5 2 8.1 7 4.4 14.1l7.1 5.5C13.3 14.3 18.2 10.2 24 10.2z"/></svg></a><?php endif; ?>
+        <?php if (!empty($settings['instagram_link'])): ?><a href="<?= e($settings['instagram_link']) ?>" target="_blank" rel="noopener" aria-label="<?= e(APP_NAME) ?> on Instagram"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" stroke="none"/></svg></a><?php endif; ?>
+        <?php if (!empty($settings['facebook_link'])): ?><a href="<?= e($settings['facebook_link']) ?>" target="_blank" rel="noopener" aria-label="<?= e(APP_NAME) ?> on Facebook"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h3l1-3h-4v-2c0-.6.4-1 1-1z"/></svg></a><?php endif; ?>
+        <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> aria-label="Call <?= e(APP_NAME) ?>"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></a>
+        <a href="https://wa.me/<?= e($wa) ?>" data-dial="wa" aria-label="<?= e(APP_NAME) ?> on WhatsApp"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1a13 13 0 01-5.6-4.9c-.4-.6-1-1.5-1-2.9s.7-2 1-2.3c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2 0 .4-.1.5l-.4.5c-.1.2-.3.3-.1.6.3.5.8 1.3 1.6 2 .9.8 1.7 1.1 2 1.2.2.1.4.1.6-.1l.8-1c.2-.2.3-.2.6-.1l2 1c.3.1.4.2.5.3v.9z"/></svg></a>
       </div>
     </div>
     <div>
@@ -796,7 +803,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
   </div>
   <div class="wrap foot-bar" style="flex-direction:column;align-items:center;text-align:center;gap:10px">
     <div><?= $content['footer_credit'] ?: ('© <span id="yr">' . date('Y') . '</span> ' . e(APP_NAME) . '. All rights reserved.') ?></div>
-    <div class="dev"><i></i><span class="dev-tx">Developed and managed by <b><a href="https://mihirjungi.com" target="_blank" rel="noopener" style="color:inherit">Mihir Jungi</a></b></span>
+    <div class="dev"><i></i><span class="dev-tx">Developed and managed by <b><a href="https://mihirjungi.com" target="_blank" rel="noopener" style="color:var(--gold)">Mihir Jungi</a></b></span>
       <span class="dev-soc">
         <a href="https://mihirjungi.com" target="_blank" rel="noopener" aria-label="Mihir Jungi — Portfolio">
           <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"/></svg>

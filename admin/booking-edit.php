@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $booking = db_one('SELECT * FROM bookings WHERE id = ?', [$id]);
@@ -48,7 +49,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <input type="hidden" name="id" value="<?= $id ?>">
     <div class="grid sm:grid-cols-2 gap-5">
       <div><label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Guest Name</label><input type="text" name="guest_name" value="<?= e($booking['guest_name']) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"></div>
-      <div><label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Phone</label><input type="text" name="guest_phone" value="<?= e($booking['guest_phone']) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"></div>
+      <div><label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Mobile Number</label><input type="text" name="guest_phone" value="<?= e($booking['guest_phone']) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"></div>
       <div class="sm:col-span-2"><label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Email <span class="normal-case font-semibold text-pallav-300">(optional)</span></label><input type="email" name="guest_email" value="<?= e($booking['guest_email'] ?? '') ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"></div>
       <div><label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Room</label>
         <select name="room_id" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">

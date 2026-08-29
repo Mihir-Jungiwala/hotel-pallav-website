@@ -6,7 +6,7 @@ $favicon = favicon_url();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= e($title ?? 'Admin') ?> — Hotel Pallav</title>
+<title>Hotel Pallav - <?= e($title ?? 'Admin') ?></title>
 <?php if ($favicon): ?><link rel="icon" href="<?= e($favicon) ?>"><?php endif; ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

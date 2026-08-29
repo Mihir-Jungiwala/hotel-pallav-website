@@ -70,6 +70,15 @@ function csrf_field(): string
     return '<input type="hidden" name="_csrf" value="' . e(csrf_token()) . '">';
 }
 
+/** Eye-icon toggle button for a password field — pair with a wrapping <div class="relative pw-field"> and pr-11 on the input. Toggling is handled by the shared .pw-toggle script in admin/guest-layout-bottom.php. */
+function password_toggle_button(): string
+{
+    return '<button type="button" class="pw-toggle absolute right-3 top-1/2 -translate-y-1/2 text-pallav-400 hover:text-pallav-600 transition" tabindex="-1" aria-label="Show password">'
+        . '<svg class="pw-icon-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+        . '<svg class="pw-icon-hide hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.6 10.6 0 0112 19.5C5 19.5 1.5 12 1.5 12a18.6 18.6 0 014.2-5.6M9.9 4.24A10.9 10.9 0 0112 4.5c7 0 10.5 7.5 10.5 7.5a18.6 18.6 0 01-2.16 3.19m-6.1-1.07a3 3 0 11-4.24-4.24"/><path d="M1.5 1.5l21 21"/></svg>'
+        . '</button>';
+}
+
 function verify_csrf(): void
 {
     $token = $_POST['_csrf'] ?? '';
@@ -77,6 +86,58 @@ function verify_csrf(): void
         http_response_code(419);
         die('Session expired — please go back and try again.');
     }
+}
+
+function client_ip(): string
+{
+    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if ($forwarded) {
+        return trim(explode(',', $forwarded)[0]);
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+}
+
+/** Requires 8+ chars with at least one uppercase, lowercase, digit and special character. Returns an error message, or null if the password passes. */
+function validate_password_strength(string $password): ?string
+{
+    if (strlen($password) < 8
+        || !preg_match('/[A-Z]/', $password)
+        || !preg_match('/[a-z]/', $password)
+        || !preg_match('/\d/', $password)
+        || !preg_match('/[!@#$%^&*()_+]/', $password)
+    ) {
+        return 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a digit, and a special character (!@#$%^&*()_+).';
+    }
+    return null;
+}
+
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_SECONDS = 300;
+
+/** True if `identifier` (username/email) has been locked out from this IP by too many recent failures. */
+function is_login_locked_out(string $identifier): bool
+{
+    $row = db_one('SELECT locked_until FROM login_attempts WHERE identifier = ? AND ip = ?', [strtolower($identifier), client_ip()]);
+    return $row && $row['locked_until'] && strtotime($row['locked_until']) > time();
+}
+
+function record_login_failure(string $identifier): void
+{
+    $identifier = strtolower($identifier);
+    $ip = client_ip();
+    $row = db_one('SELECT * FROM login_attempts WHERE identifier = ? AND ip = ?', [$identifier, $ip]);
+    $attempts = ($row['attempts'] ?? 0) + 1;
+    $lockedUntil = $attempts >= LOGIN_MAX_ATTEMPTS ? date('Y-m-d H:i:s', time() + LOGIN_LOCKOUT_SECONDS) : null;
+    if ($row) {
+        db_run('UPDATE login_attempts SET attempts = ?, locked_until = ? WHERE identifier = ? AND ip = ?', [$attempts, $lockedUntil, $identifier, $ip]);
+    } else {
+        db_run('INSERT INTO login_attempts (identifier, ip, attempts, locked_until) VALUES (?, ?, ?, ?)', [$identifier, $ip, $attempts, $lockedUntil]);
+    }
+}
+
+function clear_login_failures(string $identifier): void
+{
+    db_run('DELETE FROM login_attempts WHERE identifier = ? AND ip = ?', [strtolower($identifier), client_ip()]);
 }
 
 function flash(string $type, string $message): void
@@ -118,6 +179,152 @@ function require_admin(): void
     }
 }
 
+function user_role(): string
+{
+    return current_user()['role'] ?? 'admin';
+}
+
+function is_master_admin(): bool
+{
+    return user_role() === 'master_admin';
+}
+
+const ROLE_RANK = ['viewer' => 0, 'editor' => 1, 'admin' => 2, 'master_admin' => 3];
+
+/** True if the signed-in user's role outranks the given role — used to gate who can change whose role. */
+function outranks(string $otherRole): bool
+{
+    return (ROLE_RANK[user_role()] ?? 0) > (ROLE_RANK[$otherRole] ?? 0);
+}
+
+/** True if the signed-in user can create/edit/delete other admin accounts. */
+function can_manage_users(): bool
+{
+    return in_array(user_role(), ['master_admin', 'admin'], true);
+}
+
+/** True if the signed-in user can approve/decline/edit bookings (not just view them). */
+function can_manage_bookings(): bool
+{
+    return in_array(user_role(), ['master_admin', 'admin', 'editor'], true);
+}
+
+/** Blocks the request (redirect + flash) unless the signed-in user has one of the given roles. Call after require_admin(). */
+function require_role(array $roles): void
+{
+    if (!in_array(user_role(), $roles, true)) {
+        flash('error', "You don't have permission to do that.");
+        redirect('admin/dashboard.php');
+    }
+}
+
+const USER_ROLE_LABELS = [
+    'master_admin' => 'Master Admin',
+    'admin' => 'Admin',
+    'editor' => 'Editor',
+    'viewer' => 'Viewer',
+];
+
+/**
+ * Renders a policy card's icon. SVGs are inlined (sanitized) rather than used as
+ * an <img> so CSS `color`/currentColor can drive the hover recolor animation —
+ * an <img> can never be recolored by CSS, only inline SVG markup can. Non-SVG
+ * uploads (png/jpg/etc.) fall back to a plain <img>, which just won't recolor
+ * on hover — everything else about the hover effect (scale, glow, background)
+ * still applies since those are on the wrapping .ic badge, not the icon itself.
+ */
+function render_policy_icon(?string $iconPath): void
+{
+    $isCustom = $iconPath !== null && $iconPath !== '';
+    $fsPath = $isCustom ? UPLOADS_PATH . '/' . $iconPath : ROOT_PATH . '/assets/brand/policy-default.svg';
+    $ext = strtolower(pathinfo($fsPath, PATHINFO_EXTENSION));
+
+    if ($ext === 'svg' && is_file($fsPath)) {
+        $svg = @file_get_contents($fsPath);
+        $inline = $svg !== false ? sanitize_inline_svg($svg) : null;
+        if ($inline !== null) {
+            echo $inline;
+            return;
+        }
+    }
+
+    $url = $isCustom ? UPLOADS_URL . '/' . $iconPath : APP_URL . '/assets/brand/policy-default.svg';
+    echo '<img src="' . e($url) . '" alt="" width="22" height="22" loading="lazy">';
+}
+
+/**
+ * Renders a service card's icon. Same inline-SVG approach as render_policy_icon()
+ * (so currentColor hover recoloring works) — if the service has a custom uploaded
+ * icon, that's used; otherwise falls back to the shared default icon image, same
+ * as Hotel Policies.
+ */
+function render_service_icon(array $svc): void
+{
+    $iconPath = $svc['icon_path'] ?? null;
+    if ($iconPath) {
+        $fsPath = UPLOADS_PATH . '/' . $iconPath;
+        $ext = strtolower(pathinfo($fsPath, PATHINFO_EXTENSION));
+        if ($ext === 'svg' && is_file($fsPath)) {
+            $raw = @file_get_contents($fsPath);
+            $inline = $raw !== false ? sanitize_inline_svg($raw) : null;
+            if ($inline !== null) {
+                echo $inline;
+                return;
+            }
+        }
+        if (is_file($fsPath)) {
+            echo '<img src="' . e(UPLOADS_URL . '/' . $iconPath) . '" alt="" width="24" height="24" loading="lazy">';
+            return;
+        }
+    }
+    echo '<img src="' . e(APP_URL . '/assets/brand/policy-default.svg') . '" alt="" width="24" height="24" loading="lazy">';
+}
+
+/** Strips scripting-capable content from an SVG before inlining it directly into the page. Returns null if it doesn't look like a safe, valid SVG. */
+function sanitize_inline_svg(string $svg): ?string
+{
+    $svg = preg_replace('/<\?xml.*?\?>/is', '', $svg);
+    $svg = preg_replace('/<!DOCTYPE.*?>/is', '', $svg);
+    $svg = preg_replace('/<!--.*?-->/s', '', $svg);
+    $svg = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $svg);
+    $svg = preg_replace('/<foreignObject\b[^>]*>.*?<\/foreignObject>/is', '', $svg);
+    $svg = preg_replace('/\son\w+\s*=\s*"[^"]*"/i', '', $svg);
+    $svg = preg_replace("/\son\w+\s*=\s*'[^']*'/i", '', $svg);
+    $svg = preg_replace('/\s(?:xlink:href|href)\s*=\s*"\s*javascript:[^"]*"/i', '', $svg);
+    $svg = trim((string) $svg);
+
+    if ($svg === '' || stripos($svg, '<svg') !== 0) {
+        return null;
+    }
+    return $svg;
+}
+
+/**
+ * Room photos were originally stored as a JSON array of plain filename strings;
+ * now each photo can carry a name + alt text too, stored as {"path","name","alt"}.
+ * This normalizes either shape to the object form so old data keeps working.
+ */
+function normalize_room_photo($photo): array
+{
+    if (is_string($photo)) {
+        return ['path' => $photo, 'name' => null, 'alt' => null];
+    }
+    if (is_array($photo)) {
+        return [
+            'path' => (string) ($photo['path'] ?? ''),
+            'name' => $photo['name'] ?? null,
+            'alt' => $photo['alt'] ?? null,
+        ];
+    }
+    return ['path' => '', 'name' => null, 'alt' => null];
+}
+
+/** @return array<int,array{path:string,name:?string,alt:?string}> */
+function normalize_room_photos(array $photos): array
+{
+    return array_values(array_filter(array_map('normalize_room_photo', $photos), static fn ($p) => $p['path'] !== ''));
+}
+
 function json_decode_field($value, $default = [])
 {
     if ($value === null || $value === '') {
@@ -131,8 +338,8 @@ function log_activity(string $action, string $description, ?string $subjectType 
 {
     $user = current_user();
     db_run(
-        'INSERT INTO activity_log (user_id, action, subject_type, subject_id, description, meta, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())',
-        [$user['id'] ?? null, $action, $subjectType, $subjectId, $description, $meta ? json_encode($meta) : null]
+        'INSERT INTO activity_log (user_id, user_name, action, subject_type, subject_id, description, meta, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+        [$user['id'] ?? null, $user['name'] ?? null, $action, $subjectType, $subjectId, $description, $meta ? json_encode($meta) : null]
     );
 }
 
@@ -270,18 +477,3 @@ function fetch_google_reviews(): ?array
     return $data;
 }
 
-const POLICY_ICONS_SVG = [
-    '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/>',
-    '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M5.8 16.2c.4-1.6 1.7-2.6 3.2-2.6s2.8 1 3.2 2.6M15 10h4M15 13.5h3"/>',
-    '<path d="M4.5 20V9.6a1 1 0 01.45-.83l6.5-4.3a1 1 0 011.1 0l6.5 4.3a1 1 0 01.45.83V20"/><path d="M3.5 20h17"/>',
-];
-
-const SERVICE_ICONS = [
-    'wifi' => '<path d="M3 9.5a13 13 0 0118 0M6.5 13a8.5 8.5 0 0111 0M9.8 16.4a4 4 0 014.4 0"/><circle cx="12" cy="19.4" r="1"/>',
-    'parking' => '<path d="M4 17V9.5l3-4h10l3 4V17"/><circle cx="7.5" cy="17" r="2.2"/><circle cx="16.5" cy="17" r="2.2"/><path d="M4 13h16"/>',
-    'restaurant' => '<path d="M7 3.5v7a2.5 2.5 0 005 0v-7M9.5 3.5v7M17 3.5c-1.4 1.4-2 3.3-2 5.2 0 1.4.8 2.3 2 2.3v9.5M12 13v7.5"/>',
-    'front-desk' => '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/>',
-    'power' => '<path d="M13.4 3.5L5.6 13.4h5.2l-1 6.6 7.6-9.8h-5.2l1.2-6.7z"/>',
-    'shield' => '<path d="M12 3.2l7.4 3.1v5c0 4.5-3.1 8.5-7.4 9.6-4.3-1.1-7.4-5.1-7.4-9.6v-5z"/><path d="M9.2 12l2 2 3.6-3.8"/>',
-    'laundry' => '<path d="M4.5 6.5h15v11a2 2 0 01-2 2h-11a2 2 0 01-2-2z"/><path d="M4.5 10h15M8.5 3.5v3M15.5 3.5v3M9.5 14.5l1.8 1.8 3.4-3.4"/>',
-];

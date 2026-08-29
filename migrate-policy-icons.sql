@@ -1,0 +1,1 @@
+ALTER TABLE policy_cards ADD COLUMN icon_path VARCHAR(255) NULL;

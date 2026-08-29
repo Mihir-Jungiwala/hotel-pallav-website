@@ -228,6 +228,45 @@
     } else { play(); }
   })();
 
+  (function(){
+    var track = document.getElementById('polGrid');
+    var dots  = document.getElementById('polDots');
+    if (!track || !dots) return;
+    var kids = Array.prototype.slice.call(track.children);
+    if (kids.length < 2) return;
+
+    function step(){
+      var w = kids[0].getBoundingClientRect().width;
+      var gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || 12);
+      return w + gap;
+    }
+    function index(){
+      return Math.max(0, Math.min(kids.length - 1, Math.round(track.scrollLeft / step())));
+    }
+    function paint(){
+      var at = index();
+      if (dots.children.length !== kids.length) {
+        var html = '';
+        for (var i = 0; i < kids.length; i++) html += '<button type="button" data-p="' + i + '" aria-label="Show policy card ' + (i + 1) + '"></button>';
+        dots.innerHTML = html;
+      }
+      Array.prototype.forEach.call(dots.children, function(d, i){ d.classList.toggle('on', i === at); });
+    }
+    dots.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if (!b) return;
+      track.scrollTo({ left: parseInt(b.getAttribute('data-p'), 10) * step(), behavior: reduce ? 'auto' : 'smooth' });
+    });
+    track.addEventListener('scroll', function(){
+      clearTimeout(track._t);
+      track._t = setTimeout(paint, 90);
+    }, {passive:true});
+    window.addEventListener('resize', function(){
+      clearTimeout(window._polR);
+      window._polR = setTimeout(paint, 160);
+    });
+    paint();
+  })();
+
   var revealables = document.querySelectorAll('.rv,.rv-l,.rv-r');
   if('IntersectionObserver' in window && !reduce){
     var io = new IntersectionObserver(function(entries){

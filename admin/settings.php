@@ -9,12 +9,12 @@ $faviconUrl = $settings['favicon_path'] ? UPLOADS_URL . '/' . $settings['favicon
 $title = 'Settings';
 include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
-  <div class="mb-8">
+  <div class="mb-8 max-w-4xl mx-auto">
     <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900">Site Settings</h1>
     <p class="text-sm text-pallav-500 mt-1">Everything here controls what guests see on the public website.</p>
   </div>
 
-  <form method="POST" action="<?= e(APP_URL) ?>/admin/settings-save.php" enctype="multipart/form-data" class="space-y-6 max-w-4xl">
+  <form method="POST" action="<?= e(APP_URL) ?>/admin/settings-save.php" enctype="multipart/form-data" class="space-y-6 max-w-4xl mx-auto">
     <?= csrf_field() ?>
 
     <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
@@ -87,28 +87,33 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <input type="email" name="email" value="<?= e($settings['email']) ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM Phone (tel: format)</label>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM Mobile Number (tel: format)</label>
           <input type="text" name="gm_phone" value="<?= e($settings['gm_phone']) ?>" placeholder="+919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Reception Phone</label>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Reception Mobile Number</label>
           <input type="text" name="reception_phone" value="<?= e($settings['reception_phone']) ?>" placeholder="+917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">WhatsApp (digits only, with country code)</label>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM WhatsApp Number (digits only, with country code)</label>
           <input type="text" name="whatsapp" value="<?= e($settings['whatsapp']) ?>" placeholder="919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Reception WhatsApp Number (digits only, with country code)</label>
+          <input type="text" name="reception_whatsapp" value="<?= e($settings['reception_whatsapp'] ?? '') ?>" placeholder="917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Business Profile Link</label>
           <input type="url" name="gbp_link" value="<?= e($settings['gbp_link'] ?? '') ?>" placeholder="https://g.page/..." class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Facebook Page Link</label>
-          <input type="url" name="facebook_link" value="<?= e($settings['facebook_link'] ?? '') ?>" placeholder="https://facebook.com/yourpage" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Controls where "Find Us" / the Google icon send guests. Leave blank and they fall back to a plain Maps directions link instead.</p>
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Instagram Link</label>
           <input type="url" name="instagram_link" value="<?= e($settings['instagram_link'] ?? '') ?>" placeholder="https://instagram.com/yourpage" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Facebook Page Link</label>
+          <input type="url" name="facebook_link" value="<?= e($settings['facebook_link'] ?? '') ?>" placeholder="https://facebook.com/yourpage" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Address</label>
@@ -152,13 +157,45 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Place ID</label>
           <input type="text" name="google_place_id" value="<?= e($settings['google_place_id'] ?? '') ?>" placeholder="ChIJ..." class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
-        <div>
+        <div x-data="{
+              open: false,
+              value: <?= (int) ($settings['google_min_review_rating'] ?? 3) ?>,
+              opts: [1,2,3,4,5],
+              label(n){ return n + ' star' + (n > 1 ? 's' : '') + ' & above'; }
+            }" class="relative">
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Minimum Star Rating Shown</label>
-          <select name="google_min_review_rating" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-            <?php for ($n = 1; $n <= 5; $n++): ?>
-              <option value="<?= $n ?>" <?= (int) $settings['google_min_review_rating'] === $n ? 'selected' : '' ?>><?= $n ?> star<?= $n > 1 ? 's' : '' ?> &amp; above</option>
-            <?php endfor; ?>
-          </select>
+          <input type="hidden" name="google_min_review_rating" :value="value">
+          <button type="button" @click="open = !open" @keydown.escape.window="open = false"
+            class="w-full flex items-center justify-between gap-2 rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold text-left bg-white transition"
+            :class="open ? 'border-pallav-500 ring-4 ring-pallav-100' : 'hover:border-pallav-300'">
+            <span class="flex items-center gap-1.5">
+              <span class="flex items-center gap-0.5 text-gold-500">
+                <template x-for="i in 5" :key="i">
+                  <svg width="13" height="13" viewBox="0 0 24 24" :fill="i <= value ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.2L12 17.1l-5.4 3 1-6.2L3.2 9.5l6.1-.9z"/></svg>
+                </template>
+              </span>
+              <span x-text="label(value)" class="text-pallav-900"></span>
+            </span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top
+            class="absolute z-20 mt-1.5 w-full rounded-xl bg-white ring-1 ring-pallav-100 shadow-lg shadow-pallav-900/10 py-1.5 overflow-hidden">
+            <template x-for="n in opts" :key="n">
+              <button type="button" @click="value = n; open = false"
+                class="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold text-left transition"
+                :class="n === value ? 'bg-pallav-50 text-pallav-700' : 'text-pallav-600 hover:bg-pallav-50'">
+                <span class="flex items-center gap-1.5">
+                  <span class="flex items-center gap-0.5 text-gold-500">
+                    <template x-for="i in 5" :key="i">
+                      <svg width="12" height="12" viewBox="0 0 24 24" :fill="i <= n ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.2L12 17.1l-5.4 3 1-6.2L3.2 9.5l6.1-.9z"/></svg>
+                    </template>
+                  </span>
+                  <span x-text="label(n)"></span>
+                </span>
+                <svg x-show="n === value" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-600"><path d="M20 6L9 17l-5-5"/></svg>
+              </button>
+            </template>
+          </div>
           <p class="text-[11px] text-pallav-400 mt-1">Reviews below this rating are hidden from the site. Google only ever returns up to 5 reviews total, so this filters within that set.</p>
         </div>
       </div>
@@ -190,14 +227,17 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">OAuth Client Secret</label>
-          <input type="password" name="gbp_oauth_client_secret" value="<?= e($settings['gbp_oauth_client_secret'] ?? '') ?>" placeholder="GOCSPX-..." class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <div class="relative pw-field">
+            <input type="password" name="gbp_oauth_client_secret" value="<?= e($settings['gbp_oauth_client_secret'] ?? '') ?>" placeholder="GOCSPX-..." class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+            <?= password_toggle_button() ?>
+          </div>
         </div>
       </div>
       <p class="text-[11px] text-pallav-400 mb-4">Save this form first after entering the Client ID/Secret above, then use Connect below — it needs those saved to build the Google login link.</p>
       <div class="flex items-center gap-3 flex-wrap">
         <?php if (gbp_is_connected()): ?>
           <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php?action=refresh" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-pallav-50 text-pallav-700 hover:bg-pallav-100 transition">Refresh All Reviews Now</a>
-          <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php?action=disconnect" class="px-5 py-2.5 rounded-xl text-sm font-bold text-rose-600 hover:bg-rose-50 transition" onclick="return confirm('Disconnect Google Business Profile? The site will fall back to the 5-review Places API display.')">Disconnect</a>
+          <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php?action=disconnect" class="px-5 py-2.5 rounded-xl text-sm font-bold text-rose-600 hover:bg-rose-50 transition" data-confirm="Disconnect Google Business Profile? The site will fall back to the 5-review Places API display.">Disconnect</a>
         <?php elseif (gbp_is_configured()): ?>
           <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">Connect Google Business Profile</a>
         <?php else: ?>
@@ -258,7 +298,10 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">App Password</label>
-          <input type="password" name="smtp_password" value="" placeholder="<?= !empty($settings['smtp_password']) ? 'Saved — leave blank to keep it' : '16-character app password' ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <div class="relative pw-field">
+            <input type="password" name="smtp_password" value="" placeholder="<?= !empty($settings['smtp_password']) ? 'Saved — leave blank to keep it' : '16-character app password' ?>" class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+            <?= password_toggle_button() ?>
+          </div>
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">"From" Email</label>
@@ -277,33 +320,13 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       </div>
     </div>
 
-    <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
-      <h2 class="font-display font-bold text-lg text-pallav-900 mb-5">Reviews &amp; Display</h2>
-      <div class="grid sm:grid-cols-3 gap-5">
-        <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Rating</label>
-          <input type="text" name="google_rating" value="<?= e($settings['google_rating']) ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Review Count</label>
-          <input type="number" name="google_review_count" value="<?= (int) $settings['google_review_count'] ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-        </div>
-        <div class="flex items-end pb-2.5">
-          <label class="flex items-center gap-2 text-sm font-bold text-pallav-700">
-            <input type="checkbox" name="show_prices" value="1" <?= $settings['show_prices'] ? 'checked' : '' ?> class="rounded border-pallav-300 text-pallav-600 w-4 h-4 focus:ring-pallav-400">
-            Show room prices publicly
-          </label>
-        </div>
-      </div>
-    </div>
-
     <div class="rounded-2xl bg-pallav-50 ring-1 ring-pallav-100 p-6 sm:p-8 flex items-center justify-between gap-4">
       <div>
         <h2 class="font-display font-bold text-lg text-pallav-900">House Policies</h2>
         <p class="text-xs text-pallav-500 mt-1">Managed on their own page now — add as many policy cards as you like.</p>
       </div>
-      <a href="<?= e(APP_URL) ?>/admin/policies.php" class="shrink-0 inline-flex items-center gap-2 rounded-xl bg-white ring-1 ring-pallav-200 text-pallav-700 text-sm font-bold px-5 py-2.5 hover:bg-pallav-100 transition">
-        Manage Policies &rarr;
+      <a href="<?= e(APP_URL) ?>/admin/policies.php" class="shrink-0 inline-flex items-center gap-2 rounded-xl bg-white ring-1 ring-pallav-200 text-pallav-700 text-sm font-bold px-5 py-2.5 hover:bg-pallav-100 transition hover:-translate-y-0.5">
+        Manage Policies
       </a>
     </div>
 

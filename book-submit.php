@@ -89,8 +89,8 @@ $bookingId = db_insert(
 if (smtp_is_configured()) {
     $booking = db_one('SELECT * FROM bookings WHERE id = ?', [$bookingId]);
     if ($booking) {
-        mail_booking_guest($booking, $room);
-        mail_booking_owner($booking, $room);
+        $adminLink = '<p><a href="' . e(APP_URL) . '/admin/bookings.php">Open in admin panel</a></p>';
+        send_templated_mail('booking_received', $booking['guest_email'] ?? '', $booking['guest_name'], booking_email_vars($booking, $room), $adminLink);
     }
 }
 
