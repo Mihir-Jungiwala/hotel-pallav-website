@@ -5,3 +5,6 @@ server-local.log
 Thumbs.db
 includes/config.php
 .claude/
+
+# Admin credential scripts - contain password hashes, never commit
+create-master-admin.sql
