@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/helpers.php';
 http_response_code(404);
 $settings = get_settings();
 $gm = $settings['gm_phone'] ?? '';
-$title = 'Room Not Found - ' . APP_NAME;
+$title = APP_NAME . ' - 404 Page Not Found';
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
