@@ -1,3 +1,7 @@
+/* This is the editable source. The page loads site.min.js (built output, not
+   hand-edited) - after changing anything here, run bin/build-assets.sh to regenerate
+   it, or the site keeps serving the old JS. */
+
 /* Hotel Pallav — site behavior (ported from design-reference.js, adapted for live PHP-rendered data).
    Adaptations from the reference:
    1) No fetch('site.php')/'reviews.php' — all data is rendered server-side by index.php.

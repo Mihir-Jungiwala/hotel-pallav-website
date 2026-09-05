@@ -1,4 +1,8 @@
-﻿/* Metric-matched stand-in for Playfair Display, used only in the moment before the
+﻿/* This is the editable source. The page loads site.min.css (built output, not
+   hand-edited) - after changing anything here, run bin/build-assets.sh to regenerate
+   it, or the site keeps serving the old CSS. */
+
+/* Metric-matched stand-in for Playfair Display, used only in the moment before the
    web font arrives. Playfair sets ~87.4% the width of Georgia at the same size
    (measured), so plain Georgia wraps the hero headline differently and the whole page
    jumps when the real font swaps in. Scaling the fallback to match keeps the line
@@ -901,3 +905,55 @@ body.menu-open .mbar{ opacity:0; pointer-events:none; transition:opacity .2s eas
   .dev-soc{ margin-left:0; padding-left:0; border-left:none; }
   .dev-soc a{ width:32px; height:32px; }
 }
+
+/* ============ QUICK AVAILABILITY CHECK WIDGET (homepage) ============ */
+#quickForm{ padding:22px 24px; }
+.qform-top{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; position:relative; z-index:1; }
+.qform-title{ display:flex; align-items:center; gap:10px; flex:none; }
+.qform-dates{ display:flex; align-items:center; gap:10px; flex:1; min-width:260px; flex-wrap:wrap; }
+.qform-dates .ctl{ flex:1; min-width:130px; }
+.qform-actions{ display:flex; gap:10px; flex:none; width:100%; max-width:100%; }
+.qform-actions .btn{ flex:1; white-space:nowrap; }
+.qform-primary{ flex:1.3 !important; text-align:center; }
+#quickForm .btn,#quickForm .dp-btn{ height:50px; }
+#quickForm .dp-ic{ width:26px; height:26px; border-radius:9px; }
+@media (min-width:900px){
+  .qform-top{ flex-wrap:nowrap; }
+  .qform-actions{ width:auto; max-width:420px; }
+}
+@media (min-width:641px) and (max-width:899px){
+  #quickForm{ padding:16px 18px; }
+  .qform-top{ flex-wrap:wrap; gap:12px; }
+  .qform-title{ gap:8px; flex:1 1 100%; justify-content:center; }
+  .qform-title h3{ font-size:14px; }
+  .qform-ic{ width:32px; height:32px; border-radius:9px; }
+  .qform-ic svg{ width:15px; height:15px; }
+  .qform-dates{ min-width:0; gap:6px; flex-wrap:nowrap; flex:1; }
+  .qform-dates .ctl{ min-width:96px; }
+  #quickForm .btn,#quickForm .dp-btn{ height:40px; font-size:12px; }
+  #quickForm .dp-btn{ padding-left:8px; padding-right:8px; gap:6px; }
+  #quickForm .dp-ic{ width:20px; height:20px; border-radius:6px; }
+  .qform-actions{ width:auto; max-width:none; flex:1.4; gap:6px; }
+  .qform-actions .btn{ padding-left:10px; padding-right:10px; }
+}
+@media (max-width:640px){
+  .book-wrap{ margin-top:-70px; }
+  #quickForm{ padding:14px; border-radius:18px; }
+  .qform-top{ flex-direction:column; align-items:stretch; gap:12px; }
+  .qform-title{ justify-content:center; gap:8px; }
+  .qform-title h3{ font-size:14px; }
+  .qform-ic{ width:34px; height:34px; border-radius:10px; }
+  .qform-ic svg{ width:16px; height:16px; }
+  .qform-dates{ flex-direction:row; min-width:0; gap:8px; margin-top:2px; }
+  .qform-dates .ctl{ width:auto; flex:1 1 0; min-width:0; }
+  #quickForm .btn,#quickForm .dp-btn{ height:42px; font-size:13px; }
+  #quickForm .dp-btn{ padding-left:8px; padding-right:8px; gap:6px; }
+  #quickForm .dp-ic{ width:22px; height:22px; border-radius:7px; }
+  .qform-actions{ flex-wrap:wrap; gap:8px; }
+  .qform-actions .btn{ flex:1 1 100% !important; min-width:0; }
+  .qform-actions .btn-o{ flex:1 1 calc(50% - 4px) !important; white-space:normal !important; padding-left:8px; padding-right:8px; font-size:12.5px; }
+}
+@keyframes qPop{ from{ opacity:0; transform:translateY(8px) scale(.98) } to{ opacity:1; transform:none } }
+.q-chip{ display:inline-flex; align-items:center; gap:8px; padding:9px 15px; border-radius:100px; font-size:13px; font-weight:700; animation:qPop .4s var(--ease) backwards; }
+.q-chip.yes{ background:#E9F9F1; color:#0E8A5F; box-shadow:inset 0 0 0 1.5px #BDE9D5; }
+.q-chip.no{ background:#FEF1F1; color:#D6373C; box-shadow:inset 0 0 0 1.5px #F7C9CB; }

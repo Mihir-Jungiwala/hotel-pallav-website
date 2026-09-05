@@ -7,21 +7,29 @@ $content = get_page_content();
 $content['enquire_points'] = json_decode_field($content['enquire_points'] ?? null);
 $services = db_all('SELECT * FROM services ORDER BY sort_order, id');
 
+// Rooms, their plans, and today's rate overrides in three queries total rather than
+// one room query plus one plans query per room plus one rate-override query per plan
+// (2 rooms x 4 plans was 11 queries; any more rooms/plans previously grew that
+// linearly - now it's always exactly 3, regardless of how many of either exist).
 $rooms = db_all('SELECT * FROM rooms ORDER BY sort_order, id');
+$allPlans = db_all('SELECT * FROM rate_plans WHERE active = 1 ORDER BY sort_order');
+$todayRates = db_all('SELECT rate_plan_id, price_double, price_single FROM plan_date_rates WHERE date = CURDATE()');
+$todayRatesByPlan = array_column($todayRates, null, 'rate_plan_id');
+
+$plansByRoom = [];
+foreach ($allPlans as $plan) {
+    $plan['occupancy_prices'] = json_decode_field($plan['occupancy_prices'] ?? null);
+    $todayRate = $todayRatesByPlan[$plan['id']] ?? null;
+    if ($todayRate) {
+        $plan['price_double'] = $todayRate['price_double'];
+        if ($todayRate['price_single'] !== null) $plan['price_single'] = $todayRate['price_single'];
+    }
+    $plansByRoom[$plan['room_id']][] = $plan;
+}
+
 foreach ($rooms as &$room) {
     $room['photos'] = normalize_room_photos(json_decode_field($room['photos'] ?? null));
-    $room['plans'] = db_all('SELECT * FROM rate_plans WHERE room_id = ? AND active = 1 ORDER BY sort_order', [$room['id']]);
-    foreach ($room['plans'] as &$plan) {
-        $plan['occupancy_prices'] = json_decode_field($plan['occupancy_prices'] ?? null);
-        // Today's date-specific override (set via the Rate & Inventory Calendar), if any - the
-        // room card should always reflect what a guest booking today would actually be charged.
-        $todayRate = db_one('SELECT price_double, price_single FROM plan_date_rates WHERE rate_plan_id = ? AND date = CURDATE()', [$plan['id']]);
-        if ($todayRate) {
-            $plan['price_double'] = $todayRate['price_double'];
-            if ($todayRate['price_single'] !== null) $plan['price_single'] = $todayRate['price_single'];
-        }
-    }
-    unset($plan);
+    $room['plans'] = $plansByRoom[$room['id']] ?? [];
 }
 unset($room);
 
@@ -191,7 +199,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 <!-- Tiro Devanagari Hindi is the Devanagari in the brand mark SVG (includes/brand-mark.php).
      Regular only - the mark uses no italic, and the original request loaded both. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&family=Tiro+Devanagari+Hindi&display=swap">
-<link rel="stylesheet" href="<?= e(APP_URL) ?>/assets/css/site.css">
+<link rel="stylesheet" href="<?= e(APP_URL) ?>/assets/css/site.min.css">
 <script>window.SITE = <?= json_encode([
   'gmDigits' => $gmDigits, 'rcDigits' => $rcDigits, 'openedYear' => (int) ($settings['opened_year'] ?? 2002),
   'formMsg' => [
@@ -342,58 +350,6 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <div id="qResult" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);text-align:center"></div>
   </div>
 </div>
-<style>
-#quickForm{ padding:22px 24px; }
-.qform-top{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; position:relative; z-index:1; }
-.qform-title{ display:flex; align-items:center; gap:10px; flex:none; }
-.qform-dates{ display:flex; align-items:center; gap:10px; flex:1; min-width:260px; flex-wrap:wrap; }
-.qform-dates .ctl{ flex:1; min-width:130px; }
-.qform-actions{ display:flex; gap:10px; flex:none; width:100%; max-width:100%; }
-.qform-actions .btn{ flex:1; white-space:nowrap; }
-.qform-primary{ flex:1.3 !important; text-align:center; }
-#quickForm .btn,#quickForm .dp-btn{ height:50px; }
-#quickForm .dp-ic{ width:26px; height:26px; border-radius:9px; }
-@media (min-width:900px){
-  .qform-top{ flex-wrap:nowrap; }
-  .qform-actions{ width:auto; max-width:420px; }
-}
-@media (min-width:641px) and (max-width:899px){
-  #quickForm{ padding:16px 18px; }
-  .qform-top{ flex-wrap:wrap; gap:12px; }
-  .qform-title{ gap:8px; flex:1 1 100%; justify-content:center; }
-  .qform-title h3{ font-size:14px; }
-  .qform-ic{ width:32px; height:32px; border-radius:9px; }
-  .qform-ic svg{ width:15px; height:15px; }
-  .qform-dates{ min-width:0; gap:6px; flex-wrap:nowrap; flex:1; }
-  .qform-dates .ctl{ min-width:96px; }
-  #quickForm .btn,#quickForm .dp-btn{ height:40px; font-size:12px; }
-  #quickForm .dp-btn{ padding-left:8px; padding-right:8px; gap:6px; }
-  #quickForm .dp-ic{ width:20px; height:20px; border-radius:6px; }
-  .qform-actions{ width:auto; max-width:none; flex:1.4; gap:6px; }
-  .qform-actions .btn{ padding-left:10px; padding-right:10px; }
-}
-@media (max-width:640px){
-  .book-wrap{ margin-top:-70px; }
-  #quickForm{ padding:14px; border-radius:18px; }
-  .qform-top{ flex-direction:column; align-items:stretch; gap:12px; }
-  .qform-title{ justify-content:center; gap:8px; }
-  .qform-title h3{ font-size:14px; }
-  .qform-ic{ width:34px; height:34px; border-radius:10px; }
-  .qform-ic svg{ width:16px; height:16px; }
-  .qform-dates{ flex-direction:row; min-width:0; gap:8px; margin-top:2px; }
-  .qform-dates .ctl{ width:auto; flex:1 1 0; min-width:0; }
-  #quickForm .btn,#quickForm .dp-btn{ height:42px; font-size:13px; }
-  #quickForm .dp-btn{ padding-left:8px; padding-right:8px; gap:6px; }
-  #quickForm .dp-ic{ width:22px; height:22px; border-radius:7px; }
-  .qform-actions{ flex-wrap:wrap; gap:8px; }
-  .qform-actions .btn{ flex:1 1 100% !important; min-width:0; }
-  .qform-actions .btn-o{ flex:1 1 calc(50% - 4px) !important; white-space:normal !important; padding-left:8px; padding-right:8px; font-size:12.5px; }
-}
-@keyframes qPop{ from{ opacity:0; transform:translateY(8px) scale(.98) } to{ opacity:1; transform:none } }
-.q-chip{ display:inline-flex; align-items:center; gap:8px; padding:9px 15px; border-radius:100px; font-size:13px; font-weight:700; animation:qPop .4s var(--ease) backwards; }
-.q-chip.yes{ background:#E9F9F1; color:#0E8A5F; box-shadow:inset 0 0 0 1.5px #BDE9D5; }
-.q-chip.no{ background:#FEF1F1; color:#D6373C; box-shadow:inset 0 0 0 1.5px #F7C9CB; }
-</style>
 <script>
 (function(){
   var QC_MSG = {
@@ -993,6 +949,6 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
   </div>
 </div>
 
-<script src="<?= e(APP_URL) ?>/assets/js/site.js"></script>
+<script src="<?= e(APP_URL) ?>/assets/js/site.min.js"></script>
 </body>
 </html>

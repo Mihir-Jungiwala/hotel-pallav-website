@@ -1,3 +1,7 @@
+/* This is the editable source. The admin panel loads admin-pickers.min.js (built
+   output, not hand-edited) - after changing anything here, run bin/build-assets.sh
+   to regenerate it, or the panel keeps serving the old JS. */
+
 /* Upgrades every native <input type="date"> and <select> in the admin panel into the
    same custom calendar / dropdown widgets used on the public site (assets/js/site.js),
    minus the public site's "Today" / "Tomorrow" quick-pick shortcuts - not useful when

@@ -152,7 +152,7 @@ document.addEventListener('click', function(e){
   history.replaceState(null, '', url);
 })();
 </script>
-<script src="<?= e(APP_URL) ?>/assets/js/admin-pickers.js"></script>
+<script src="<?= e(APP_URL) ?>/assets/js/admin-pickers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>
 </html>

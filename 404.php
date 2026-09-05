@@ -15,7 +15,7 @@ $title = 'Room Not Found - ' . APP_NAME;
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="<?= e(APP_URL) ?>/assets/css/site.css">
+<link rel="stylesheet" href="<?= e(APP_URL) ?>/assets/css/site.min.css">
 <style>
   body{ min-height:100vh; display:flex; flex-direction:column; }
   .e404{ flex:1; display:flex; align-items:center; justify-content:center; padding:60px 24px; position:relative; overflow:hidden; }
