@@ -908,7 +908,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     </div>
   </div>
   <div class="wrap foot-bar" style="flex-direction:column;align-items:center;text-align:center;gap:10px">
-    <div><?= $content['footer_credit'] ? auto_copyright_year($content['footer_credit']) : ('© ' . date('Y') . ' ' . e(APP_NAME) . '. All rights reserved.') ?></div>
+    <div>© <?= date('Y') ?> <?= e(APP_NAME) ?>. All rights reserved.</div>
     <div class="dev"><i></i><span class="dev-tx">Developed and managed by <b><a href="https://mihirjungi.com" target="_blank" rel="noopener" style="color:var(--gold)">Mihir Jungi</a></b></span>
       <span class="dev-soc">
         <a href="https://mihirjungi.com" target="_blank" rel="noopener" aria-label="Mihir Jungi - Portfolio">

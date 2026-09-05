@@ -189,11 +189,8 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <input type="hidden" name="footer_tagline" value="<?= e($content['footer_tagline'] ?? '') ?>">
         <div class="rte" data-target="footer_tagline"></div>
       </div>
-      <div>
-        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Bottom Credit Line <span class="normal-case font-semibold text-pallav-300">(the very last line of the footer - copyright, developer credit, anything you want)</span></label>
-        <input type="hidden" name="footer_credit" value="<?= e($content['footer_credit'] ?? '') ?>">
-        <div class="rte" data-target="footer_credit"></div>
-      </div>
+      <?php // The bottom credit line ("© {year} Hotel Pallav. All rights reserved.") is fixed
+      // and no longer editable here - it always shows the current year automatically. ?>
     </div>
 
     <div class="flex justify-end gap-3 mt-6">
