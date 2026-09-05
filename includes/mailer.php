@@ -118,9 +118,19 @@ function smtp_expect($sock, $expectedCode): string
 }
 
 /**
- * Wraps inner message HTML in a branded, table-based, mobile-responsive email shell
- * (purple Hotel Pallav header, white content card, footer) - table markup and inline
- * styles throughout for email-client compatibility, no external image dependency.
+ * Wraps inner message HTML in a branded, table-based, mobile-responsive email shell -
+ * purple/gold Hotel Pallav header, white content card, footer.
+ *
+ * Structurally this follows the "bulletproof" pattern for HTML email: an MSO
+ * conditional comment pins the width for Outlook's Word rendering engine (which
+ * ignores max-width entirely), every table/td repeats mso-table-lspace/rspace:0 to
+ * stop Outlook adding its own cell spacing, and three separate media-query tiers
+ * (a 601-700px in-between step, the main 600px mobile breakpoint, and a 380px small-
+ * phone tightening) reflow padding and font sizes in stages rather than one jump.
+ * Table markup and inline styles throughout, no external image dependency, no
+ * webfont <link> - Outlook and most webmail ignore @font-face in email entirely, so
+ * the Georgia/Arial fallback stack the rest of this shell already relies on renders
+ * identically everywhere rather than "correctly in some clients, fallback in others".
  */
 function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true): string
 {
@@ -141,11 +151,12 @@ function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true
         ? 'Rajkot &middot; Since ' . $since
         : 'Rajkot';
 
-    // Logo if one has been uploaded in Settings, otherwise the wordmark on its own.
+    // Logo if one has been uploaded in Settings (from our own uploads, never a
+    // remote/third-party URL), otherwise the wordmark on its own.
     $logo = '';
     if (!empty($s['logo_path'])) {
-        $logo = '<img src="' . e(UPLOADS_URL . '/' . $s['logo_path']) . '" width="54" height="54" alt="' . $hotel . '"'
-              . ' style="display:block;margin:0 auto 10px;width:54px;height:54px;border-radius:12px;object-fit:contain;background:#FFFFFF;padding:5px;">';
+        $logo = '<img src="' . e(UPLOADS_URL . '/' . $s['logo_path']) . '" width="56" height="56" alt="' . $hotel . '"'
+              . ' style="display:block;margin:0 auto 10px;width:56px;height:56px;border-radius:14px;object-fit:contain;background:#FFFFFF;padding:5px;border:0;-ms-interpolation-mode:bicubic;">';
     }
 
     // Footer contact lines, each only rendered when the value actually exists.
@@ -169,68 +180,96 @@ function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true
     // notification it would be the hotel inviting itself to phone itself.
     $helpStrip = '';
     if ($guestFacing && $receptionRaw !== '') {
-        $helpStrip = '<tr><td class="ep-pad" style="padding:8px 40px 32px;">'
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F4FF;border-radius:12px;border-left:3px solid #8B5CF6;">'
-            . '<tr><td style="padding:16px 18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#7A7392;">'
+        $helpStrip = '<tr><td class="ep-pad" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:8px 40px 32px;box-sizing:border-box;">'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;background-color:#F7F4FF;border-radius:12px;border-left:3px solid #8B5CF6;">'
+            . '<tr><td style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:16px 18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#7A7392;">'
             . 'Need anything at all? Call the front desk on <a href="tel:' . $phoneHref . '" style="color:#5B21B6;text-decoration:none;font-weight:bold;">' . $phone . '</a> - we are happy to help.'
             . '</td></tr></table></td></tr>';
     } else {
         // Keep the content block from sitting flush against the footer.
-        $helpStrip = '<tr><td style="height:26px;line-height:26px;font-size:0;">&nbsp;</td></tr>';
+        $helpStrip = '<tr><td class="help-spacer" style="height:26px;line-height:26px;font-size:0;">&nbsp;</td></tr>';
     }
 
     return <<<HTML
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="margin:0!important;padding:0!important;width:100%!important;min-width:100%!important;background-color:#F5F2FC!important;" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no">
+<meta name="x-apple-disable-message-reformatting">
 <title>{$heading}</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<![endif]-->
 <style>
-  @media only screen and (max-width: 600px) {
-    .ep-wrap { width: 100% !important; }
-    .ep-pad { padding-left: 20px !important; padding-right: 20px !important; }
-    .ep-heading { font-size: 22px !important; line-height: 28px !important; }
-    /* Label above value instead of beside it - a 42% label column leaves too little
-       room for a room name or an email address on a narrow phone. */
-    .ep-cell { display: block !important; width: 100% !important; }
-    .ep-cell-l { padding-bottom: 2px !important; border-bottom: 0 !important; }
-    .ep-cell-v { padding-top: 0 !important; }
-    /* Check-in and check-out stack, so neither date has to wrap mid-word. */
-    .ep-half { display: block !important; width: 100% !important; padding: 14px 10px !important; }
-    .ep-mid  { display: block !important; width: 100% !important; padding: 0 0 10px !important; }
-    .ep-btn  { display: block !important; width: 100% !important; padding: 0 0 10px !important; }
-  }
+@media only screen and (min-width:601px) and (max-width:700px){
+  .ep-wrap{ width:100%!important; max-width:650px!important; margin-left:auto!important; margin-right:auto!important; }
+}
+@media only screen and (max-width:600px){
+  html,body{ width:100%!important; min-width:100%!important; }
+  .ep-outer-cell{ padding:16px 8px!important; }
+  .ep-wrap{ width:100%!important; max-width:100%!important; border-radius:16px!important; }
+  .ep-header{ padding:22px 18px!important; }
+  .ep-logo{ width:48px!important; height:48px!important; }
+  .ep-pad{ padding-left:20px!important; padding-right:20px!important; }
+  .ep-heading{ font-size:22px!important; line-height:28px!important; }
+  /* Label above value instead of beside it - a 42% label column leaves too little
+     room for a room name or an email address on a narrow phone. */
+  .ep-cell{ display:block!important; width:100%!important; }
+  .ep-cell-l{ padding-bottom:2px!important; border-bottom:0!important; }
+  .ep-cell-v{ padding-top:0!important; }
+  /* Check-in and check-out stack, so neither date has to wrap mid-word. */
+  .ep-half{ display:block!important; width:100%!important; padding:14px 10px!important; }
+  .ep-mid{ display:block!important; width:100%!important; padding:0 0 10px!important; }
+  .ep-btn{ display:block!important; width:100%!important; padding:0 0 10px!important; }
+  .ep-footer{ padding:20px 18px!important; }
+}
+@media only screen and (max-width:380px){
+  .ep-outer-cell{ padding:10px 4px!important; }
+  .ep-header{ padding:18px 14px!important; }
+  .ep-pad{ padding-left:14px!important; padding-right:14px!important; }
+  .ep-heading{ font-size:20px!important; line-height:26px!important; }
+}
 </style>
 </head>
-<body style="margin:0;padding:0;background-color:#F5F2FC;-webkit-text-size-adjust:100%;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F2FC;">
-<tr><td align="center" style="padding:28px 12px;">
-<table role="presentation" class="ep-wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid #E9E2FA;">
+<body style="margin:0!important;padding:0!important;width:100%!important;min-width:100%!important;background-color:#F5F2FC!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<table role="presentation" align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border-spacing:0;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%!important;background-color:#F5F2FC!important;">
+<tr>
+<td align="center" class="ep-outer-cell" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:28px 12px;box-sizing:border-box;" valign="top">
+<!--[if mso]>
+<table role="presentation" width="650" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td width="650">
+<![endif]-->
+<table role="presentation" class="ep-wrap" align="center" border="0" cellpadding="0" cellspacing="0" width="650" style="border-collapse:separate;border-spacing:0;mso-table-lspace:0pt;mso-table-rspace:0pt;width:650px;max-width:650px;background-color:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid #E9E2FA;box-sizing:border-box;">
 
-<tr><td style="background:#5B21B6;padding:26px 24px;text-align:center;">
+<tr><td class="ep-header" style="mso-table-lspace:0pt;mso-table-rspace:0pt;background:#5B21B6;padding:28px 24px;text-align:center;box-sizing:border-box;">
   {$logo}
   <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:bold;color:#FFFFFF;letter-spacing:.5px;">{$hotel}</div>
   <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:2px;color:#DDD3FA;text-transform:uppercase;margin-top:4px;">{$tagline}</div>
 </td></tr>
 
-<tr><td class="ep-pad" style="padding:32px 40px 8px;">
+<tr><td class="ep-pad" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:32px 40px 8px;box-sizing:border-box;">
   <div class="ep-heading" style="font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:32px;font-weight:bold;color:#4A1A8F;text-align:center;padding-bottom:20px;">{$heading}</div>
-  <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#4A4262;">
+  <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#4A4262;max-width:100%;overflow-wrap:break-word;word-break:break-word;">
 {$bodyHtml}
   </div>
 </td></tr>
 
 {$helpStrip}
 
-<tr><td style="background-color:#FBF9FF;padding:22px 24px;text-align:center;border-top:1px solid #EFE9FE;">
+<tr><td class="ep-footer" style="mso-table-lspace:0pt;mso-table-rspace:0pt;background-color:#FBF9FF;padding:22px 24px;text-align:center;border-top:1px solid #EFE9FE;box-sizing:border-box;">
   <div style="font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:bold;color:#5B21B6;padding-bottom:6px;">{$hotel}</div>
   {$footerContact}
   <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#A79FC7;">&copy; {$year} {$hotel}. All rights reserved.</div>
 </td></tr>
 
 </table>
-</td></tr>
+<!--[if mso]>
+</td></tr></table>
+<![endif]-->
+</td>
+</tr>
 </table>
 </body>
 </html>
@@ -326,16 +365,32 @@ function email_contact_buttons(): string
     return '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:24px auto 6px;"><tr>' . $cells . '</tr></table>';
 }
 
-/** One of the 2x2 "For Your Security" feature cards on the password-reset email. */
+/**
+ * One of the 2x2 "For Your Security" feature cards on the password-reset email.
+ *
+ * Fixed height with mso-height-rule:exactly, rather than letting each card size to
+ * its own text: four cards with independently varying text lengths would otherwise
+ * produce a visibly uneven 2x2 grid in clients (Outlook especially) that don't
+ * stretch table cells to match their row's tallest sibling.
+ */
 function password_reset_security_card(string $emoji, string $title, string $text): string
 {
-    return '<td width="50%" valign="top" style="width:50%;padding:0 6px 12px 0;box-sizing:border-box;">'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FFFFFF;border:1px solid #E9E2FA;border-radius:12px;">'
-        . '<tr><td align="center" style="padding:16px 12px;">'
+    return '<td class="ep-half" width="50%" valign="top" style="mso-table-lspace:0pt;mso-table-rspace:0pt;width:50%;padding:0 6px 12px 0;box-sizing:border-box;">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" height="150" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;height:150px;background:#FFFFFF;border:1px solid #E9E2FA;border-radius:12px;table-layout:fixed;">'
+        . '<tr><td align="center" valign="middle" height="150" style="mso-table-lspace:0pt;mso-table-rspace:0pt;height:150px;min-height:150px;mso-height-rule:exactly;padding:14px 12px;box-sizing:border-box;overflow:hidden;">'
         . '<div style="font-size:24px;line-height:28px;padding-bottom:4px;">' . $emoji . '</div>'
         . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#5B21B6;padding-bottom:4px;">' . e($title) . '</div>'
         . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#7A7392;">' . e($text) . '</div>'
         . '</td></tr></table></td>';
+}
+
+/** One bullet line in the password-reset email's closing "Security Reminder" list. */
+function email_bullet_line(string $text): string
+{
+    return '<tr>'
+        . '<td valign="top" width="16" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding-bottom:6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8B5CF6;">&bull;</td>'
+        . '<td valign="top" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding-bottom:6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#7A7392;">' . e($text) . '</td>'
+        . '</tr>';
 }
 
 /** Password reset link - sent to the admin whose account it is. */
@@ -343,37 +398,50 @@ function mail_password_reset(string $toEmail, string $toName, string $resetLink)
 {
     $firstName = e(explode(' ', $toName)[0] ?: 'there');
 
-    $body = '<p>Dear ' . $firstName . ',</p>'
-        . '<p>We received a request to reset the password for your <b>' . e(APP_NAME) . '</b> admin account.</p>'
-        . '<p>Click the button below to choose a new password. This link is valid for <b>10 minutes</b>.</p>'
+    $body = '<p style="margin:0 0 14px;">Dear ' . $firstName . ',</p>'
+        . '<p style="margin:0 0 4px;">We received a request to reset the password for your <b>' . e(APP_NAME) . '</b> admin account.</p>'
+        . '<p style="margin:10px 0 0;">Click the button below to choose a new password. This link is valid for <b>10 minutes</b>.</p>'
 
         // Reset button card
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0;background:#5B21B6;border-radius:14px;">'
-        . '<tr><td align="center" style="padding:22px 20px;">'
-        . '<a href="' . e($resetLink) . '" style="display:inline-block;background:#FFFFFF;color:#5B21B6;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 34px;border-radius:10px;">Reset Your Password</a>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;margin:20px 0;background:#5B21B6;border-radius:14px;">'
+        . '<tr><td align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:24px 20px;">'
+        . '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;"><tr><td align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;background:#FFFFFF;border-radius:10px;">'
+        . '<a href="' . e($resetLink) . '" style="display:inline-block;color:#5B21B6;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 34px;">Reset Your Password</a>'
+        . '</td></tr></table>'
         . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1px;color:#E4DEFA;text-transform:uppercase;padding-top:14px;">Valid for 10 Minutes</div>'
         . '</td></tr></table>'
 
         // Security notice
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7F4FF;border-left:3px solid #8B5CF6;border-radius:10px;margin-bottom:22px;">'
-        . '<tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#7A7392;">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;background:#F7F4FF;border-left:3px solid #8B5CF6;border-radius:10px;margin-bottom:26px;">'
+        . '<tr><td style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#7A7392;">'
         . '<b style="color:#4A1A8F;">Security notice:</b> if you did not request this, you can safely ignore this email, your account will remain secure and no changes will be made.'
         . '</td></tr></table>'
 
         // "For Your Security" heading
-        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:20px;font-weight:bold;color:#4A1A8F;text-align:center;padding-bottom:4px;">For Your Security</div>'
-        . '<p style="text-align:center;font-size:13px;color:#7A7392;padding-bottom:14px;">A few reminders to keep your account safe.</p>'
+        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:22px;line-height:28px;font-weight:bold;color:#4A1A8F;text-align:center;padding-bottom:4px;">For Your Security</div>'
+        . '<p style="text-align:center;font-size:13px;color:#7A7392;padding-bottom:14px;margin:0 0 14px;">A few reminders to keep your account safe.</p>'
 
         // 2x2 security cards
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;table-layout:fixed;"><tr>'
         . password_reset_security_card('🔒', 'Keep It Private', 'Never share this reset link with anyone, treat it like a password.')
         . password_reset_security_card('⏳', 'Limited Time', 'This link expires in 10 minutes. Request a new one if it lapses.')
         . '</tr><tr>'
         . password_reset_security_card('✔️', 'One-Time Use', 'The link stops working the moment your password is changed.')
-        . password_reset_security_card('🛡️', 'Stay Protected', 'Choose a password you don\'t use anywhere else.')
-        . '</tr></table>';
+        . password_reset_security_card('🛡️', 'Stay Protected', "Choose a password you don't use anywhere else.")
+        . '</tr></table>'
 
-    $html = email_shell('Reset Your Password', $body);
+        // Security Reminder - closing bulleted checklist
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;margin-top:8px;background:#F7F4FF;border:1px solid #E9E2FA;border-left:3px solid #5B21B6;border-radius:10px;">'
+        . '<tr><td style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:18px 20px 16px;">'
+        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:17px;font-weight:bold;color:#4A1A8F;padding-bottom:10px;">Security Reminder</div>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">'
+        . email_bullet_line('Never share your password or reset link with anyone.')
+        . email_bullet_line('This email always comes from ' . APP_NAME . ' - double-check the sender before clicking anything.')
+        . email_bullet_line('Choose a strong, unique password for your admin account.')
+        . '</table>'
+        . '</td></tr></table>';
+
+    $html = email_shell('Reset Your Password', $body, false);
     return smtp_send($toEmail, $toName ?: 'Admin', APP_NAME . ' - Forgot Password', $html);
 }
 
