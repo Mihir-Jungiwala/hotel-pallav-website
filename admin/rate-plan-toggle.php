@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { redirect('admin/pricing.php'); }
 verify_csrf();

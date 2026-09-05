@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { redirect('admin/settings.php'); }
 verify_csrf();
@@ -54,9 +55,29 @@ if (!empty($_FILES['favicon']['name']) && $_FILES['favicon']['error'] === UPLOAD
 
 $smtpPassword = trim($_POST['smtp_password'] ?? '');
 if ($smtpPassword === '') {
-    // Blank means "leave unchanged" — the field is masked and re-rendered blank on every load.
+    // Blank means "leave unchanged" - the field is masked and re-rendered blank on every load.
     $smtpPassword = $settings['smtp_password'] ?? null;
 }
+
+/**
+ * API keys, OAuth secrets and mail credentials are only rendered for roles that pass
+ * can_view_secrets(), so for anyone else they simply aren't in $_POST. This is a
+ * full-row UPDATE, so taking them from $_POST unconditionally would silently wipe
+ * every secret the moment an Editor saved the page. Keep the stored value instead,
+ * and ignore these keys even if they're injected into a crafted request.
+ */
+$secret = function (string $key) use ($settings) {
+    if (!can_view_secrets()) {
+        return $settings[$key] ?? null;
+    }
+    return trim($_POST[$key] ?? '') ?: null;
+};
+
+// One or more notification addresses, entered one per line or comma-separated -
+// keep only the ones that actually look like an email, store one per line.
+$notifyEmails = preg_split('/[\r\n,]+/', $_POST['notify_email'] ?? '');
+$notifyEmails = array_filter(array_map('trim', $notifyEmails), fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL));
+$notifyEmail = $notifyEmails ? implode("\n", array_unique($notifyEmails)) : null;
 
 db_run(
     'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_email=? WHERE id=?',
@@ -67,16 +88,16 @@ db_run(
         ($_POST['meta_title'] ?? '') ?: null, ($_POST['meta_description'] ?? '') ?: null, ($_POST['meta_keywords'] ?? '') ?: null,
         $logoPath, $faviconPath, ($_POST['gbp_link'] ?? '') ?: null,
         ($_POST['facebook_link'] ?? '') ?: null, ($_POST['instagram_link'] ?? '') ?: null,
-        ($_POST['google_maps_api_key'] ?? '') ?: null, ($_POST['google_place_id'] ?? '') ?: null,
+        $secret('google_maps_api_key'), ($_POST['google_place_id'] ?? '') ?: null,
         max(1, min(5, (int) ($_POST['google_min_review_rating'] ?? 3))),
-        trim($_POST['gbp_oauth_client_id'] ?? '') ?: null, trim($_POST['gbp_oauth_client_secret'] ?? '') ?: null,
-        trim($_POST['smtp_host'] ?? '') ?: null,
-        (int) ($_POST['smtp_port'] ?? 587) ?: 587,
-        trim($_POST['smtp_username'] ?? '') ?: null,
-        $smtpPassword,
-        trim($_POST['smtp_from_email'] ?? '') ?: null,
-        trim($_POST['smtp_from_name'] ?? '') ?: null,
-        trim($_POST['notify_email'] ?? '') ?: null,
+        $secret('gbp_oauth_client_id'), $secret('gbp_oauth_client_secret'),
+        $secret('smtp_host'),
+        can_view_secrets() ? ((int) ($_POST['smtp_port'] ?? 587) ?: 587) : (int) ($settings['smtp_port'] ?? 587),
+        $secret('smtp_username'),
+        can_view_secrets() ? $smtpPassword : ($settings['smtp_password'] ?? null),
+        $secret('smtp_from_email'),
+        $secret('smtp_from_name'),
+        $notifyEmail,
         $settings['id'],
     ]
 );

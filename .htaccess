@@ -35,6 +35,13 @@ ErrorDocument 404 /404.php
   RewriteRule (^|/)\.git - [F,L]
 </IfModule>
 
+# ----- MIME types -----
+# Some shared-host Apache builds still ship without a webp mapping, which makes the
+# browser refuse the <picture> source and silently fall back to the heavier JPEG.
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+</IfModule>
+
 # ----- Compression (mod_deflate) -----
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript

@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = 'Too many reset requests, please try again in a few minutes';
     } else {
         if ($identifier !== '') record_login_failure('reset:' . $identifier);
-        // Accepts either the username or the account email — resolves to the email either way,
+        // Accepts either the username or the account email - resolves to the email either way,
         // since that's what the reset link is actually sent to.
         $user = db_one('SELECT * FROM users WHERE username = ? OR email = ?', [$identifier, $identifier]);
 
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $sent = smtp_is_configured() && mail_password_reset($email, $user['name'], $resetLink);
             if (!$sent) {
-                // No SMTP configured (or send failed) — fall back to showing the link directly.
+                // No SMTP configured (or send failed) - fall back to showing the link directly.
                 $resetLinkFallback = $resetLink;
             }
         }
@@ -65,5 +65,5 @@ include __DIR__ . '/../includes/guest-layout-top.php';
     </button>
   </form>
 
-  <a href="<?= e(APP_URL) ?>/admin/login.php" class="block text-center text-xs font-bold text-pallav-600 hover:text-pallav-800 mt-6">&larr; Back to sign in</a>
+  <a href="<?= e(APP_URL) ?>/admin/login.php" class="block text-center text-xs font-bold text-pallav-600 hover:text-pallav-800 mt-6">Back to sign in</a>
 <?php include __DIR__ . '/../includes/guest-layout-bottom.php'; ?>

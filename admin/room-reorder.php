@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

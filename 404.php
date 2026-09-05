@@ -6,7 +6,7 @@ http_response_code(404);
 $settings = get_settings();
 $gm = $settings['gm_phone'] ?? '';
 $gmDigits = preg_replace('/\D/', '', $gm);
-$title = 'Room Not Found — ' . APP_NAME;
+$title = 'Room Not Found - ' . APP_NAME;
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,7 +46,7 @@ $title = 'Room Not Found — ' . APP_NAME;
       </svg>
     </div>
     <h1>This room is fully booked... by nobody.</h1>
-    <p>You've knocked on a page that checked out a while ago — or never checked in at all. No mini-bar, no turndown service, just a very confused 404. Let's get you back to a room that actually exists.</p>
+    <p>You've knocked on a page that checked out a while ago - or never checked in at all. No mini-bar, no turndown service, just a very confused 404. Let's get you back to a room that actually exists.</p>
     <span class="e404-quip">Housekeeping has been notified 🧹</span>
     <div class="e404-btns">
       <a href="<?= e(APP_URL) ?>/" class="btn btn-p btn-lg">

@@ -17,12 +17,12 @@ $roleBadge = [
 $title = 'Users Management';
 include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
-  <div class="flex items-center justify-between mb-8">
-    <div>
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <div class="min-w-0">
       <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900">Users Management</h1>
-      <p class="text-sm text-pallav-500 mt-1">Master Admin &amp; Admin manage the whole panel. Editor can handle bookings but not delete them. Viewer can only see bookings.</p>
+      <p class="text-sm text-pallav-500 mt-1">Master Admin &amp; Admin can change and delete anything. Editor can change anything but never delete. Viewer can see the whole panel but not change anything.</p>
     </div>
-    <a href="<?= e(APP_URL) ?>/admin/user-create.php" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">
+    <a href="<?= e(APP_URL) ?>/admin/user-create.php" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition whitespace-nowrap shrink-0">
       + Add User
     </a>
   </div>
@@ -31,17 +31,17 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     $userActionsHtml = static function (array $u, bool $isMaster, bool $isMe, bool $canDelete) use ($me): string {
         ob_start();
         ?>
-        <a href="<?= e(APP_URL) ?>/admin/user-edit.php?id=<?= $u['id'] ?>" class="text-xs font-bold bg-pallav-100 hover:bg-pallav-200 text-pallav-700 rounded-lg px-3 py-1.5 transition">Edit</a>
+        <a href="<?= e(APP_URL) ?>/admin/user-edit.php?id=<?= $u['id'] ?>" title="Edit" aria-label="Edit" class="icon-btn bg-pallav-100 hover:bg-pallav-200 text-pallav-700"><?= ICON_EDIT ?></a>
         <?php if (is_master_admin() && !$isMaster): ?>
         <form method="POST" action="<?= e(APP_URL) ?>/admin/user-transfer-master.php" data-confirm="Make <?= e($u['name']) ?> the Master Admin? You will become a regular Admin.">
           <?= csrf_field() ?><input type="hidden" name="id" value="<?= $u['id'] ?>">
-          <button class="text-xs font-bold bg-gold-50 hover:bg-gold-100 text-gold-700 rounded-lg px-3 py-1.5 transition">Make Master</button>
+          <button title="Make Master" aria-label="Make Master" class="icon-btn bg-gold-50 hover:bg-gold-100 text-gold-700"><?= ICON_CROWN ?></button>
         </form>
         <?php endif; ?>
         <?php if ($canDelete): ?>
         <form method="POST" action="<?= e(APP_URL) ?>/admin/user-delete.php" data-confirm="Remove <?= e($u['name']) ?>?">
           <?= csrf_field() ?><input type="hidden" name="id" value="<?= $u['id'] ?>">
-          <button class="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg px-3 py-1.5 transition">Remove</button>
+          <button title="Remove" aria-label="Remove" class="icon-btn bg-rose-50 hover:bg-rose-100 text-rose-600"><?= ICON_TRASH ?></button>
         </form>
         <?php endif; ?>
         <?php
@@ -55,7 +55,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <table class="w-full text-sm">
         <thead>
           <tr class="text-center text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">
-            <th class="px-6 py-3 text-left">Name</th>
+            <th class="px-6 py-3">Name</th>
             <th class="px-6 py-3">Username</th>
             <th class="px-6 py-3">Role</th>
             <th class="px-6 py-3">Email</th>
@@ -77,7 +77,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             <td class="px-6 py-3.5 font-semibold text-pallav-900 text-left"><?= e($u['name']) ?> <?php if ($isMe): ?><span class="text-xs text-pallav-400 font-normal">(you)</span><?php endif; ?></td>
             <td class="px-6 py-3.5 text-pallav-600">@<?= e($u['username']) ?></td>
             <td class="px-6 py-3.5"><span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide <?= $roleBadge[$u['role']] ?? 'bg-pallav-50 text-pallav-500' ?>"><?= e(USER_ROLE_LABELS[$u['role']] ?? $u['role']) ?></span></td>
-            <td class="px-6 py-3.5 text-pallav-600"><?= e($u['email']) ?></td>
+            <td class="px-6 py-3.5 text-pallav-600 text-left"><?= e($u['email']) ?></td>
             <td class="px-6 py-3.5 text-pallav-500"><?= date('d M Y', strtotime($u['created_at'])) ?></td>
             <td class="px-6 py-3.5">
               <div class="flex justify-center gap-2 flex-wrap"><?= $userActionsHtml($u, $isMaster, $isMe, $canDelete) ?></div>

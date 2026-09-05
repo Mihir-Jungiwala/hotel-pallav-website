@@ -10,6 +10,7 @@ function gallery_slugify(string $text): string
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'caption') {
+    require_role(['master_admin', 'admin', 'editor']);
     verify_csrf();
     $id = (int) ($_POST['id'] ?? 0);
     $caption = trim($_POST['caption'] ?? '');
@@ -19,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_role(['master_admin', 'admin', 'editor']);
     verify_csrf();
     $maxSort = (int) (db_one('SELECT MAX(sort_order) m FROM gallery_photos')['m'] ?? 0);
     $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
@@ -73,10 +75,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     </div>
   </div>
 
+  <?php if (can_edit_site()): ?>
   <form method="POST" enctype="multipart/form-data" class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 mb-8 space-y-4">
     <?= csrf_field() ?>
     <div>
-      <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Description / keywords for these photos <span class="normal-case font-semibold text-pallav-300">(sets the filename plus a starting name &amp; alt text — edit each photo individually afterward)</span></label>
+      <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Description / keywords for these photos <span class="normal-case font-semibold text-pallav-300">(sets the filename plus a starting name &amp; alt text - edit each photo individually afterward)</span></label>
       <input type="text" name="caption" placeholder="e.g. Deluxe Room Hotel Pallav Rajkot" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
     </div>
     <div>
@@ -87,34 +90,42 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">Upload</button>
     </div>
   </form>
+  <?php endif; ?>
 
-  <?php if ($photos): ?>
+  <?php if ($photos && can_edit_site()): ?>
   <p class="text-xs text-pallav-400 mb-4 flex items-center gap-1.5">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg>
-    Drag a photo by its handle to reorder — the live website updates to match.
+    Drag a photo by its handle to reorder - the live website updates to match.
   </p>
   <?php endif; ?>
   <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="galleryGrid">
     <?php if (!$photos): ?>
-      <div class="col-span-full rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-10 text-center text-pallav-400">No photos yet — upload your first ones above.</div>
+      <div class="col-span-full rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-10 text-center text-pallav-400">No photos yet - upload your first ones above.</div>
     <?php else: foreach ($photos as $photo): ?>
       <div class="gallery-photo relative group rounded-2xl overflow-hidden ring-1 ring-pallav-100 shadow-sm" data-id="<?= (int) $photo['id'] ?>" x-data="{ editing: false }">
+        <?php if (can_edit_site()): ?>
         <span class="drag-handle absolute top-2 left-1/2 -translate-x-1/2 z-10 w-8 h-6 rounded-md bg-pallav-900/80 text-white flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition" draggable="true" title="Drag to reorder">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
         </span>
+        <?php endif; ?>
         <div class="aspect-square">
           <img src="<?= e(UPLOADS_URL . '/' . $photo['path']) ?>" alt="<?= e($photo['alt_text'] ?? $photo['caption'] ?? 'Hotel Pallav, Rajkot') ?>" class="w-full h-full object-cover">
         </div>
+        <?php if (can_delete_site()): ?>
         <form method="POST" action="<?= e(APP_URL) ?>/admin/gallery-delete.php" data-confirm="Delete this photo?" class="absolute top-2 right-2">
           <?= csrf_field() ?><input type="hidden" name="id" value="<?= $photo['id'] ?>">
           <button class="w-8 h-8 rounded-lg bg-rose-600/90 hover:bg-rose-700 text-white flex items-center justify-center transition opacity-0 group-hover:opacity-100">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </form>
+        <?php endif; ?>
+        <?php if (can_edit_site()): ?>
         <button type="button" @click="editing = true" x-show="!editing" class="absolute top-2 left-2 w-8 h-8 rounded-lg bg-pallav-900/80 hover:bg-pallav-900 text-white flex items-center justify-center transition opacity-0 group-hover:opacity-100">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
         </button>
+        <?php endif; ?>
         <div class="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1.5 text-[10px] text-white truncate" x-show="!editing"><?= e($photo['caption'] ?? '') ?></div>
+        <?php if (can_edit_site()): ?>
         <form x-show="editing" x-cloak method="POST" class="absolute inset-x-0 bottom-0 bg-white/95 p-2 space-y-1.5">
           <?= csrf_field() ?>
           <input type="hidden" name="action" value="caption">
@@ -126,9 +137,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             <button type="submit" class="text-[10px] font-bold bg-pallav-700 text-white rounded-lg px-2 py-1">Save</button>
           </div>
         </form>
+        <?php endif; ?>
       </div>
     <?php endforeach; endif; ?>
   </div>
+<?php if (can_edit_site()): ?>
 <style>.gallery-photo.dragging{ opacity:.4; }</style>
 <script>
 (function(){
@@ -156,7 +169,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
 
   grid.addEventListener('dragover', function(e){
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move'; // tells the browser the drop is accepted — without this the native drag-ghost snaps back to its origin on release even though the reorder already happened
+    e.dataTransfer.dropEffect = 'move'; // tells the browser the drop is accepted - without this the native drag-ghost snaps back to its origin on release even though the reorder already happened
     if (!dragging) return;
     var after = getPhotoAfter(e.clientX, e.clientY);
     if (after === lastAfter) return;
@@ -218,4 +231,5 @@ include __DIR__ . '/../includes/admin-layout-top.php';
   }
 })();
 </script>
+<?php endif; ?>
 <?php include __DIR__ . '/../includes/admin-layout-bottom.php'; ?>

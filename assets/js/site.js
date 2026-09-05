@@ -6,8 +6,8 @@
    3) Gallery lightbox already worked generically off #gal figure elements — kept as-is, now fed by
       real gallery_photos rows (or an empty state renders instead of the whole section, from PHP).
    4) Forms (#quickForm, #mainForm) validate client-side exactly as before, then submit normally
-      (real POST, not fetch/PREVIEW) to book-submit.php / enquire-submit.php, which already carry a
-      CSRF hidden field rendered by PHP and already redirect back with a flash message.
+      (real POST, not fetch/PREVIEW) to book-submit.php, which already carries a CSRF hidden field
+      rendered by PHP and already redirects back with a flash message.
 */
 (function(){
   "use strict";
@@ -28,12 +28,21 @@
   document.querySelectorAll('[data-years-to]').forEach(function(el){ el.setAttribute('data-to', YEARS); });
 
   var nav = document.getElementById('nav'), bar = document.getElementById('bar'), toTop = document.getElementById('toTop');
+  var scrollCue = document.querySelector('.scroll-cue');
+  var devCredit = document.querySelector('.dev');
   function onScroll(){
     var y = window.scrollY || document.documentElement.scrollTop;
     var h = document.documentElement.scrollHeight - window.innerHeight;
     if (bar) bar.style.width = (h > 0 ? (y / h) * 100 : 0) + '%';
     if (nav) nav.classList.toggle('stuck', y > 40);
-    if (toTop) toTop.classList.toggle('show', y > 700);
+    if (scrollCue) scrollCue.classList.toggle('hide', y > 60);
+    if (toTop) {
+      var nearDevCredit = false;
+      if (devCredit && window.matchMedia('(max-width:640px)').matches) {
+        nearDevCredit = devCredit.getBoundingClientRect().top < window.innerHeight;
+      }
+      toTop.classList.toggle('show', y > 700 && !nearDevCredit);
+    }
   }
   window.addEventListener('scroll', onScroll, {passive:true});
   onScroll();
@@ -228,9 +237,9 @@
     } else { play(); }
   })();
 
-  (function(){
-    var track = document.getElementById('polGrid');
-    var dots  = document.getElementById('polDots');
+  function initCarouselDots(trackId, dotsId, label){
+    var track = document.getElementById(trackId);
+    var dots  = document.getElementById(dotsId);
     if (!track || !dots) return;
     var kids = Array.prototype.slice.call(track.children);
     if (kids.length < 2) return;
@@ -243,17 +252,20 @@
     function index(){
       return Math.max(0, Math.min(kids.length - 1, Math.round(track.scrollLeft / step())));
     }
+    var touched = false;
     function paint(){
       var at = index();
       if (dots.children.length !== kids.length) {
         var html = '';
-        for (var i = 0; i < kids.length; i++) html += '<button type="button" data-p="' + i + '" aria-label="Show policy card ' + (i + 1) + '"></button>';
+        for (var i = 0; i < kids.length; i++) html += '<button type="button" data-p="' + i + '" aria-label="Show ' + label + ' ' + (i + 1) + '"></button>';
         dots.innerHTML = html;
       }
       Array.prototype.forEach.call(dots.children, function(d, i){ d.classList.toggle('on', i === at); });
+      if (touched) kids.forEach(function(k, i){ k.classList.toggle('snap-active', i === at); });
     }
     dots.addEventListener('click', function(e){
       var b = e.target.closest('button'); if (!b) return;
+      touched = true;
       track.scrollTo({ left: parseInt(b.getAttribute('data-p'), 10) * step(), behavior: reduce ? 'auto' : 'smooth' });
     });
     track.addEventListener('scroll', function(){
@@ -264,8 +276,30 @@
       clearTimeout(window._polR);
       window._polR = setTimeout(paint, 160);
     });
+
+    var dragStartX = 0, dragStartScroll = 0, dragging = false;
+    track.addEventListener('touchstart', function(e){
+      touched = true;
+      dragging = true;
+      dragStartX = e.touches[0].clientX;
+      dragStartScroll = track.scrollLeft;
+    }, {passive:true});
+    track.addEventListener('touchend', function(){
+      if (!dragging) return;
+      dragging = false;
+      var delta = track.scrollLeft - dragStartScroll;
+      var base = Math.max(0, Math.min(kids.length - 1, Math.round(dragStartScroll / step())));
+      var target = base;
+      if (Math.abs(delta) > step() * 0.12) {
+        target = delta > 0 ? Math.min(kids.length - 1, base + 1) : Math.max(0, base - 1);
+      }
+      track.scrollTo({ left: target * step(), behavior: reduce ? 'auto' : 'smooth' });
+    }, {passive:true});
+
     paint();
-  })();
+  }
+  initCarouselDots('polGrid', 'polDots', 'policy card');
+  initCarouselDots('svcGrid', 'svcDots', 'service card');
 
   var revealables = document.querySelectorAll('.rv,.rv-l,.rv-r');
   if('IntersectionObserver' in window && !reduce){
@@ -364,13 +398,14 @@
     inp.addEventListener('input', function(){ inp.classList.remove('bad'); });
   });
 
-  /* Forms validate client-side, then perform a REAL submit (not fetch) to book-submit.php /
-     enquire-submit.php — those endpoints are CSRF-protected (hidden _csrf field already rendered by
-     PHP inside each <form>) and redirect back to index.php#enquire with a flash message, which is
-     rendered by index.php on the next load. */
+  /* Forms validate client-side, then perform a REAL submit (not fetch) to book-submit.php —
+     it's CSRF-protected (hidden _csrf field already rendered by PHP inside the <form>) and
+     redirects back to index.php#enquire with a flash message, which is rendered by index.php
+     on the next load. */
   function wire(formId, msgId){
     var form = document.getElementById(formId), msg = document.getElementById(msgId);
     if(!form) return;
+    var FM = (window.SITE && window.SITE.formMsg) || {};
     form.addEventListener('submit', function(e){
       var name = form.querySelector('[name=name]'), phone = form.querySelector('[name=phone]');
       var email = form.querySelector('[name=email]');
@@ -378,19 +413,33 @@
       if (msg) msg.className = 'fmsg';
       function show(kind, text){ if (msg){ msg.className = 'fmsg ' + kind; msg.textContent = text; } }
 
-      if(name.value.trim().length < 2){ e.preventDefault(); show('err','Please enter your name.'); name.focus(); return; }
+      if(name.value.trim().length < 2){ e.preventDefault(); show('err', FM.name || 'Please enter your name.'); name.focus(); return; }
 
+      // International-friendly: a bare 10-digit number is assumed to be an Indian
+      // mobile (default +91), but any other country code + length is accepted too -
+      // just a sane digit-count range, no India-only leading-digit rule. Always
+      // saved with a leading + so the country code is never lost.
+      var hasPlus = phone.value.trim().charAt(0) === '+';
       var digits = phone.value.replace(/\D/g,'');
-      if(digits.length === 12 && digits.indexOf('91') === 0) digits = digits.slice(2);
-      if(digits.length === 11 && digits.charAt(0) === '0') digits = digits.slice(1);
-      if(digits.length !== 10 || '6789'.indexOf(digits.charAt(0)) === -1){
-        e.preventDefault(); show('err','Please enter a valid 10-digit mobile number.'); phone.focus(); return;
+      if(!hasPlus && digits.length === 10) digits = '91' + digits;
+      if(digits.length < 7 || digits.length > 15){
+        e.preventDefault(); show('err', FM.phone || 'Please enter a valid phone number with country code.'); phone.focus(); return;
       }
-      phone.value = digits;
+      phone.value = '+' + digits;
 
       if(email && email.value.trim() !== '' && !EMAIL_RE.test(email.value.trim())){
-        e.preventDefault(); show('err','That email address does not look right. Leave it blank if you prefer.'); email.focus(); return;
+        e.preventDefault(); show('err', FM.email || 'That email address does not look right. Leave it blank if you prefer.'); email.focus(); return;
       }
+
+      var checkin = form.querySelector('[name=checkin]'), checkout = form.querySelector('[name=checkout]');
+      var room = form.querySelector('[name=room]'), adults = form.querySelector('[name=adults]');
+      var children = form.querySelector('[name=children]'), message = form.querySelector('[name=message]');
+      if(checkin && !checkin.value){ e.preventDefault(); show('err', FM.checkin || 'Please pick a check-in date.'); checkin.focus(); return; }
+      if(checkout && !checkout.value){ e.preventDefault(); show('err', FM.checkout || 'Please pick a check-out date.'); checkout.focus(); return; }
+      if(room && room.value.trim() === ''){ e.preventDefault(); show('err', FM.room || 'Please pick a room, or enter "not sure yet".'); room.focus(); return; }
+      if(adults && adults.value.trim() === ''){ e.preventDefault(); show('err', FM.adults || 'Please enter the number of adults.'); adults.focus(); return; }
+      if(children && children.value.trim() === ''){ e.preventDefault(); show('err', FM.children || 'Please enter the number of children (0 if none).'); children.focus(); return; }
+      if(message && message.value.trim() === ''){ e.preventDefault(); show('err', FM.message || 'Please tell us anything we should know (or write "none").'); message.focus(); return; }
 
       var btn = form.querySelector('button[type=submit]');
       if (btn) { btn.disabled = true; btn.style.opacity = '.75'; }
@@ -399,6 +448,16 @@
   }
   wire('quickForm','quickMsg');
   wire('mainForm','mainMsg');
+
+  document.querySelectorAll('input[name=phone]').forEach(function(el){
+    el.addEventListener('input', function(){
+      // Free typing for any country code/length - keep a single leading + (if
+      // present) plus digits and spaces (for readability), nothing else.
+      var v = el.value;
+      var plus = v.charAt(0) === '+' ? '+' : '';
+      el.value = plus + v.slice(plus.length).replace(/[^\d ]/g, '');
+    });
+  });
 
   function tickSvg(){ return '<svg aria-hidden="true" focusable="false" class="tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>'; }
   var openSel = null;
@@ -449,12 +508,13 @@
   var pickers = [];
   document.querySelectorAll('input[type=date]').forEach(function(native){
     var ctl = native.closest('.ctl');
+    var placeholderText = native.getAttribute('placeholder') || 'Select date';
     native.type = 'hidden';
 
     var box = document.createElement('div'); box.className = 'dp';
     var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'dp-btn';
-    btn.innerHTML = '<svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.6"/><path d="M3.5 10h17M8.5 3v3.4M15.5 3v3.4"/></svg>' +
-      '<span class="dp-val ph">Select date</span>';
+    btn.innerHTML = '<span class="dp-ic"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.6"/><path d="M3.5 10h17M8.5 3v3.4M15.5 3v3.4"/></svg></span>' +
+      '<span class="dp-val ph">' + placeholderText + '</span>';
     var pop = document.createElement('div'); pop.className = 'dp-pop';
 
     var P = { native:native, box:box, btn:btn, pop:pop, min:new Date(TODAY), view:new Date(TODAY), val:null, link:null };
@@ -514,7 +574,7 @@
       P.min = new Date(minDate); P.min.setHours(0,0,0,0);
       if(P.val && P.val < P.min){
         P.val = null; native.value = '';
-        var lab = btn.querySelector('.dp-val'); lab.textContent = 'Select date'; lab.classList.add('ph');
+        var lab = btn.querySelector('.dp-val'); lab.textContent = placeholderText; lab.classList.add('ph');
       }
       if(P.view < P.min) P.view = new Date(P.min);
       draw();
@@ -573,15 +633,6 @@
       host.addEventListener('mouseleave', function(){ el.style.transform = ''; });
     });
 
-    document.querySelectorAll('.svc,.rev,.stat,.loc-card,.panel').forEach(function(c){
-      c.classList.add('spot');
-      c.addEventListener('mousemove', function(e){
-        var r = c.getBoundingClientRect();
-        c.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100)+'%');
-        c.style.setProperty('--my', ((e.clientY-r.top)/r.height*100)+'%');
-      });
-    });
-
     document.querySelectorAll('.btn-p').forEach(function(b){
       b.addEventListener('mousemove', function(e){
         var r = b.getBoundingClientRect();
@@ -626,7 +677,7 @@
   document.querySelectorAll('.rslide').forEach(function(sl){
     var key = sl.getAttribute('data-slider');
     if (!key) return;
-    var frames = Array.prototype.slice.call(sl.querySelectorAll('.frame > svg, .frame > img'));
+    var frames = Array.prototype.slice.call(sl.querySelectorAll('.frame svg, .frame img'));
     ROOM_SETS[key] = frames.map(function(f){
       return { svg: f.outerHTML, cap: f.getAttribute('data-cap') || '' };
     });
@@ -634,7 +685,7 @@
 
   document.querySelectorAll('.rslide').forEach(function(sl){
     var key    = sl.getAttribute('data-slider');
-    var frames = Array.prototype.slice.call(sl.querySelectorAll('.frame > svg, .frame > img'));
+    var frames = Array.prototype.slice.call(sl.querySelectorAll('.frame svg, .frame img'));
     var caps   = (ROOM_SETS[key] || []).map(function(x){ return x.cap; });
     var capEl  = sl.querySelector('.rcap');
     var dotBox = sl.querySelector('.rdots');

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true) ?: [];
@@ -10,12 +11,12 @@ if (!hash_equals($_SESSION['_csrf'] ?? '', $data['_csrf'] ?? '')) {
     exit;
 }
 
-$roomId = $data['room_id'] ?? '';
+$roomIds = $data['room_ids'] ?? [];
 $startDate = $data['start_date'] ?? '';
 $endDate = $data['end_date'] ?? '';
 $action = $data['action'] ?? 'block';
 
-if (!in_array($action, ['block', 'unblock'], true) || !strtotime($startDate) || !strtotime($endDate)) {
+if (!is_array($roomIds) || !$roomIds || !in_array($action, ['block', 'unblock'], true) || !strtotime($startDate) || !strtotime($endDate)) {
     http_response_code(422);
     echo json_encode(['ok' => false, 'error' => 'Invalid input']);
     exit;
@@ -36,16 +37,13 @@ if ($dayCount > 366) {
     exit;
 }
 
-$allRooms = db_all('SELECT * FROM rooms ORDER BY id');
-if ($roomId === 'all' || $roomId === '') {
-    $rooms = $allRooms;
-} else {
-    $rooms = array_values(array_filter($allRooms, fn($r) => (int) $r['id'] === (int) $roomId));
-    if (!$rooms) {
-        http_response_code(404);
-        echo json_encode(['ok' => false, 'error' => 'Room category not found']);
-        exit;
-    }
+$roomIds = array_map('intval', $roomIds);
+$placeholders = implode(',', array_fill(0, count($roomIds), '?'));
+$rooms = db_all("SELECT * FROM rooms WHERE id IN ($placeholders) ORDER BY id", $roomIds);
+if (!$rooms) {
+    http_response_code(404);
+    echo json_encode(['ok' => false, 'error' => 'No matching room categories']);
+    exit;
 }
 
 $blocked = $action === 'block' ? 1 : 0;
@@ -65,12 +63,12 @@ foreach ($rooms as $room) {
     }
 }
 
-$roomLabel = $roomId === 'all' || $roomId === '' ? 'all room categories' : $rooms[0]['name'];
+$roomLabel = implode(', ', array_column($rooms, 'name'));
 log_activity(
     'room.date_range_' . $action . 'ed',
     ucfirst($action) . "ed {$roomLabel} from {$start} to {$end}",
     'room',
-    $roomId === 'all' || $roomId === '' ? null : (int) $roomId
+    count($rooms) === 1 ? (int) $rooms[0]['id'] : null
 );
 
 echo json_encode(['ok' => true, 'blocked' => (bool) $blocked, 'days' => count($dates), 'rooms' => count($rooms)]);

@@ -11,10 +11,11 @@ if (!strtotime($checkin) || !strtotime($checkout) || strtotime($checkout) <= str
     exit;
 }
 
-// Cap the range to something a real stay would need — also guards against a crafted
-// request (e.g. a multi-year span) forcing an unbounded number of per-day queries.
-if ((strtotime($checkout) - strtotime($checkin)) > 60 * 86400) {
-    echo json_encode(['ok' => false, 'message' => 'Please choose a shorter date range (max 60 nights).']);
+// Cap the range to something a real stay would need - also guards against a crafted
+// request (e.g. a multi-year span) forcing an unbounded amount of work.
+$nights = stay_nights($checkin, $checkout);
+if (!$nights) {
+    echo json_encode(['ok' => false, 'message' => 'Please choose a shorter date range (max ' . MAX_STAY_NIGHTS . ' nights).']);
     exit;
 }
 
@@ -23,23 +24,10 @@ $results = [];
 $anyAvailable = false;
 
 foreach ($rooms as $room) {
-    $minLeft = null;
-    $cursor = strtotime($checkin);
-    $end = strtotime($checkout);
-    while ($cursor < $end) {
-        $date = date('Y-m-d', $cursor);
-        $inv = db_one('SELECT rooms_left, blocked FROM room_date_inventory WHERE room_id = ? AND date = ?', [$room['id'], $date]);
-        $roomsLeft = $inv ? (int) $inv['rooms_left'] : (int) $room['rooms_left'];
-        $blocked = $inv ? (bool) $inv['blocked'] : false;
-        if ($blocked) $roomsLeft = 0;
-        $sold = (int) db_one('SELECT COUNT(*) c FROM bookings WHERE room_id = ? AND status = "confirmed" AND check_in <= ? AND check_out > ?', [$room['id'], $date, $date])['c'];
-        $left = max(0, $roomsLeft - $sold);
-        $minLeft = $minLeft === null ? $left : min($minLeft, $left);
-        $cursor = strtotime('+1 day', $cursor);
-    }
-    $available = ($minLeft ?? 0) > 0;
+    $left = rooms_free_for_stay((int) $room['id'], $nights);
+    $available = $left > 0;
     if ($available) $anyAvailable = true;
-    $results[] = ['name' => $room['name'], 'available' => $available, 'roomsLeft' => $minLeft ?? 0];
+    $results[] = ['name' => $room['name'], 'available' => $available, 'roomsLeft' => $left];
 }
 
 echo json_encode(['ok' => true, 'anyAvailable' => $anyAvailable, 'results' => $results]);

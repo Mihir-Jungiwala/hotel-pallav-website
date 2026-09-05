@@ -2,6 +2,8 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/mailer.php';
+require_once __DIR__ . '/availability.php';
+require_once __DIR__ . '/sanitize.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -42,6 +44,30 @@ function phone_display(?string $raw): string
     return $raw ?? '';
 }
 
+/**
+ * Reference number for a new enquiry: HP-DDMMYYYY-NNNNN, where NNNNN only ever moves
+ * forward within its accounting year - a deleted entry's number is never reused - and
+ * resets to 00001 when a new accounting year (1 April - 31 March) begins.
+ */
+function generate_reference(): string
+{
+    $month = (int) date('n');
+    $year = (int) date('Y');
+    $fiscalYear = $month >= 4 ? $year : $year - 1;
+    // LAST_INSERT_ID(1) in the VALUES clause matters: fiscal_year is the primary key
+    // and nothing here auto-increments, so on the very first booking of a new
+    // accounting year the ON DUPLICATE branch never runs and LAST_INSERT_ID() would
+    // otherwise still hold 0 - numbering that booking 00000. Setting it explicitly on
+    // the insert path makes the first reference of every year 00001.
+    db_run(
+        'INSERT INTO reference_counters (fiscal_year, counter) VALUES (?, LAST_INSERT_ID(1))
+         ON DUPLICATE KEY UPDATE counter = LAST_INSERT_ID(counter + 1)',
+        [$fiscalYear]
+    );
+    $serial = (int) db_one('SELECT LAST_INSERT_ID() n')['n'];
+    return 'HP-' . date('dmY') . '-' . str_pad((string) $serial, 5, '0', STR_PAD_LEFT);
+}
+
 function old(string $key, $default = '')
 {
     return $_SESSION['_old'][$key] ?? $default;
@@ -70,7 +96,7 @@ function csrf_field(): string
     return '<input type="hidden" name="_csrf" value="' . e(csrf_token()) . '">';
 }
 
-/** Eye-icon toggle button for a password field — pair with a wrapping <div class="relative pw-field"> and pr-11 on the input. Toggling is handled by the shared .pw-toggle script in admin/guest-layout-bottom.php. */
+/** Eye-icon toggle button for a password field - pair with a wrapping <div class="relative pw-field"> and pr-11 on the input. Toggling is handled by the shared .pw-toggle script in admin/guest-layout-bottom.php. */
 function password_toggle_button(): string
 {
     return '<button type="button" class="pw-toggle absolute right-3 top-1/2 -translate-y-1/2 text-pallav-400 hover:text-pallav-600 transition" tabindex="-1" aria-label="Show password">'
@@ -79,13 +105,31 @@ function password_toggle_button(): string
         . '</button>';
 }
 
-function verify_csrf(): void
+/**
+ * Rejects a POST whose CSRF token doesn't match the session.
+ *
+ * Nothing has been written by the time this runs, so a failure is safe to recover
+ * from - and in practice it's nearly always a form left open until the session timed
+ * out rather than an attack. Public pages pass $failRedirect so a guest lands back on
+ * the form they were filling in; admin pages leave it null and go to the dashboard,
+ * or to the login screen if the session is gone.
+ */
+function verify_csrf(?string $failRedirect = null): void
 {
     $token = $_POST['_csrf'] ?? '';
-    if (!hash_equals($_SESSION['_csrf'] ?? '', $token)) {
-        http_response_code(419);
-        die('Session expired — please go back and try again.');
+    if (hash_equals($_SESSION['_csrf'] ?? '', $token)) {
+        return;
     }
+    if ($failRedirect !== null) {
+        flash('error', 'That form had expired, so nothing was sent. Please check your details and send it again.');
+        redirect($failRedirect);
+    }
+    if (current_user()) {
+        flash('error', 'That form had expired, so nothing was saved. Please try again.');
+        redirect('admin/dashboard.php');
+    }
+    flash('error', 'Your session had expired, so nothing was saved. Please sign in and try again.');
+    redirect('admin/login.php');
 }
 
 function client_ip(): string
@@ -177,6 +221,15 @@ function require_admin(): void
     if (!current_user()) {
         redirect('admin/login.php');
     }
+    promote_stale_enquiries();
+}
+
+/** Any enquiry still sitting in 'new' from a previous calendar day automatically
+ *  rolls into 'pending' (waiting for an admin to confirm/decline) - runs on every
+ *  admin page load so nothing needs a cron job to advance overnight. */
+function promote_stale_enquiries(): void
+{
+    db_run("UPDATE enquiries SET status = 'pending' WHERE status = 'new' AND created_at < CURDATE()");
 }
 
 function user_role(): string
@@ -191,7 +244,7 @@ function is_master_admin(): bool
 
 const ROLE_RANK = ['viewer' => 0, 'editor' => 1, 'admin' => 2, 'master_admin' => 3];
 
-/** True if the signed-in user's role outranks the given role — used to gate who can change whose role. */
+/** True if the signed-in user's role outranks the given role - used to gate who can change whose role. */
 function outranks(string $otherRole): bool
 {
     return (ROLE_RANK[user_role()] ?? 0) > (ROLE_RANK[$otherRole] ?? 0);
@@ -203,10 +256,66 @@ function can_manage_users(): bool
     return in_array(user_role(), ['master_admin', 'admin'], true);
 }
 
-/** True if the signed-in user can approve/decline/edit bookings (not just view them). */
-function can_manage_bookings(): bool
+/** True if the signed-in user can confirm/decline/edit enquiries (not just view them). */
+function can_manage_enquiries(): bool
 {
     return in_array(user_role(), ['master_admin', 'admin', 'editor'], true);
+}
+
+/** True if the signed-in user can create/update site content (rooms, services, policies,
+ *  gallery, pricing, rate calendar, page content, settings) - everything short of deleting. */
+function can_edit_site(): bool
+{
+    return in_array(user_role(), ['master_admin', 'admin', 'editor'], true);
+}
+
+/** True if the signed-in user can permanently delete something (room, service, policy,
+ *  gallery photo, rate plan, enquiry...). Only Admin and Master Admin - Editors can
+ *  change anything but never remove it. */
+function can_delete_site(): bool
+{
+    return in_array(user_role(), ['master_admin', 'admin'], true);
+}
+
+/** True if the signed-in user may see the stored API keys, OAuth secrets and mail
+ *  credentials. Deliberately narrower than can_edit_site(): an Editor runs the site
+ *  day to day without ever needing the hotel's Google or mailbox credentials, and a
+ *  Viewer has no business reading them out of the page source. */
+function can_view_secrets(): bool
+{
+    return in_array(user_role(), ['master_admin', 'admin'], true);
+}
+
+/**
+ * An <img> wrapped in a <picture> that offers the WebP twin when one exists beside the
+ * original (see the image optimisation pass - every upload gets a .webp sibling).
+ * Browsers take the WebP; anything that doesn't understand it falls back to the
+ * original file, so the markup is safe everywhere.
+ *
+ * $path is relative to the uploads directory, e.g. "gallery/room-1.jpg".
+ * Only use this where the <img> isn't matched by a direct-child CSS/JS selector - the
+ * extra <picture> wrapper would break those.
+ */
+function picture_tag(string $path, string $imgAttrs): string
+{
+    $img = '<img src="' . e(UPLOADS_URL . '/' . $path) . '" ' . $imgAttrs . '>';
+    $webpRel = preg_replace('/\.(jpe?g|png)$/i', '.webp', $path);
+    if ($webpRel === $path || !is_file(UPLOADS_PATH . '/' . $webpRel)) {
+        return $img;
+    }
+    return '<picture><source srcset="' . e(UPLOADS_URL . '/' . $webpRel) . '" type="image/webp">' . $img . '</picture>';
+}
+
+/** Stand-in shown where a secret input would be, for roles that can't view secrets.
+ *  Reports only whether a value exists - never the value itself, and never inside a
+ *  form field, so there is nothing to read back out of the page source. */
+function secret_locked_field(?string $value): string
+{
+    $isSet = trim((string) $value) !== '';
+    $label = $isSet ? 'Saved - only an administrator can view or change this' : 'Not set - an administrator can add this';
+    return '<div class="w-full rounded-xl border border-pallav-200 bg-pallav-50 px-4 py-2.5 text-sm font-semibold text-pallav-400 flex items-center gap-2">'
+        . '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+        . '<span>' . e($label) . '</span></div>';
 }
 
 /** Blocks the request (redirect + flash) unless the signed-in user has one of the given roles. Call after require_admin(). */
@@ -226,17 +335,60 @@ const USER_ROLE_LABELS = [
 ];
 
 /**
+ * Shared 14x14 stroke icons for icon-only admin action buttons - pair with the
+ * `.icon-btn` class (defined in admin-layout-top.php) and a `title` attribute
+ * for the hover tooltip, since these buttons carry no visible text label.
+ */
+const ICON_EYE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_EDIT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';
+const ICON_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+const ICON_X = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const ICON_TRASH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8c0-.4.3-.8.8-.8h4.4c.5 0 .8.4.8.8V7m-8 0v12.2c0 .4.3.8.8.8h6.4c.5 0 .8-.4.8-.8V7"/></svg>';
+const ICON_CLOCK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/></svg>';
+const ICON_CROWN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z"/></svg>';
+const ICON_ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+/**
+ * Every currently-blocked date, per room, collapsed into contiguous ranges (e.g. a
+ * week-long block becomes one row instead of seven). Shared by the Rate & Inventory
+ * Calendar's "Blocked Dates" list and the Dashboard's preview of it, so both always
+ * agree on what's blocked.
+ */
+function blocked_date_ranges(): array {
+    $rows = db_all(
+        "SELECT rdi.room_id, rdi.date, r.name AS room_name FROM room_date_inventory rdi
+         JOIN rooms r ON r.id = rdi.room_id
+         WHERE rdi.blocked = 1 AND rdi.date >= ? ORDER BY rdi.room_id, rdi.date",
+        [date('Y-m-d', strtotime('-1 day'))]
+    );
+    $ranges = [];
+    $room = null; $roomName = null; $start = null; $end = null;
+    foreach ($rows as $row) {
+        $isContinuation = $room === $row['room_id'] && $end !== null && $row['date'] === date('Y-m-d', strtotime($end . ' +1 day'));
+        if ($isContinuation) {
+            $end = $row['date'];
+        } else {
+            if ($room !== null) $ranges[] = ['room_id' => $room, 'room_name' => $roomName, 'start' => $start, 'end' => $end];
+            $room = $row['room_id']; $roomName = $row['room_name']; $start = $row['date']; $end = $row['date'];
+        }
+    }
+    if ($room !== null) $ranges[] = ['room_id' => $room, 'room_name' => $roomName, 'start' => $start, 'end' => $end];
+    return $ranges;
+}
+
+/**
  * Renders a policy card's icon. SVGs are inlined (sanitized) rather than used as
- * an <img> so CSS `color`/currentColor can drive the hover recolor animation —
+ * an <img> so CSS `color`/currentColor can drive the hover recolor animation - 
  * an <img> can never be recolored by CSS, only inline SVG markup can. Non-SVG
  * uploads (png/jpg/etc.) fall back to a plain <img>, which just won't recolor
- * on hover — everything else about the hover effect (scale, glow, background)
+ * on hover - everything else about the hover effect (scale, glow, background)
  * still applies since those are on the wrapping .ic badge, not the icon itself.
  */
 function render_policy_icon(?string $iconPath): void
 {
-    $isCustom = $iconPath !== null && $iconPath !== '';
-    $fsPath = $isCustom ? UPLOADS_PATH . '/' . $iconPath : ROOT_PATH . '/assets/brand/policy-default.svg';
+    if ($iconPath === null || $iconPath === '') return;
+
+    $fsPath = UPLOADS_PATH . '/' . $iconPath;
     $ext = strtolower(pathinfo($fsPath, PATHINFO_EXTENSION));
 
     if ($ext === 'svg' && is_file($fsPath)) {
@@ -248,36 +400,35 @@ function render_policy_icon(?string $iconPath): void
         }
     }
 
-    $url = $isCustom ? UPLOADS_URL . '/' . $iconPath : APP_URL . '/assets/brand/policy-default.svg';
-    echo '<img src="' . e($url) . '" alt="" width="22" height="22" loading="lazy">';
+    if (is_file($fsPath)) {
+        echo '<img src="' . e(UPLOADS_URL . '/' . $iconPath) . '" alt="" width="22" height="22" loading="lazy">';
+    }
 }
 
 /**
  * Renders a service card's icon. Same inline-SVG approach as render_policy_icon()
- * (so currentColor hover recoloring works) — if the service has a custom uploaded
- * icon, that's used; otherwise falls back to the shared default icon image, same
- * as Hotel Policies.
+ * (so currentColor hover recoloring works) - only outputs anything once the admin
+ * has uploaded a custom icon; otherwise the icon tile stays empty (still shows its
+ * background/hover styling).
  */
 function render_service_icon(array $svc): void
 {
     $iconPath = $svc['icon_path'] ?? null;
-    if ($iconPath) {
-        $fsPath = UPLOADS_PATH . '/' . $iconPath;
-        $ext = strtolower(pathinfo($fsPath, PATHINFO_EXTENSION));
-        if ($ext === 'svg' && is_file($fsPath)) {
-            $raw = @file_get_contents($fsPath);
-            $inline = $raw !== false ? sanitize_inline_svg($raw) : null;
-            if ($inline !== null) {
-                echo $inline;
-                return;
-            }
-        }
-        if (is_file($fsPath)) {
-            echo '<img src="' . e(UPLOADS_URL . '/' . $iconPath) . '" alt="" width="24" height="24" loading="lazy">';
+    if (!$iconPath) return;
+
+    $fsPath = UPLOADS_PATH . '/' . $iconPath;
+    $ext = strtolower(pathinfo($fsPath, PATHINFO_EXTENSION));
+    if ($ext === 'svg' && is_file($fsPath)) {
+        $raw = @file_get_contents($fsPath);
+        $inline = $raw !== false ? sanitize_inline_svg($raw) : null;
+        if ($inline !== null) {
+            echo $inline;
             return;
         }
     }
-    echo '<img src="' . e(APP_URL . '/assets/brand/policy-default.svg') . '" alt="" width="24" height="24" loading="lazy">';
+    if (is_file($fsPath)) {
+        echo '<img src="' . e(UPLOADS_URL . '/' . $iconPath) . '" alt="" width="24" height="24" loading="lazy">';
+    }
 }
 
 /** Strips scripting-capable content from an SVG before inlining it directly into the page. Returns null if it doesn't look like a safe, valid SVG. */
@@ -394,7 +545,7 @@ function get_page_content(): array
 
 /**
  * Live rating + reviews from Google Places (legacy Place Details API).
- * File-cached for 6 hours. Returns null if not configured or the call fails —
+ * File-cached for 6 hours. Returns null if not configured or the call fails - 
  * callers should fall back to the static settings.google_rating/count.
  */
 function fetch_google_reviews(): ?array
@@ -461,7 +612,7 @@ function fetch_google_reviews(): ?array
                     'reviews' => $reviews,
                 ];
             } else {
-                error_log('Google Places lookup failed — status: ' . $status . ', error_message: ' . ($json['error_message'] ?? 'none'));
+                error_log('Google Places lookup failed - status: ' . $status . ', error_message: ' . ($json['error_message'] ?? 'none'));
             }
         } else {
             error_log('Google Places curl request failed: ' . $curlErr);

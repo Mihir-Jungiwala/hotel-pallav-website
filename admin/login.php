@@ -34,7 +34,7 @@ $title = 'Sign In';
 include __DIR__ . '/../includes/guest-layout-top.php';
 ?>
   <h1 class="font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Welcome Back</h1>
-  <p class="text-sm text-pallav-500 mb-6 text-center">Sign in securely to manage your bookings, rooms and settings</p>
+  <p class="text-sm text-pallav-500 mb-6 text-center">Sign in securely to manage guest activity, rooms and settings</p>
 
   <?php if (!empty($_GET['expired'])): ?>
     <div class="mb-5 rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200 px-4 py-3 text-sm font-semibold text-center">For your security, your session ended after 30 minutes of inactivity, please sign in again</div>

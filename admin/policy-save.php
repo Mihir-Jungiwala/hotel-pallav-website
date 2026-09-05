@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { redirect('admin/policies.php'); }
 verify_csrf();
@@ -22,7 +23,7 @@ if ($title === '') {
 
 $linesJson = json_encode($lines);
 if ($linesJson === false) {
-    flash('error', 'One of the rule lines had invalid characters — please retype it.');
+    flash('error', 'One of the rule lines had invalid characters - please retype it.');
     redirect('admin/policies.php');
 }
 

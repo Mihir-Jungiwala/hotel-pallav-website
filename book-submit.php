@@ -5,9 +5,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('index.php');
 }
 
-verify_csrf();
+verify_csrf('index.php#enquire');
 
-// Honeypot — bots fill hidden fields, humans never see them.
+// Honeypot - bots fill hidden fields, humans never see them.
 if (trim($_POST['company'] ?? '') !== '') {
     redirect('index.php#enquire');
 }
@@ -26,16 +26,25 @@ $errors = [];
 if ($name === '' || mb_strlen($name) < 2) $errors[] = 'Please enter your name.';
 if ($name !== '' && mb_strlen($name) > 100) $errors[] = 'Name is too long.';
 
+// International-friendly: a bare 10-digit number is assumed Indian (default +91),
+// any other country code + length is accepted too via a sane digit-count range.
+// Always stored with a leading + so the country code is never lost.
+$hasPlus = isset($phone[0]) && $phone[0] === '+';
 $digits = preg_replace('/\D/', '', $phone);
-if (strlen($digits) === 12 && str_starts_with($digits, '91')) $digits = substr($digits, 2);
-if (strlen($digits) === 11 && $digits[0] === '0') $digits = substr($digits, 1);
-if (strlen($digits) !== 10 || strpos('6789', $digits[0]) === false) {
-    $errors[] = 'Please enter a valid 10-digit mobile number.';
+if (!$hasPlus && strlen($digits) === 10) $digits = '91' . $digits;
+if (strlen($digits) < 7 || strlen($digits) > 15) {
+    $errors[] = 'Please enter a valid phone number with country code.';
 }
+$phone = '+' . $digits;
 
 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'That email address does not look right.';
 }
+
+if ($checkin === '' || !strtotime($checkin)) $errors[] = 'Please pick a check-in date.';
+if ($checkout === '' || !strtotime($checkout)) $errors[] = 'Please pick a check-out date.';
+if ($roomQuery === '') $errors[] = 'Please pick a room.';
+if ($message === '') $errors[] = 'Please tell us anything we should know (or write "none").';
 
 if ($errors) {
     flash('error', implode(' ', $errors));
@@ -43,7 +52,7 @@ if ($errors) {
 }
 
 $adults = max(1, min(20, $adults ?: 1));
-$children = max(0, min(10, $children));
+$children = max(0, min(9, $children));
 
 $room = null;
 if ($roomQuery !== '') {
@@ -59,24 +68,16 @@ if (strtotime($checkoutDate) < strtotime($checkinDate)) {
     $checkoutDate = $checkinDate;
 }
 
-function generate_booking_reference(): string
-{
-    do {
-        $ref = 'HP-' . date('Y') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
-    } while (db_one('SELECT id FROM bookings WHERE reference = ?', [$ref]));
-    return $ref;
-}
+$reference = generate_reference();
 
-$reference = generate_booking_reference();
-
-$bookingId = db_insert(
-    'INSERT INTO bookings (reference, room_id, guest_name, guest_phone, guest_email, check_in, check_out, guests, message, status, ip_address, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "pending", ?, NOW(), NOW())',
+$enquiryId = db_insert(
+    'INSERT INTO enquiries (reference, room_id, name, phone, email, check_in, check_out, guests, message, status, ip_address, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "new", ?, NOW(), NOW())',
     [
         $reference,
         $room['id'] ?? null,
         $name,
-        $digits,
+        $phone,
         $email !== '' ? $email : null,
         $checkinDate,
         $checkoutDate,
@@ -87,10 +88,10 @@ $bookingId = db_insert(
 );
 
 if (smtp_is_configured()) {
-    $booking = db_one('SELECT * FROM bookings WHERE id = ?', [$bookingId]);
-    if ($booking) {
+    $enquiry = db_one('SELECT * FROM enquiries WHERE id = ?', [$enquiryId]);
+    if ($enquiry) {
         $adminLink = '<p><a href="' . e(APP_URL) . '/admin/bookings.php">Open in admin panel</a></p>';
-        send_templated_mail('booking_received', $booking['guest_email'] ?? '', $booking['guest_name'], booking_email_vars($booking, $room), $adminLink);
+        send_templated_mail('enquiry_received', $enquiry['email'] ?? '', $enquiry['name'], enquiry_email_vars($enquiry, $room), $adminLink);
     }
 }
 

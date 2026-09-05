@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../includes/gbp.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 
 $action = $_GET['action'] ?? 'connect';
 
@@ -27,7 +28,7 @@ if ($action === 'refresh') {
     redirect('admin/settings.php');
 }
 
-// action === 'connect' — send the owner to Google's consent screen
+// action === 'connect' - send the owner to Google's consent screen
 $url = gbp_auth_url();
 if (!$url) {
     flash('error', 'Save your OAuth Client ID and Secret first.');

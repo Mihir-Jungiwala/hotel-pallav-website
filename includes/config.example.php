@@ -1,12 +1,12 @@
 <?php
 /**
- * Central config — copy this file to config.php and fill in real values.
+ * Central config - copy this file to config.php and fill in real values.
  * config.php is gitignored on purpose: it holds live database credentials
  * and must never be committed. Everything else in the app reads from it;
  * nothing else hardcodes credentials.
  *
  * After every fresh deploy (git pull / re-upload), config.php will NOT be
- * present — copy this file to config.php and fill in DB_PASS again.
+ * present - copy this file to config.php and fill in DB_PASS again.
  */
 
 // ===== Database =====

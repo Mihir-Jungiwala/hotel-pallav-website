@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { redirect('admin/rooms.php'); }
 verify_csrf();
@@ -10,9 +11,9 @@ $room = db_one('SELECT * FROM rooms WHERE id = ?', [$id]);
 
 if (!$room) { flash('error', 'Room not found.'); redirect('admin/rooms.php'); }
 
-$hasBookings = db_one('SELECT id FROM bookings WHERE room_id = ? LIMIT 1', [$id]);
-if ($hasBookings) {
-    flash('error', "Can't delete {$room['name']} — it has existing bookings. Mark it unavailable instead.");
+$hasEnquiries = db_one('SELECT id FROM enquiries WHERE room_id = ? LIMIT 1', [$id]);
+if ($hasEnquiries) {
+    flash('error', "Can't delete {$room['name']} - it has existing enquiries/bookings. Mark it unavailable instead.");
     redirect('admin/rooms.php');
 }
 

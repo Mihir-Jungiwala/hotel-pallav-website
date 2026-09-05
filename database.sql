@@ -5,7 +5,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  username VARCHAR(50) NOT NULL UNIQUE,
+  username VARCHAR(50) NOT NULL UNIQUE COLLATE utf8mb4_bin,
   email VARCHAR(150) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   role ENUM('master_admin','admin','editor','viewer') NOT NULL DEFAULT 'admin',
@@ -29,13 +29,6 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   locked_until DATETIME NULL,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY identifier_ip (identifier, ip)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS email_templates (
-  template_key VARCHAR(50) NOT NULL PRIMARY KEY,
-  subject VARCHAR(200) NOT NULL,
-  body TEXT NOT NULL,
-  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS settings (
@@ -76,7 +69,7 @@ CREATE TABLE IF NOT EXISTS settings (
   smtp_password VARCHAR(255) NULL,
   smtp_from_email VARCHAR(150) NULL,
   smtp_from_name VARCHAR(100) NULL,
-  notify_email VARCHAR(150) NULL,
+  notify_email TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -87,6 +80,20 @@ CREATE TABLE IF NOT EXISTS page_content (
   hero_title_line1 VARCHAR(100) NOT NULL DEFAULT 'Where every stay',
   hero_title_emphasis VARCHAR(100) NOT NULL DEFAULT 'feels like coming home',
   hero_lead TEXT NULL,
+  quick_check_title VARCHAR(100) NOT NULL DEFAULT 'Check availability',
+  qc_msg_pick_dates VARCHAR(200) NOT NULL DEFAULT 'Please pick both check-in and check-out dates first.',
+  qc_msg_available VARCHAR(200) NOT NULL DEFAULT 'Good news - we have rooms for your dates!',
+  qc_msg_unavailable VARCHAR(300) NOT NULL DEFAULT 'Those exact rooms look full, but call us - dates shift often and we may still fit you in.',
+  qc_msg_error VARCHAR(200) NOT NULL DEFAULT 'Could not check right now - please call us instead.',
+  fm_msg_name VARCHAR(150) NOT NULL DEFAULT 'Please enter your name.',
+  fm_msg_phone VARCHAR(150) NOT NULL DEFAULT 'Please enter a valid 10-digit mobile number.',
+  fm_msg_email VARCHAR(150) NOT NULL DEFAULT 'That email address does not look right. Leave it blank if you prefer.',
+  fm_msg_checkin VARCHAR(150) NOT NULL DEFAULT 'Please pick a check-in date.',
+  fm_msg_checkout VARCHAR(150) NOT NULL DEFAULT 'Please pick a check-out date.',
+  fm_msg_room VARCHAR(150) NOT NULL DEFAULT 'Please pick a room, or enter "not sure yet".',
+  fm_msg_adults VARCHAR(150) NOT NULL DEFAULT 'Please enter the number of adults.',
+  fm_msg_children VARCHAR(150) NOT NULL DEFAULT 'Please enter the number of children (0 if none).',
+  fm_msg_message VARCHAR(150) NOT NULL DEFAULT 'Please tell us anything we should know (or write "none").',
   about_kicker VARCHAR(50) NOT NULL DEFAULT 'Our Story',
   about_heading VARCHAR(150) NOT NULL DEFAULT 'A family hotel that never stopped caring',
   about_p1 TEXT NULL,
@@ -147,6 +154,7 @@ CREATE TABLE IF NOT EXISTS rooms (
   rooms_left TINYINT UNSIGNED NOT NULL DEFAULT 1,
   available TINYINT(1) NOT NULL DEFAULT 1,
   note VARCHAR(255) NULL,
+  badge_label VARCHAR(40) NULL,
   photos JSON NULL,
   sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -169,21 +177,6 @@ CREATE TABLE IF NOT EXISTS rate_plans (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS room_rates (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  room_id INT UNSIGNED NOT NULL,
-  label VARCHAR(100) NOT NULL,
-  start_date DATE NOT NULL,
-  end_date DATE NOT NULL,
-  price INT UNSIGNED NOT NULL,
-  price_with_breakfast INT UNSIGNED NULL,
-  active TINYINT(1) NOT NULL DEFAULT 1,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
-  INDEX (room_id, start_date, end_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS plan_date_rates (
@@ -210,39 +203,39 @@ CREATE TABLE IF NOT EXISTS room_date_inventory (
   FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS bookings (
+-- One counter per accounting year (1 April - 31 March) behind generate_reference()
+-- (includes/helpers.php) - every enquiry draws the next HP-YYYYMMDD-NNNNN serial from
+-- its accounting year's row here. A deleted entry's number is never reused (the
+-- counter only ever moves forward); a new accounting year starts its own row at 1.
+CREATE TABLE IF NOT EXISTS reference_counters (
+  fiscal_year SMALLINT UNSIGNED PRIMARY KEY,
+  counter INT UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- A "booking" is not a different kind of record - it's just an enquiry whose status
+-- is 'confirmed'. Every guest request (from the site's Booking Enquiry form or
+-- entered manually by an admin) lives here as one row from the moment it's
+-- submitted through pending -> confirmed/declined.
+CREATE TABLE IF NOT EXISTS enquiries (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   reference VARCHAR(20) NOT NULL UNIQUE,
-  room_id INT UNSIGNED NULL,
-  guest_name VARCHAR(100) NOT NULL,
-  guest_phone VARCHAR(20) NOT NULL,
-  guest_email VARCHAR(150) NULL,
-  check_in DATE NOT NULL,
-  check_out DATE NOT NULL,
-  guests TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(20) NULL,
+  email VARCHAR(150) NULL,
   message TEXT NULL,
-  status ENUM('pending','confirmed','declined','cancelled') NOT NULL DEFAULT 'pending',
+  room_id INT UNSIGNED NULL,
+  check_in DATE NULL,
+  check_out DATE NULL,
+  guests TINYINT UNSIGNED NULL,
+  status ENUM('new','pending','confirmed','declined') NOT NULL DEFAULT 'new',
+  decision_note VARCHAR(255) NULL,
   approved_by INT UNSIGNED NULL,
   decided_at DATETIME NULL,
-  decision_note VARCHAR(255) NULL,
   ip_address VARCHAR(45) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL,
   FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS enquiries (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  phone VARCHAR(20) NULL,
-  email VARCHAR(150) NULL,
-  message TEXT NOT NULL,
-  is_read TINYINT(1) NOT NULL DEFAULT 0,
-  status ENUM('new','pending','confirmed','declined') NOT NULL DEFAULT 'new',
-  ip_address VARCHAR(45) NULL,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS activity_log (

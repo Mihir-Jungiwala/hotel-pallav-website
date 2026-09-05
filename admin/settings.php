@@ -22,7 +22,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <h2 class="font-display font-bold text-lg text-pallav-900">Branding</h2>
         <span class="text-[10px] font-extrabold uppercase tracking-wide bg-pallav-100 text-pallav-700 rounded-full px-2.5 py-1">Logo &amp; Favicon</span>
       </div>
-      <p class="text-xs text-pallav-400 mb-5">Upload your own logo to replace the default monogram everywhere — website header, admin panel, login screen. Upload a favicon for the browser tab.</p>
+      <p class="text-xs text-pallav-400 mb-5">Upload your own logo to replace the default monogram everywhere - website header, admin panel, login screen. Upload a favicon for the browser tab.</p>
 
       <div class="grid sm:grid-cols-2 gap-6">
         <div>
@@ -40,7 +40,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
                   Remove current logo &amp; use default
                 </label>
               <?php else: ?>
-                Using the default monogram — upload a PNG/SVG to replace it.
+                Using the default monogram - upload a PNG/SVG to replace it.
               <?php endif; ?>
             </div>
           </div>
@@ -87,25 +87,24 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <input type="email" name="email" value="<?= e($settings['email']) ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM Mobile Number (tel: format)</label>
-          <input type="text" name="gm_phone" value="<?= e($settings['gm_phone']) ?>" placeholder="+919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM Mobile Number</label>
+          <input type="text" name="gm_phone" value="<?= e($settings['gm_phone'] ?: '+91 ') ?>" placeholder="+919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Reception Mobile Number</label>
-          <input type="text" name="reception_phone" value="<?= e($settings['reception_phone']) ?>" placeholder="+917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <input type="text" name="reception_phone" value="<?= e($settings['reception_phone'] ?: '+91 ') ?>" placeholder="+917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM WhatsApp Number (digits only, with country code)</label>
-          <input type="text" name="whatsapp" value="<?= e($settings['whatsapp']) ?>" placeholder="919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM WhatsApp Number</label>
+          <input type="text" name="whatsapp" value="<?= e($settings['whatsapp'] ?: '+91 ') ?>" placeholder="919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Reception WhatsApp Number (digits only, with country code)</label>
-          <input type="text" name="reception_whatsapp" value="<?= e($settings['reception_whatsapp'] ?? '') ?>" placeholder="917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Reception WhatsApp Number</label>
+          <input type="text" name="reception_whatsapp" value="<?= e($settings['reception_whatsapp'] ?: '+91 ') ?>" placeholder="917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Business Profile Link</label>
           <input type="url" name="gbp_link" value="<?= e($settings['gbp_link'] ?? '') ?>" placeholder="https://g.page/..." class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-          <p class="text-[11px] text-pallav-400 mt-1">Controls where "Find Us" / the Google icon send guests. Leave blank and they fall back to a plain Maps directions link instead.</p>
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Instagram Link</label>
@@ -144,14 +143,18 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <b class="text-pallav-800">How to get these:</b>
         <ol class="list-decimal pl-4 mt-1.5 space-y-1">
           <li>Go to <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" class="font-bold text-pallav-700 underline">Google Cloud Console</a>, create a project, and enable <b>"Maps Embed API"</b> and <b>"Places API"</b>.</li>
-          <li>Under Credentials, create an API key — that's your <b>Maps API Key</b> below.</li>
-          <li>Find your <b>Place ID</b> using Google's <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" class="font-bold text-pallav-700 underline">Place ID Finder</a> — search "Hotel Pallav Rajkot" and copy the ID shown.</li>
+          <li>Under Credentials, create an API key - that's your <b>Maps API Key</b> below.</li>
+          <li>Find your <b>Place ID</b> using Google's <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" class="font-bold text-pallav-700 underline">Place ID Finder</a> - search "Hotel Pallav Rajkot" and copy the ID shown.</li>
         </ol>
       </div>
       <div class="grid sm:grid-cols-2 gap-5">
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Maps API Key</label>
-          <input type="text" name="google_maps_api_key" value="<?= e($settings['google_maps_api_key'] ?? '') ?>" placeholder="AIzaSy..." class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <?php if (can_view_secrets()): ?>
+            <input type="text" name="google_maps_api_key" value="<?= e($settings['google_maps_api_key'] ?? '') ?>" placeholder="AIzaSy..." class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <?php else: ?>
+            <?= secret_locked_field($settings['google_maps_api_key'] ?? '') ?>
+          <?php endif; ?>
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Place ID</label>
@@ -211,29 +214,38 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 rounded-full px-2.5 py-1">Not connected</span>
         <?php endif; ?>
       </div>
-      <p class="text-xs text-pallav-400 mb-5">The Places API above is capped at 5 reviews by Google — no way around that. Showing every review requires connecting your actual Google Business Profile account below, which uses a separate, restricted Google API.</p>
+      <p class="text-xs text-pallav-400 mb-5">The Places API above is capped at 5 reviews by Google - no way around that. Showing every review requires connecting your actual Google Business Profile account below, which uses a separate, restricted Google API.</p>
       <div class="rounded-xl bg-amber-50 ring-1 ring-amber-100 p-4 text-xs text-amber-800 mb-5 leading-relaxed">
-        <b>Before this will work</b>, your Google Cloud project needs approval for the "Google My Business API" — this is a manual review by Google, separate from just enabling an API, and can take time or be declined. See
+        <b>Before this will work</b>, your Google Cloud project needs approval for the "Google My Business API" - this is a manual review by Google, separate from just enabling an API, and can take time or be declined. See
         <a href="https://developers.google.com/my-business/content/prereqs" target="_blank" class="font-bold underline">Google's access request form</a>.
         You'll also need an OAuth 2.0 Client ID (Web application type) from
-        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="font-bold underline">Cloud Console → Credentials</a>,
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="font-bold underline">Cloud Console - Credentials</a>,
         with this exact Authorized redirect URI:
         <code class="block mt-1 bg-white rounded-lg px-3 py-2 ring-1 ring-amber-200 select-all"><?= e(APP_URL . '/admin/gbp-callback.php') ?></code>
       </div>
       <div class="grid sm:grid-cols-2 gap-5 mb-5">
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">OAuth Client ID</label>
-          <input type="text" name="gbp_oauth_client_id" value="<?= e($settings['gbp_oauth_client_id'] ?? '') ?>" placeholder="xxxxx.apps.googleusercontent.com" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <?php if (can_view_secrets()): ?>
+            <input type="text" name="gbp_oauth_client_id" value="<?= e($settings['gbp_oauth_client_id'] ?? '') ?>" placeholder="xxxxx.apps.googleusercontent.com" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <?php else: ?>
+            <?= secret_locked_field($settings['gbp_oauth_client_id'] ?? '') ?>
+          <?php endif; ?>
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">OAuth Client Secret</label>
-          <div class="relative pw-field">
-            <input type="password" name="gbp_oauth_client_secret" value="<?= e($settings['gbp_oauth_client_secret'] ?? '') ?>" placeholder="GOCSPX-..." class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-            <?= password_toggle_button() ?>
-          </div>
+          <?php if (can_view_secrets()): ?>
+            <div class="relative pw-field">
+              <input type="password" name="gbp_oauth_client_secret" value="<?= e($settings['gbp_oauth_client_secret'] ?? '') ?>" placeholder="GOCSPX-..." class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+              <?= password_toggle_button() ?>
+            </div>
+          <?php else: ?>
+            <?= secret_locked_field($settings['gbp_oauth_client_secret'] ?? '') ?>
+          <?php endif; ?>
         </div>
       </div>
-      <p class="text-[11px] text-pallav-400 mb-4">Save this form first after entering the Client ID/Secret above, then use Connect below — it needs those saved to build the Google login link.</p>
+      <p class="text-[11px] text-pallav-400 mb-4">Save this form first after entering the Client ID/Secret above, then use Connect below - it needs those saved to build the Google login link.</p>
+      <?php if (can_edit_site()): ?>
       <div class="flex items-center gap-3 flex-wrap">
         <?php if (gbp_is_connected()): ?>
           <a href="<?= e(APP_URL) ?>/admin/gbp-connect.php?action=refresh" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-pallav-50 text-pallav-700 hover:bg-pallav-100 transition">Refresh All Reviews Now</a>
@@ -244,6 +256,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <span class="text-xs text-pallav-400 font-semibold">Save your Client ID/Secret above first to enable the Connect button.</span>
         <?php endif; ?>
       </div>
+      <?php endif; ?>
     </div>
 
     <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
@@ -255,7 +268,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <div class="space-y-5">
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Meta Title <span class="normal-case font-semibold text-pallav-300">(shown as the browser tab / search result title, ~60 chars)</span></label>
-          <input type="text" name="meta_title" maxlength="70" value="<?= e($settings['meta_title'] ?? '') ?>" placeholder="Hotel Pallav — Comfortable Stays in Rajkot" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <input type="text" name="meta_title" maxlength="70" value="<?= e($settings['meta_title'] ?? '') ?>" placeholder="Hotel Pallav - Comfortable Stays in Rajkot" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Meta Description <span class="normal-case font-semibold text-pallav-300">(the snippet under the title in search results, ~155 chars)</span></label>
@@ -277,13 +290,14 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 rounded-full px-2.5 py-1">Not configured</span>
         <?php endif; ?>
       </div>
-      <p class="text-xs text-pallav-400 mb-5">Send password-reset emails, booking/enquiry alerts to you, and booking confirmations to guests — using Gmail SMTP.</p>
+      <p class="text-xs text-pallav-400 mb-5">Send password-reset emails, booking/enquiry alerts to you, and booking confirmations to guests - using Gmail SMTP.</p>
       <div class="rounded-xl bg-pallav-50 ring-1 ring-pallav-100 p-4 text-xs text-pallav-600 mb-5 leading-relaxed">
         <b class="text-pallav-800">Using Gmail:</b> enable 2-Step Verification on the Google account, then create an
         <a href="https://myaccount.google.com/apppasswords" target="_blank" class="font-bold text-pallav-700 underline">App Password</a>
         (Google no longer accepts your normal Gmail password here). Use <code class="bg-white rounded px-1.5 py-0.5 ring-1 ring-pallav-200">smtp.gmail.com</code>, port <code class="bg-white rounded px-1.5 py-0.5 ring-1 ring-pallav-200">587</code>, and the 16-character App Password below.
       </div>
       <div class="grid sm:grid-cols-2 gap-5">
+        <?php if (can_view_secrets()): ?>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">SMTP Host</label>
           <input type="text" name="smtp_host" value="<?= e($settings['smtp_host'] ?? '') ?>" placeholder="smtp.gmail.com" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
@@ -299,7 +313,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">App Password</label>
           <div class="relative pw-field">
-            <input type="password" name="smtp_password" value="" placeholder="<?= !empty($settings['smtp_password']) ? 'Saved — leave blank to keep it' : '16-character app password' ?>" class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+            <input type="password" name="smtp_password" value="" placeholder="<?= !empty($settings['smtp_password']) ? 'Saved - leave blank to keep it' : '16-character app password' ?>" class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
             <?= password_toggle_button() ?>
           </div>
         </div>
@@ -312,10 +326,16 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">"From" Name</label>
           <input type="text" name="smtp_from_name" value="<?= e($settings['smtp_from_name'] ?? '') ?>" placeholder="<?= e(APP_NAME) ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
+        <?php else: ?>
         <div class="sm:col-span-2">
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Notify This Email (bookings &amp; enquiries)</label>
-          <input type="email" name="notify_email" value="<?= e($settings['notify_email'] ?? '') ?>" placeholder="<?= e($settings['email'] ?? '') ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-          <p class="text-[11px] text-pallav-400 mt-1">Where you'll receive new booking and enquiry alerts. Leave blank to use the hotel Email above.</p>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Mailbox Credentials</label>
+          <?= secret_locked_field($settings['smtp_host'] ?? '') ?>
+        </div>
+        <?php endif; ?>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Notification Emails (guest enquiries)</label>
+          <textarea name="notify_email" rows="3" placeholder="<?= e($settings['email'] ?? 'yourhotel@gmail.com') ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"><?= e($settings['notify_email'] ?? '') ?></textarea>
+          <p class="text-[11px] text-pallav-400 mt-1">One email per line (or comma-separated) - every address listed here gets new enquiry alerts and confirm/decline updates. Leave blank to use the hotel Email above.</p>
         </div>
       </div>
     </div>
@@ -323,15 +343,17 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <div class="rounded-2xl bg-pallav-50 ring-1 ring-pallav-100 p-6 sm:p-8 flex items-center justify-between gap-4">
       <div>
         <h2 class="font-display font-bold text-lg text-pallav-900">House Policies</h2>
-        <p class="text-xs text-pallav-500 mt-1">Managed on their own page now — add as many policy cards as you like.</p>
+        <p class="text-xs text-pallav-500 mt-1">Managed on their own page now - add as many policy cards as you like.</p>
       </div>
       <a href="<?= e(APP_URL) ?>/admin/policies.php" class="shrink-0 inline-flex items-center gap-2 rounded-xl bg-white ring-1 ring-pallav-200 text-pallav-700 text-sm font-bold px-5 py-2.5 hover:bg-pallav-100 transition hover:-translate-y-0.5">
         Manage Policies
       </a>
     </div>
 
+    <?php if (can_edit_site()): ?>
     <div class="flex justify-end gap-3">
       <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">Save Settings</button>
     </div>
+    <?php endif; ?>
   </form>
 <?php include __DIR__ . '/../includes/admin-layout-bottom.php'; ?>

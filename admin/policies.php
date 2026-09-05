@@ -22,14 +22,16 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900">Hotel Policies</h1>
-        <p class="text-sm text-pallav-500 mt-1">Add as many policy cards as you need — they appear under "Before You Book" on the homepage.</p>
       </div>
+      <?php if (can_edit_site()): ?>
       <button type="button" @click="open ? close() : openAdd()" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
         Add Policy Card
       </button>
+      <?php endif; ?>
     </div>
 
+    <?php if (can_edit_site()): ?>
     <form x-show="open" x-cloak x-transition method="POST" action="<?= e(APP_URL) ?>/admin/policy-save.php" enctype="multipart/form-data" class="mt-6 rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 space-y-4">
       <?= csrf_field() ?>
       <input type="hidden" name="id" :value="editId">
@@ -42,7 +44,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <textarea name="lines" x-model="lines" rows="4" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none" placeholder="No pets allowed&#10;No smoking anywhere on the property"></textarea>
       </div>
       <div>
-        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Icon <span class="normal-case font-semibold text-pallav-300">(SVG recommended — optional, a default icon is used if left blank)</span></label>
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Icon <span class="normal-case font-semibold text-pallav-300">(SVG recommended - optional, a default icon is used if left blank)</span></label>
         <div class="flex items-center gap-3 mb-2">
           <span class="w-9 h-9 rounded-lg bg-pallav-50 flex items-center justify-center overflow-hidden shrink-0">
             <img :src="iconUrl" alt="" style="width:19px;height:19px" class="object-contain">
@@ -60,14 +62,17 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold shadow transition hover:-translate-y-0.5" x-text="editId ? 'Save Changes' : 'Save Card'"></button>
       </div>
     </form>
+    <?php endif; ?>
 
+  <?php if (can_edit_site()): ?>
   <p class="text-xs text-pallav-400 mt-6 mb-4 flex items-center gap-1.5">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg>
-    Drag a card by its handle to reorder — the live website updates to match.
+    Drag a card by its handle to reorder - the live website updates to match.
   </p>
+  <?php endif; ?>
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="policyGrid">
     <?php if (!$cards): ?>
-      <div class="col-span-full rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-10 text-center text-pallav-400">No policy cards yet — add your first one above.</div>
+      <div class="col-span-full rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-10 text-center text-pallav-400">No policy cards yet - add your first one above.</div>
     <?php else: foreach ($cards as $card):
       $cardIconUrl = $card['icon_path'] ? UPLOADS_URL . '/' . $card['icon_path'] : $defaultIconUrl;
       $editPayload = json_encode([
@@ -81,24 +86,30 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <div class="policy-card rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 hover:shadow-lg transition-all duration-300" data-id="<?= (int) $card['id'] ?>">
       <div class="flex items-start justify-between gap-2 mb-3">
         <div class="flex items-start gap-2 min-w-0">
+          <?php if (can_edit_site()): ?>
           <span class="drag-handle shrink-0 mt-0.5 w-6 h-6 rounded-md flex items-center justify-center text-pallav-300 hover:text-pallav-600 hover:bg-pallav-50 cursor-grab active:cursor-grabbing transition" draggable="true" title="Drag to reorder">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
           </span>
+          <?php endif; ?>
           <span class="shrink-0 w-8 h-8 rounded-lg bg-pallav-50 flex items-center justify-center overflow-hidden">
             <img src="<?= e($cardIconUrl) ?>" alt="" style="width:18px;height:18px" class="object-contain">
           </span>
           <h3 class="font-display font-bold text-lg text-pallav-900 min-w-0 break-words"><?= e($card['title']) ?></h3>
         </div>
         <div class="flex gap-1.5 shrink-0">
+          <?php if (can_edit_site()): ?>
           <button type="button" @click="openEdit(<?= e($editPayload) ?>)" class="w-7 h-7 rounded-lg bg-pallav-100 hover:bg-pallav-200 text-pallav-600 flex items-center justify-center transition">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
           </button>
+          <?php endif; ?>
+          <?php if (can_delete_site()): ?>
           <form method="POST" action="<?= e(APP_URL) ?>/admin/policy-delete.php" data-confirm="Delete this policy card?">
             <?= csrf_field() ?><input type="hidden" name="id" value="<?= $card['id'] ?>">
             <button class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </form>
+          <?php endif; ?>
         </div>
       </div>
       <ul class="space-y-2">
@@ -112,6 +123,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <?php endforeach; endif; ?>
   </div>
   </div>
+<?php if (can_edit_site()): ?>
 <script>
 (function(){
   var grid = document.getElementById('policyGrid');
@@ -138,10 +150,10 @@ include __DIR__ . '/../includes/admin-layout-top.php';
   var lastAfter = undefined;
   grid.addEventListener('dragover', function(e){
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move'; // tells the browser the drop is accepted — without this the native drag-ghost snaps back to its origin on release even though the reorder already happened
+    e.dataTransfer.dropEffect = 'move'; // tells the browser the drop is accepted - without this the native drag-ghost snaps back to its origin on release even though the reorder already happened
     if (!dragging) return;
     var after = getCardAfter(e.clientX, e.clientY);
-    if (after === lastAfter) return; // same slot as last time — skip, avoids re-triggering the animation every pixel of mouse movement
+    if (after === lastAfter) return; // same slot as last time - skip, avoids re-triggering the animation every pixel of mouse movement
     lastAfter = after;
     move(after);
   });
@@ -200,4 +212,5 @@ include __DIR__ . '/../includes/admin-layout-top.php';
   }
 })();
 </script>
+<?php endif; ?>
 <?php include __DIR__ . '/../includes/admin-layout-bottom.php'; ?>

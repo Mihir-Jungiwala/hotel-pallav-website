@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../includes/gbp.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 
 if (!empty($_GET['error'])) {
     flash('error', 'Google sign-in was cancelled or denied: ' . e($_GET['error']));
@@ -22,7 +23,7 @@ if (!$exchange['ok']) {
 
 $resolved = gbp_resolve_account_and_location();
 if (!$resolved['ok']) {
-    // Token is saved, but we couldn't confirm the business — most often
+    // Token is saved, but we couldn't confirm the business - most often
     // this means the My Business API access request hasn't been approved
     // for this Cloud project yet.
     flash('error', 'Connected to Google, but could not read your Business Profile: ' . $resolved['error']);

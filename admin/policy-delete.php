@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { redirect('admin/policies.php'); }
 verify_csrf();

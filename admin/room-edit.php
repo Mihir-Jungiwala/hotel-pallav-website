@@ -29,6 +29,7 @@ function unique_room_slug(string $name, ?int $ignoreId = null): string
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_role(['master_admin', 'admin', 'editor']);
     verify_csrf();
     $name = trim($_POST['name'] ?? '');
     $size = trim($_POST['size'] ?? '');
@@ -37,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $totalCount = max(1, (int) ($_POST['total_count'] ?? 1));
     $showPrice = !empty($_POST['show_price']) ? 1 : 0;
     $note = trim($_POST['note'] ?? '');
+    $badgeLabel = trim($_POST['badge_label'] ?? '');
 
     if ($name === '') { $errors[] = 'Room name is required.'; }
 
@@ -73,14 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $photosJson = json_encode(array_values($photos));
 
         if ($room) {
-            db_run('UPDATE rooms SET name=?, size=?, bed_type=?, max_guests=?, total_count=?, show_price=?, note=?, photos=? WHERE id=?',
-                [$name, $size, $bedType, $maxGuests, $totalCount, $showPrice, $note ?: null, $photosJson, $room['id']]);
+            db_run('UPDATE rooms SET name=?, size=?, bed_type=?, max_guests=?, total_count=?, show_price=?, note=?, badge_label=?, photos=? WHERE id=?',
+                [$name, $size, $bedType, $maxGuests, $totalCount, $showPrice, $note ?: null, $badgeLabel ?: null, $photosJson, $room['id']]);
             log_activity('room.updated', "Updated room {$name}", 'room', $room['id']);
             flash('success', "{$name} updated.");
         } else {
             $slug = unique_room_slug($name);
-            db_insert('INSERT INTO rooms (slug, name, size, bed_type, max_guests, show_price, note, photos, total_count, rooms_left, available) VALUES (?,?,?,?,?,?,?,?,?,?,1)',
-                [$slug, $name, $size, $bedType, $maxGuests, $showPrice, $note ?: null, $photosJson, $totalCount, $totalCount]);
+            db_insert('INSERT INTO rooms (slug, name, size, bed_type, max_guests, show_price, note, badge_label, photos, total_count, rooms_left, available) VALUES (?,?,?,?,?,?,?,?,?,?,?,1)',
+                [$slug, $name, $size, $bedType, $maxGuests, $showPrice, $note ?: null, $badgeLabel ?: null, $photosJson, $totalCount, $totalCount]);
             log_activity('room.created', "Added room category \"{$name}\"");
             flash('success', "{$name} added.");
         }
@@ -92,9 +94,9 @@ $title = $room ? 'Edit ' . $room['name'] : 'Add Room Category';
 include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
   <div class="mb-8 max-w-3xl mx-auto">
-    <a href="<?= e(APP_URL) ?>/admin/rooms.php" class="text-xs font-bold text-pallav-500 hover:text-pallav-700">&larr; Back to rooms</a>
+    <a href="<?= e(APP_URL) ?>/admin/rooms.php" class="text-xs font-bold text-pallav-500 hover:text-pallav-700">Back to rooms</a>
     <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900 mt-2"><?= $room ? 'Edit ' . e($room['name']) : 'Add Room Category' ?></h1>
-    <?php if (!$room): ?><p class="text-sm text-pallav-500 mt-1">Create a new room type — it appears on the homepage automatically once saved.</p><?php endif; ?>
+    <?php if (!$room): ?><p class="text-sm text-pallav-500 mt-1">Create a new room type - it appears on the homepage automatically once saved.</p><?php endif; ?>
   </div>
 
   <?php foreach ($errors as $err): ?>
@@ -136,13 +138,18 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     </div>
 
     <div class="mt-5">
+      <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Badge pill <span class="normal-case font-semibold text-pallav-300">(optional - the small tag shown top-left on the card, e.g. "Most Booked")</span></label>
+      <input type="text" name="badge_label" value="<?= e($room['badge_label'] ?? '') ?>" maxlength="40" placeholder="e.g. Most Booked, Premium, Best Value" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+    </div>
+
+    <div class="mt-5">
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Note shown on site <span class="normal-case font-semibold text-pallav-300">(optional)</span></label>
       <input type="text" name="note" value="<?= e($room['note'] ?? '') ?>" placeholder="e.g. Currently under renovation until March" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
     </div>
 
     <div class="mt-5">
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-2">Room Photos</label>
-      <p class="text-xs text-pallav-400 mb-3">First photo shows first in the site's photo slider. Give each one a name and alt text (for SEO / accessibility) — same as Gallery.</p>
+      <p class="text-xs text-pallav-400 mb-3">First photo shows first in the site's photo slider. Give each one a name and alt text (for SEO / accessibility) - same as Gallery.</p>
       <?php if ($photos): ?>
       <div class="space-y-3 mb-4">
         <?php foreach ($photos as $photo): ?>

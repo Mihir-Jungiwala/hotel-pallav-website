@@ -14,16 +14,16 @@ if ($user['role'] === 'master_admin' && !is_master_admin()) {
     redirect('admin/users.php');
 }
 
-// A regular Admin can only manage accounts below their own rank — editing another
+// A regular Admin can only manage accounts below their own rank - editing another
 // Admin's details (including their password) is reserved for the Master Admin.
 if ($user['role'] === 'admin' && (int) $user['id'] !== (int) current_user()['id'] && !is_master_admin()) {
     flash('error', 'Only the Master Admin can edit another Admin account.');
     redirect('admin/users.php');
 }
 
-// A regular Admin can only promote/demote within editor/viewer — never to Admin.
+// A regular Admin can only promote/demote within editor/viewer - never to Admin.
 $assignableRoles = is_master_admin() ? ['admin', 'editor', 'viewer'] : ['editor', 'viewer'];
-// A role can only be changed by someone who outranks the target's *current* role —
+// A role can only be changed by someone who outranks the target's *current* role - 
 // e.g. a regular Admin can't change another Admin's role, only the Master Admin can.
 $canChangeRole = $user['role'] !== 'master_admin' && outranks($user['role']);
 $errors = [];
@@ -71,7 +71,7 @@ $title = 'Edit User';
 include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
   <div class="mb-8 max-w-xl mx-auto">
-    <a href="<?= e(APP_URL) ?>/admin/users.php" class="text-xs font-bold text-pallav-500 hover:text-pallav-700">&larr; Back to users</a>
+    <a href="<?= e(APP_URL) ?>/admin/users.php" class="text-xs font-bold text-pallav-500 hover:text-pallav-700">Back to users</a>
     <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900 mt-2">Edit User</h1>
   </div>
 
@@ -93,7 +93,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <input type="email" name="email" value="<?= e($user['email']) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
     </div>
     <?php if ($user['role'] === 'master_admin'): ?>
-      <div class="rounded-xl bg-gold-50 ring-1 ring-gold-200/60 px-4 py-3 text-xs font-bold text-gold-700">This is the Master Admin account — its role can only change via "Make Master" on another user from Users Management.</div>
+      <div class="rounded-xl bg-gold-50 ring-1 ring-gold-200/60 px-4 py-3 text-xs font-bold text-gold-700">This is the Master Admin account - its role can only change via "Make Master" on another user from Users Management.</div>
     <?php elseif (!$canChangeRole): ?>
       <div>
         <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Role</label>
@@ -104,9 +104,9 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <div x-data="{
           open: false, value: <?= e(json_encode($user['role'])) ?>,
           opts: [
-            <?php if (is_master_admin()): ?>{ v: 'admin', label: 'Admin', desc: 'Full access to the whole panel' },<?php endif; ?>
-            { v: 'editor', label: 'Editor', desc: 'Can manage bookings, not delete them' },
-            { v: 'viewer', label: 'Viewer', desc: 'Can only see bookings' },
+            <?php if (is_master_admin()): ?>{ v: 'admin', label: 'Admin' },<?php endif; ?>
+            { v: 'editor', label: 'Editor' },
+            { v: 'viewer', label: 'Viewer' },
           ],
           label(v){ var o = this.opts.find(function(o){ return o.v === v; }); return o ? o.label : v; }
         }" class="relative">
@@ -118,12 +118,9 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       </button>
       <div x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top class="absolute z-20 mt-1.5 w-full rounded-xl bg-white ring-1 ring-pallav-100 shadow-lg shadow-pallav-900/10 py-1.5 overflow-hidden">
         <template x-for="o in opts" :key="o.v">
-          <button type="button" @click="value = o.v; open = false" class="w-full flex items-start justify-between gap-2 px-4 py-2.5 text-sm text-left transition" :class="o.v === value ? 'bg-pallav-50' : 'hover:bg-pallav-50'">
-            <span>
-              <span class="block font-bold" :class="o.v === value ? 'text-pallav-700' : 'text-pallav-900'" x-text="o.label"></span>
-              <span class="block text-xs text-pallav-400" x-text="o.desc"></span>
-            </span>
-            <svg x-show="o.v === value" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-600 shrink-0 mt-0.5"><path d="M20 6L9 17l-5-5"/></svg>
+          <button type="button" @click="value = o.v; open = false" class="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm text-left transition" :class="o.v === value ? 'bg-pallav-50' : 'hover:bg-pallav-50'">
+            <span class="font-bold" :class="o.v === value ? 'text-pallav-700' : 'text-pallav-900'" x-text="o.label"></span>
+            <svg x-show="o.v === value" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-600 shrink-0"><path d="M20 6L9 17l-5-5"/></svg>
           </button>
         </template>
       </div>
@@ -131,11 +128,12 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <?php endif; ?>
     <div class="grid sm:grid-cols-2 gap-5">
       <div>
-        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">New Password <span class="normal-case font-semibold text-pallav-300">(leave blank to keep current — 8+ chars, upper, lower, digit &amp; symbol)</span></label>
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">New Password</label>
         <div class="relative pw-field">
           <input type="password" name="password" class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
           <?= password_toggle_button() ?>
         </div>
+        <p class="text-[11px] font-semibold text-pallav-300 mt-1">Leave blank to keep current, 8+ chars, upper, lower, digit &amp; symbol</p>
       </div>
       <div>
         <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Confirm New Password</label>

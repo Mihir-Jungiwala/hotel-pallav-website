@@ -24,7 +24,7 @@
   var msg = document.getElementById('confirmModalMsg');
   var okBtn = document.getElementById('confirmModalOk');
   var cancelBtn = document.getElementById('confirmModalCancel');
-  var pendingEl = null, pendingType = null;
+  var pendingEl = null, pendingType = null, pendingCallback = null;
 
   function show(message, el, type){
     pendingEl = el; pendingType = type;
@@ -37,13 +37,14 @@
   function hide(){
     card.classList.add('scale-95', 'opacity-0');
     setTimeout(function(){ modal.classList.add('hidden'); modal.classList.remove('flex'); }, 150);
-    pendingEl = null; pendingType = null;
+    pendingEl = null; pendingType = null; pendingCallback = null;
   }
   okBtn.addEventListener('click', function(){
-    var el = pendingEl, type = pendingType;
+    var el = pendingEl, type = pendingType, callback = pendingCallback;
     hide();
     if (type === 'form' && el) el.submit();
     else if (type === 'link' && el) window.location.href = el.href;
+    else if (type === 'callback' && typeof callback === 'function') callback();
   });
   cancelBtn.addEventListener('click', hide);
   bg.addEventListener('click', hide);
@@ -63,6 +64,13 @@
       show(link.getAttribute('data-confirm'), link, 'link');
     }
   });
+
+  // For AJAX-driven buttons (not a real form submit or link) that still want the
+  // same confirm-before-proceeding UX: window.confirmAction(message, onConfirm).
+  window.confirmAction = function(message, onConfirm){
+    pendingCallback = onConfirm;
+    show(message, null, 'callback');
+  };
 })();
 </script>
 
@@ -88,7 +96,9 @@ document.addEventListener('click', function(e){
   function setDark(dark){
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     try { localStorage.setItem('admin_theme', dark ? 'dark' : 'light'); } catch (e) {}
+    document.querySelectorAll('.theme-label').forEach(function(el){ el.textContent = dark ? 'Dark Mode' : 'Light Mode'; });
   }
+  setDark(isDark());
   function toggle(){ setDark(!isDark()); }
   document.querySelectorAll('.theme-toggle').forEach(function(el){
     el.addEventListener('click', toggle);
@@ -120,6 +130,7 @@ document.addEventListener('click', function(e){
   }
   document.addEventListener('DOMContentLoaded', initRichText);
 </script>
+<script src="<?= e(APP_URL) ?>/assets/js/admin-pickers.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>
 </html>

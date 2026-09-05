@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
+require_role(['master_admin', 'admin', 'editor']);
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true) ?: [];

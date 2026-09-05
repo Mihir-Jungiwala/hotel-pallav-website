@@ -1,7 +1,7 @@
 <?php
 /**
  * Lazy-load endpoint for the full Google Business Profile review history.
- * Only used when admin/gbp-connect.php is connected — the homepage renders
+ * Only used when admin/gbp-connect.php is connected - the homepage renders
  * an initial batch server-side and the carousel calls here for the rest as
  * the visitor browses, instead of dumping hundreds of cards into the page.
  */

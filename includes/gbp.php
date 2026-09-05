@@ -7,10 +7,10 @@
  * restricted "Google My Business API v4" reviews.list endpoint, which
  * needs both:
  *  1) An OAuth app (Client ID/Secret) with the business.manage scope,
- *     authorized interactively by the Business Profile owner — see
+ *     authorized interactively by the Business Profile owner - see
  *     admin/gbp-connect.php.
  *  2) Google's approval of that Cloud project for My Business API access
- *     (developers.google.com/my-business/content/prereqs) — self-serve
+ *     (developers.google.com/my-business/content/prereqs) - self-serve
  *     Places-API-style enablement does NOT cover this endpoint.
  * Until both are in place, gbp_is_connected() returns false and callers
  * should keep using the Places API path.
@@ -137,13 +137,13 @@ function gbp_resolve_account_and_location(): array
 
     $accRes = gbp_http('GET', GBP_ACCOUNTS_API, $auth);
     if (!$accRes['ok'] || $accRes['status'] !== 200 || empty($accRes['body']['accounts'][0]['name'])) {
-        return ['ok' => false, 'error' => 'Could not list Business Profile accounts — ' . ($accRes['body']['error']['message'] ?? $accRes['status'])];
+        return ['ok' => false, 'error' => 'Could not list Business Profile accounts - ' . ($accRes['body']['error']['message'] ?? $accRes['status'])];
     }
     $accountName = $accRes['body']['accounts'][0]['name']; // e.g. "accounts/12345"
 
     $locRes = gbp_http('GET', GBP_LOCATIONS_API . '/' . $accountName . '/locations?readMask=name,title', $auth);
     if (!$locRes['ok'] || $locRes['status'] !== 200 || empty($locRes['body']['locations'])) {
-        return ['ok' => false, 'error' => 'Could not list locations — ' . ($locRes['body']['error']['message'] ?? $locRes['status'])];
+        return ['ok' => false, 'error' => 'Could not list locations - ' . ($locRes['body']['error']['message'] ?? $locRes['status'])];
     }
     $locationName = $locRes['body']['locations'][0]['name']; // e.g. "locations/67890"
 
@@ -182,7 +182,7 @@ function gbp_fetch_all_reviews(bool $forceRefresh = false): array
         if (!$res['ok'] || $res['status'] !== 200) {
             $msg = $res['body']['error']['message'] ?? ($res['error'] ?: 'HTTP ' . $res['status']);
             // 403 here almost always means the Cloud project hasn't been
-            // granted My Business API access yet — surface that plainly.
+            // granted My Business API access yet - surface that plainly.
             return ['ok' => false, 'error' => $msg, 'reviews' => $all];
         }
         foreach (($res['body']['reviews'] ?? []) as $r) {

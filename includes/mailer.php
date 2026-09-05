@@ -6,7 +6,7 @@
  *
  * All send functions are best-effort: they log failures via error_log and
  * return false rather than throwing, so a broken mail config never breaks
- * a booking/enquiry submission or a password reset.
+ * an enquiry submission or a password reset.
  */
 
 function smtp_is_configured(): bool
@@ -37,7 +37,7 @@ function smtp_send(string $toEmail, string $toName, string $subject, string $htm
     $address = ($useImplicitTls ? 'ssl://' : '') . $host;
     $sock = @stream_socket_client("{$address}:{$port}", $errno, $errstr, 15, STREAM_CLIENT_CONNECT);
     if (!$sock) {
-        error_log("SMTP connect failed to {$host}:{$port} — {$errstr} ({$errno})");
+        error_log("SMTP connect failed to {$host}:{$port} - {$errstr} ({$errno})");
         return false;
     }
     stream_set_timeout($sock, 15);
@@ -119,15 +119,65 @@ function smtp_expect($sock, $expectedCode): string
 
 /**
  * Wraps inner message HTML in a branded, table-based, mobile-responsive email shell
- * (purple Hotel Pallav header, white content card, footer) — table markup and inline
+ * (purple Hotel Pallav header, white content card, footer) - table markup and inline
  * styles throughout for email-client compatibility, no external image dependency.
  */
-function email_shell(string $heading, string $bodyHtml): string
+function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true): string
 {
     $s = get_settings();
-    $phone = e(phone_display($s['reception_phone'] ?? $s['gm_phone'] ?? ''));
-    $address = trim((string) ($s['address'] ?? '')) !== '' ? ' &middot; ' . e($s['address']) : '';
+    $hotel = e(APP_NAME);
     $year = date('Y');
+
+    // Everything in the header/footer comes from Settings, so updating the hotel's
+    // details in the admin panel updates every email - nothing here is hardcoded.
+    $receptionRaw = trim((string) ($s['reception_phone'] ?? $s['gm_phone'] ?? ''));
+    $phone = e(phone_display($receptionRaw));
+    $phoneHref = e(preg_replace('/[^0-9+]/', '', $receptionRaw));
+    $addressText = trim((string) ($s['address'] ?? ''));
+    $hotelEmail = trim((string) ($s['email'] ?? ''));
+    $since = (int) ($s['opened_year'] ?? 0);
+
+    $tagline = $since > 0
+        ? 'Rajkot &middot; Since ' . $since
+        : 'Rajkot';
+
+    // Logo if one has been uploaded in Settings, otherwise the wordmark on its own.
+    $logo = '';
+    if (!empty($s['logo_path'])) {
+        $logo = '<img src="' . e(UPLOADS_URL . '/' . $s['logo_path']) . '" width="54" height="54" alt="' . $hotel . '"'
+              . ' style="display:block;margin:0 auto 10px;width:54px;height:54px;border-radius:12px;object-fit:contain;background:#FFFFFF;padding:5px;">';
+    }
+
+    // Footer contact lines, each only rendered when the value actually exists.
+    $footerBits = [];
+    if ($addressText !== '') {
+        $footerBits[] = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:19px;color:#7A7392;padding-bottom:5px;">' . e($addressText) . '</div>';
+    }
+    $inline = [];
+    if ($receptionRaw !== '') {
+        $inline[] = '<a href="tel:' . $phoneHref . '" style="color:#6D28D9;text-decoration:none;font-weight:bold;">' . $phone . '</a>';
+    }
+    if ($hotelEmail !== '') {
+        $inline[] = '<a href="mailto:' . e($hotelEmail) . '" style="color:#6D28D9;text-decoration:none;font-weight:bold;">' . e($hotelEmail) . '</a>';
+    }
+    if ($inline) {
+        $footerBits[] = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:19px;color:#7A7392;padding-bottom:8px;">' . implode(' &nbsp;&middot;&nbsp; ', $inline) . '</div>';
+    }
+    $footerContact = implode('', $footerBits);
+
+    // "Call us if you need anything" only belongs on mail going to a guest - on a staff
+    // notification it would be the hotel inviting itself to phone itself.
+    $helpStrip = '';
+    if ($guestFacing && $receptionRaw !== '') {
+        $helpStrip = '<tr><td class="ep-pad" style="padding:8px 40px 32px;">'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F4FF;border-radius:12px;border-left:3px solid #8B5CF6;">'
+            . '<tr><td style="padding:16px 18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#7A7392;">'
+            . 'Need anything at all? Call the front desk on <a href="tel:' . $phoneHref . '" style="color:#5B21B6;text-decoration:none;font-weight:bold;">' . $phone . '</a> - we are happy to help.'
+            . '</td></tr></table></td></tr>';
+    } else {
+        // Keep the content block from sitting flush against the footer.
+        $helpStrip = '<tr><td style="height:26px;line-height:26px;font-size:0;">&nbsp;</td></tr>';
+    }
 
     return <<<HTML
 <!DOCTYPE html>
@@ -141,6 +191,15 @@ function email_shell(string $heading, string $bodyHtml): string
     .ep-wrap { width: 100% !important; }
     .ep-pad { padding-left: 20px !important; padding-right: 20px !important; }
     .ep-heading { font-size: 22px !important; line-height: 28px !important; }
+    /* Label above value instead of beside it - a 42% label column leaves too little
+       room for a room name or an email address on a narrow phone. */
+    .ep-cell { display: block !important; width: 100% !important; }
+    .ep-cell-l { padding-bottom: 2px !important; border-bottom: 0 !important; }
+    .ep-cell-v { padding-top: 0 !important; }
+    /* Check-in and check-out stack, so neither date has to wrap mid-word. */
+    .ep-half { display: block !important; width: 100% !important; padding: 14px 10px !important; }
+    .ep-mid  { display: block !important; width: 100% !important; padding: 0 0 10px !important; }
+    .ep-btn  { display: block !important; width: 100% !important; padding: 0 0 10px !important; }
   }
 </style>
 </head>
@@ -150,8 +209,9 @@ function email_shell(string $heading, string $bodyHtml): string
 <table role="presentation" class="ep-wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid #E9E2FA;">
 
 <tr><td style="background:#5B21B6;padding:26px 24px;text-align:center;">
-  <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:bold;color:#FFFFFF;letter-spacing:.5px;">Hotel Pallav</div>
-  <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:2px;color:#DDD3FA;text-transform:uppercase;margin-top:4px;">Rajkot &middot; Since Generations</div>
+  {$logo}
+  <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:bold;color:#FFFFFF;letter-spacing:.5px;">{$hotel}</div>
+  <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:2px;color:#DDD3FA;text-transform:uppercase;margin-top:4px;">{$tagline}</div>
 </td></tr>
 
 <tr><td class="ep-pad" style="padding:32px 40px 8px;">
@@ -161,16 +221,12 @@ function email_shell(string $heading, string $bodyHtml): string
   </div>
 </td></tr>
 
-<tr><td class="ep-pad" style="padding:8px 40px 32px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F4FF;border-radius:12px;border-left:3px solid #8B5CF6;">
-    <tr><td style="padding:16px 18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#7A7392;">
-      Need help? Call us on <b style="color:#5B21B6;">{$phone}</b>{$address}
-    </td></tr>
-  </table>
-</td></tr>
+{$helpStrip}
 
-<tr><td style="background-color:#FBF9FF;padding:20px 24px;text-align:center;border-top:1px solid #EFE9FE;">
-  <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#A79FC7;">&copy; {$year} Hotel Pallav. All rights reserved.</div>
+<tr><td style="background-color:#FBF9FF;padding:22px 24px;text-align:center;border-top:1px solid #EFE9FE;">
+  <div style="font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:bold;color:#5B21B6;padding-bottom:6px;">{$hotel}</div>
+  {$footerContact}
+  <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#A79FC7;">&copy; {$year} {$hotel}. All rights reserved.</div>
 </td></tr>
 
 </table>
@@ -179,6 +235,95 @@ function email_shell(string $heading, string $bodyHtml): string
 </body>
 </html>
 HTML;
+}
+
+/**
+ * A label/value details table - the standard way booking information is laid out in
+ * every guest email. Table markup with inline styles so it survives Outlook, and it
+ * reflows to full width on a phone via the .ep-wrap rule in the shell.
+ *
+ * $pairs is ['Label' => 'value', ...]; rows with an empty value are skipped, so a
+ * template never shows "Room: -" for an enquiry that didn't name one.
+ */
+function email_details_table(array $pairs): string
+{
+    $rows = '';
+    $i = 0;
+    foreach ($pairs as $label => $value) {
+        if (trim((string) $value) === '') continue;
+        $bg = $i % 2 === 0 ? '#FFFFFF' : '#FBF9FF';
+        $rows .= '<tr>'
+            . '<td class="ep-cell ep-cell-l" width="42%" style="width:42%;padding:12px 16px;background:' . $bg . ';border-bottom:1px solid #EFE9FE;'
+            . 'font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#7A7392;vertical-align:top;">'
+            . e($label) . '</td>'
+            . '<td class="ep-cell ep-cell-v" style="padding:12px 16px;background:' . $bg . ';border-bottom:1px solid #EFE9FE;'
+            . 'font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#1B1235;vertical-align:top;">'
+            . $value . '</td>'
+            . '</tr>';
+        $i++;
+    }
+    if ($rows === '') return '';
+
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"'
+        . ' style="width:100%;margin:20px 0;border:1px solid #E9E2FA;border-radius:12px;overflow:hidden;border-collapse:separate;">'
+        . $rows . '</table>';
+}
+
+/** The check-in / check-out pair, shown side by side as the centrepiece of a stay email. */
+function email_stay_band(string $checkIn, string $checkOut, string $nights, string $checkInTime, string $checkOutTime): string
+{
+    if ($checkIn === '' || $checkOut === '') return '';
+    $nightLabel = $nights !== '' ? $nights . ' night' . ($nights === '1' ? '' : 's') : '&nbsp;';
+    $inTime = $checkInTime !== '' ? 'from ' . e($checkInTime) : '';
+    $outTime = $checkOutTime !== '' ? 'by ' . e($checkOutTime) : '';
+
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:22px 0;background:#F7F4FF;border-radius:14px;">'
+        . '<tr>'
+        . '<td class="ep-half" width="44%" align="center" style="width:44%;padding:18px 10px;">'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#8B5CF6;padding-bottom:5px;">Check-in</div>'
+        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:19px;font-weight:bold;color:#4A1A8F;">' . e($checkIn) . '</div>'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A7392;padding-top:3px;">' . $inTime . '</div>'
+        . '</td>'
+        . '<td class="ep-mid" width="12%" align="center" style="width:12%;padding:18px 0;">'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#A886F7;letter-spacing:.5px;">' . $nightLabel . '</div>'
+        . '</td>'
+        . '<td class="ep-half" width="44%" align="center" style="width:44%;padding:18px 10px;">'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#8B5CF6;padding-bottom:5px;">Check-out</div>'
+        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:19px;font-weight:bold;color:#4A1A8F;">' . e($checkOut) . '</div>'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A7392;padding-top:3px;">' . $outTime . '</div>'
+        . '</td>'
+        . '</tr></table>';
+}
+
+/** Status pill (Confirmed / Declined / Received) shown under the heading. */
+function email_status_pill(string $text, string $bg, string $fg): string
+{
+    return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 4px;">'
+        . '<tr><td style="background:' . $bg . ';border-radius:999px;padding:7px 18px;'
+        . 'font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:' . $fg . ';">'
+        . e($text) . '</td></tr></table>';
+}
+
+/** Call / WhatsApp buttons so a guest can reach the hotel straight from the email. */
+function email_contact_buttons(): string
+{
+    $s = get_settings();
+    $tel = preg_replace('/[^0-9+]/', '', (string) ($s['reception_phone'] ?? $s['gm_phone'] ?? ''));
+    $wa = preg_replace('/[^0-9]/', '', (string) ($s['reception_whatsapp'] ?? $s['whatsapp'] ?? ''));
+    if ($tel === '' && $wa === '') return '';
+
+    $cells = '';
+    if ($tel !== '') {
+        $cells .= '<td class="ep-btn" align="center" style="padding:0 5px;">'
+            . '<a href="tel:' . e($tel) . '" style="display:inline-block;background:#5B21B6;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:14px;font-weight:bold;text-decoration:none;padding:13px 26px;border-radius:10px;">Call the hotel</a></td>';
+    }
+    if ($wa !== '') {
+        $cells .= '<td class="ep-btn" align="center" style="padding:0 5px;">'
+            . '<a href="https://wa.me/' . e($wa) . '" style="display:inline-block;background:#FFFFFF;color:#5B21B6;border:2px solid #DFD3FD;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:14px;font-weight:bold;text-decoration:none;padding:11px 26px;border-radius:10px;">WhatsApp us</a></td>';
+    }
+    return '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:24px auto 6px;"><tr>' . $cells . '</tr></table>';
 }
 
 /** One of the 2x2 "For Your Security" feature cards on the password-reset email. */
@@ -193,7 +338,7 @@ function password_reset_security_card(string $emoji, string $title, string $text
         . '</td></tr></table></td>';
 }
 
-/** Password reset link — sent to the admin whose account it is. */
+/** Password reset link - sent to the admin whose account it is. */
 function mail_password_reset(string $toEmail, string $toName, string $resetLink): bool
 {
     $firstName = e(explode(' ', $toName)[0] ?: 'there');
@@ -232,49 +377,58 @@ function mail_password_reset(string $toEmail, string $toName, string $resetLink)
     return smtp_send($toEmail, $toName ?: 'Admin', APP_NAME . ' - Forgot Password', $html);
 }
 
-/** Built-in fallback content for each editable email template — used whenever a row hasn't been customized yet. */
+/** Built-in fallback content for each editable email template - used whenever a row hasn't been customized yet. */
 const EMAIL_TEMPLATE_DEFAULTS = [
-    'booking_received' => [
-        'subject' => 'Your Booking Request - {{reference}}',
-        'body' => "<p>Hi {{guest_name}},</p>\n<p>Thank you for your booking request at {{hotel_name}}. Here are the details:</p>\n<ul>\n<li><b>Reference:</b> {{reference}}</li>\n<li><b>Room:</b> {{room_name}}</li>\n<li><b>Check-in:</b> {{check_in}}</li>\n<li><b>Check-out:</b> {{check_out}}</li>\n<li><b>Guests:</b> {{guests}}</li>\n</ul>\n<p>This is a <b>request</b>, not a confirmed booking yet, our team will call you shortly on {{guest_phone}} to confirm availability and finalize your stay.</p>\n<p>Any questions, call us on {{reception_phone}}.</p>",
-    ],
-    'booking_approved' => [
-        'subject' => 'Your Booking is Confirmed - {{reference}}',
-        'body' => "<p>Hi {{guest_name}},</p>\n<p>Great news, your booking request has been <b>confirmed</b>!</p>\n<ul>\n<li><b>Reference:</b> {{reference}}</li>\n<li><b>Room:</b> {{room_name}}</li>\n<li><b>Check-in:</b> {{check_in}}</li>\n<li><b>Check-out:</b> {{check_out}}</li>\n<li><b>Guests:</b> {{guests}}</li>\n</ul>\n<p>We look forward to welcoming you at {{hotel_name}}. Call us on {{reception_phone}} if you need anything before your stay.</p>",
-    ],
-    'booking_declined' => [
-        'subject' => 'About Your Booking Request - {{reference}}',
-        'body' => "<p>Hi {{guest_name}},</p>\n<p>We're sorry, we're unable to confirm your booking request ({{reference}}) for {{check_in}} to {{check_out}}.</p>\n<p>{{decision_note}}</p>\n<p>Please call us on {{reception_phone}} and our team will help you find alternative dates or options.</p>",
-    ],
+    // Guest-facing. Warm, specific, and honest that nothing is reserved yet.
     'enquiry_received' => [
-        'subject' => "We've received your enquiry",
-        'body' => "<p>Hi {{guest_name}},</p>\n<p>Thank you for reaching out to {{hotel_name}}. We've received your message and our team will call you back shortly.</p>\n<p><b>Your message:</b> {{message}}</p>\n<p>Any urgent questions, call us on {{reception_phone}}.</p>",
+        'subject' => 'We have your enquiry - {{reference}}',
+        'body' => "<p style=\"margin:0 0 14px;\">Dear {{guest_first_name}},</p>\n"
+            . "<p style=\"margin:0 0 4px;\">Thank you for thinking of {{hotel_name}} for your stay in Rajkot. We have your enquiry and our front desk is checking availability for your dates now.</p>\n"
+            . "{{stay_band}}\n"
+            . "{{details_table}}\n"
+            . "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;margin:4px 0 6px;background:#FFFBEB;border-left:3px solid #C9A227;border-radius:10px;\">"
+            . "<tr><td style=\"padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#7A5B12;\">"
+            . "<b>Please note:</b> this is an enquiry, not a confirmed booking. Your room is held only once we have spoken with you and confirmed it."
+            . "</td></tr></table>\n"
+            . "<p style=\"margin:16px 0 0;\">We will call you on <b>{{guest_phone}}</b> shortly to confirm availability and settle the details. If you would rather reach us first, we are always glad to hear from you.</p>\n"
+            . "{{contact_buttons}}\n"
+            . "<p style=\"margin:18px 0 0;\">We look forward to welcoming you.</p>\n"
+            . "<p style=\"margin:6px 0 0;color:#7A7392;\">Warm regards,<br><b style=\"color:#5B21B6;\">The team at {{hotel_name}}</b></p>",
     ],
+
+    // Staff-facing: sent to the notification addresses when an enquiry is confirmed.
     'enquiry_confirmed' => [
-        'subject' => 'Following up on your enquiry',
-        'body' => "<p>Hi {{guest_name}},</p>\n<p>Thanks for your patience, we're happy to confirm the details of your enquiry.</p>\n<p>{{message}}</p>\n<p>Call us on {{reception_phone}} for anything else.</p>",
+        'subject' => 'Booking confirmed - {{reference}}',
+        'body' => "{{pill_confirmed}}\n"
+            . "<p style=\"margin:0 0 4px;\"><b>{{guest_name}}</b> is now confirmed as a booking. The room has been taken out of availability for these dates.</p>\n"
+            . "{{stay_band}}\n"
+            . "{{staff_table}}",
     ],
+
+    // Staff-facing: sent to the notification addresses when an enquiry is declined.
     'enquiry_declined' => [
-        'subject' => 'About your enquiry',
-        'body' => "<p>Hi {{guest_name}},</p>\n<p>Thank you for your interest in {{hotel_name}}. Unfortunately we're unable to help with this particular request.</p>\n<p>Please call us on {{reception_phone}} if you'd like to discuss other options.</p>",
+        'subject' => 'Enquiry declined - {{reference}}',
+        'body' => "{{pill_declined}}\n"
+            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has been declined. No room is held for these dates.</p>\n"
+            . "{{stay_band}}\n"
+            . "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;margin:18px 0 4px;background:#FEF2F2;border-left:3px solid #EF4444;border-radius:10px;\">"
+            . "<tr><td style=\"padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#991B1B;\">"
+            . "<b>Reason given:</b> {{decision_note}}"
+            . "</td></tr></table>\n"
+            . "{{staff_table}}",
     ],
 ];
 
-/** Human-readable labels, shown on the Email Templates admin page. */
+/** Human-readable labels for each fixed template key. */
 const EMAIL_TEMPLATE_LABELS = [
-    'booking_received' => 'Booking Received',
-    'booking_approved' => 'Booking Approved',
-    'booking_declined' => 'Booking Declined',
     'enquiry_received' => 'Enquiry Received',
-    'enquiry_confirmed' => 'Enquiry Confirmed',
+    'enquiry_confirmed' => 'Booking Confirmed',
     'enquiry_declined' => 'Enquiry Declined',
 ];
 
-/** The saved (or default, if never customized) subject/body for one template key. */
+/** Fixed subject/body for one template key - not admin-editable. */
 function email_template(string $key): array
 {
-    $row = db_one('SELECT subject, body FROM email_templates WHERE template_key = ?', [$key]);
-    if ($row) return $row;
     return EMAIL_TEMPLATE_DEFAULTS[$key] ?? ['subject' => '', 'body' => ''];
 }
 
@@ -290,10 +444,21 @@ function render_email_template(string $key, array $vars): array
     ];
 }
 
+/** Splits Settings' notify_email (one address per line, or comma-separated) into a clean list. */
+function notify_email_list(): array
+{
+    $s = get_settings();
+    $raw = $s['notify_email'] ?? $s['email'] ?? '';
+    $emails = preg_split('/[\r\n,]+/', (string) $raw);
+    $emails = array_filter(array_map('trim', $emails), fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL));
+    return array_values(array_unique($emails));
+}
+
 /**
  * Sends a rendered template to the guest (if an email was given) and always sends a copy
- * to the hotel's notify address from Settings, so every guest-facing email is also seen
- * by the team. $ownerExtraHtml (e.g. an admin-panel link) is appended only to that copy.
+ * to every notification address configured in Settings, so every guest-facing email is
+ * also seen by the team. $ownerExtraHtml (e.g. an admin-panel link) is appended only to
+ * those copies.
  */
 function send_templated_mail(string $key, string $toEmail, string $toName, array $vars, ?string $ownerExtraHtml = null): bool
 {
@@ -303,42 +468,110 @@ function send_templated_mail(string $key, string $toEmail, string $toName, array
     $html = email_shell($heading, $rendered['body']);
     $sent = $toEmail !== '' ? smtp_send($toEmail, $toName ?: 'Guest', $subject, $html) : true;
 
-    $s = get_settings();
-    $notifyTo = $s['notify_email'] ?? $s['email'] ?? null;
-    if ($notifyTo) {
-        $ownerBody = email_shell($heading, $rendered['body'] . ($ownerExtraHtml ?? ''));
+    $ownerBody = email_shell($heading, $rendered['body'] . ($ownerExtraHtml ?? ''), false);
+    foreach (notify_email_list() as $notifyTo) {
         smtp_send($notifyTo, APP_NAME . ' Admin', $subject, $ownerBody, $toEmail !== '' ? $toEmail : null);
     }
     return $sent;
 }
 
-/** Placeholder values available to the booking_* templates. */
-function booking_email_vars(array $booking, ?array $room = null): array
+/**
+ * Sends a rendered template only to the Settings notification list - never to the guest.
+ * Used for status-change events (confirmed/declined) after the guest has already gotten
+ * their one "we've received this" email, so they aren't emailed again on every update.
+ */
+function send_admin_notification(string $key, array $vars, ?string $ownerExtraHtml = null): void
 {
-    $s = get_settings();
-    return [
-        'guest_name' => e($booking['guest_name']),
-        'reference' => e($booking['reference']),
-        'room_name' => e($room['name'] ?? 'a room'),
-        'check_in' => date('d M Y', strtotime($booking['check_in'])),
-        'check_out' => date('d M Y', strtotime($booking['check_out'])),
-        'guests' => e((string) $booking['guests']),
-        'guest_phone' => e(phone_display($booking['guest_phone'] ?? '')),
-        'message' => nl2br(e($booking['message'] ?? '')),
-        'decision_note' => $booking['decision_note'] ? e($booking['decision_note']) : '',
-        'hotel_name' => e(APP_NAME),
-        'reception_phone' => e(phone_display($s['reception_phone'] ?? '')),
-    ];
+    $rendered = render_email_template($key, $vars);
+    $heading = EMAIL_TEMPLATE_LABELS[$key] ?? APP_NAME;
+    $subject = APP_NAME . ' - ' . $rendered['subject'];
+    $html = email_shell($heading, $rendered['body'] . ($ownerExtraHtml ?? ''), false);
+    foreach (notify_email_list() as $notifyTo) {
+        smtp_send($notifyTo, APP_NAME . ' Admin', $subject, $html);
+    }
 }
 
-/** Placeholder values available to the enquiry_* templates. */
-function enquiry_email_vars(array $enquiry): array
+/**
+ * Placeholder values available to the enquiry_* templates.
+ *
+ * Everything the hotel side of these emails says - name, address, phone numbers,
+ * check-in/check-out times - is read from Settings, so changing a detail in the admin
+ * panel changes every email the system sends. The pre-built {{details_table}},
+ * {{stay_band}} and {{contact_buttons}} blocks keep the templates readable while still
+ * producing the full table-based layout.
+ */
+function enquiry_email_vars(array $enquiry, ?array $room = null): array
 {
     $s = get_settings();
+
+    // d/m/Y throughout, matching every date shown in the admin panel and on the site.
+    $checkIn = $enquiry['check_in'] ? date('d/m/Y', strtotime($enquiry['check_in'])) : '';
+    $checkOut = $enquiry['check_out'] ? date('d/m/Y', strtotime($enquiry['check_out'])) : '';
+    $nights = '';
+    if ($enquiry['check_in'] && $enquiry['check_out']) {
+        $count = count(stay_nights($enquiry['check_in'], $enquiry['check_out']));
+        if ($count > 0) $nights = (string) $count;
+    }
+
+    $firstName = trim(explode(' ', trim((string) $enquiry['name']))[0] ?? '');
+    $guestPhoneRaw = (string) ($enquiry['phone'] ?? '');
+    $guestPhone = $guestPhoneRaw !== '' ? phone_display($guestPhoneRaw) : '';
+    $guestEmail = trim((string) ($enquiry['email'] ?? ''));
+    $roomName = $room['name'] ?? '';
+    $guests = (string) ($enquiry['guests'] ?? '');
+    $checkInTime = trim((string) ($s['checkin_time'] ?? ''));
+    $checkOutTime = trim((string) ($s['checkout_time'] ?? ''));
+    $message = trim((string) ($enquiry['message'] ?? ''));
+
+    // Guest-facing summary: the stay itself, without repeating their own contact details.
+    $detailsTable = email_details_table([
+        'Reference' => e($enquiry['reference'] ?? ''),
+        'Room' => $roomName !== '' ? e($roomName) : '',
+        'Guests' => $guests !== '' ? e($guests) : '',
+        'Nights' => $nights,
+    ]);
+
+    // Staff-facing summary: who to contact and what they asked for. The dates aren't
+    // repeated here - the stay band above already shows them.
+    $staffTable = email_details_table([
+        'Reference' => e($enquiry['reference'] ?? ''),
+        'Guest' => e((string) $enquiry['name']),
+        'Phone' => $guestPhone !== '' ? '<a href="tel:' . e(preg_replace('/[^0-9+]/', '', $guestPhoneRaw)) . '" style="color:#6D28D9;text-decoration:none;">' . e($guestPhone) . '</a>' : '',
+        'Email' => $guestEmail !== '' ? '<a href="mailto:' . e($guestEmail) . '" style="color:#6D28D9;text-decoration:none;">' . e($guestEmail) . '</a>' : '',
+        'Room' => $roomName !== '' ? e($roomName) : '',
+        'Guests' => $guests !== '' ? e($guests) : '',
+        'Message' => $message !== '' ? nl2br(e($message)) : '',
+    ]);
+
     return [
-        'guest_name' => e($enquiry['name']),
-        'message' => nl2br(e($enquiry['message'])),
+        'guest_name' => e((string) $enquiry['name']),
+        'guest_first_name' => e($firstName !== '' ? $firstName : 'there'),
+        'reference' => e($enquiry['reference'] ?? ''),
+        'room_name' => e($roomName !== '' ? $roomName : 'a room'),
+        'check_in' => $checkIn,
+        'check_out' => $checkOut,
+        'nights' => $nights,
+        'guests' => e($guests),
+        'guest_phone' => e($guestPhone),
+        'guest_email' => e($guestEmail),
+        'message' => nl2br(e($message)),
+        'decision_note' => $enquiry['decision_note'] ?? null ? e($enquiry['decision_note']) : '',
+
+        // From the admin panel
         'hotel_name' => e(APP_NAME),
+        'hotel_address' => e((string) ($s['address'] ?? '')),
+        'hotel_email' => e((string) ($s['email'] ?? '')),
         'reception_phone' => e(phone_display($s['reception_phone'] ?? '')),
+        'checkin_time' => e($checkInTime),
+        'checkout_time' => e($checkOutTime),
+
+        // Pre-rendered layout blocks
+        'details_table' => $detailsTable,
+        'staff_table' => $staffTable,
+        'stay_band' => email_stay_band($checkIn, $checkOut, $nights, $checkInTime, $checkOutTime),
+        'contact_buttons' => email_contact_buttons(),
+        'pill_received' => email_status_pill('Enquiry received', '#EFE9FE', '#5B21B6'),
+        'pill_confirmed' => email_status_pill('Confirmed', '#DCFCE7', '#15803D'),
+        'pill_declined' => email_status_pill('Not available', '#FEE2E2', '#B91C1C'),
     ];
 }
