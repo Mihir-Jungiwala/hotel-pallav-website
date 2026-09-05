@@ -188,7 +188,9 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<!-- Tiro Devanagari Hindi is the Devanagari in the brand mark SVG (includes/brand-mark.php).
+     Regular only - the mark uses no italic, and the original request loaded both. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&family=Tiro+Devanagari+Hindi&display=swap">
 <link rel="stylesheet" href="<?= e(APP_URL) ?>/assets/css/site.css">
 <script>window.SITE = <?= json_encode([
   'gmDigits' => $gmDigits, 'rcDigits' => $rcDigits, 'openedYear' => (int) ($settings['opened_year'] ?? 2002),
@@ -725,7 +727,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <div class="head mid rv">
       <span class="kicker"><i></i> Find Us <i></i></span>
       <h2 id="h-location">Easy to reach, <em>easy to leave</em></h2>
-      <p>On Kalavad Road - minutes from the city's landmarks, with the station, bus stand and airport all an easy drive away.</p>
+      <p>On Kalavad Road, in Rajkot's commercial belt at KKV Chowk - with the railway station, bus stand and airport all an easy drive away.</p>
     </div>
     <div class="loc">
       <div class="loc-card rv-l">
