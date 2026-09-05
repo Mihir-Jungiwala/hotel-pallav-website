@@ -68,6 +68,21 @@ $me = current_user();
   .admin-fade-in{ animation:adminFadeIn .45s cubic-bezier(.22,.9,.28,1) backwards; }
   @media (prefers-reduced-motion:reduce){ .admin-fade-in{ animation:none; } }
 
+  /* Briefly marks the exact card a "Go to record" link (from the Activity Log) landed
+     on, since scrolling it into view alone doesn't tell you which of several similar
+     cards it actually is. */
+  @keyframes adminHighlightPulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(139,92,246,0); }
+    15%,55%{ box-shadow:0 0 0 4px rgba(139,92,246,.45); }
+  }
+  .admin-highlight{ animation:adminHighlightPulse 1.6s ease-out 2; border-radius:16px; }
+  html[data-theme="dark"] .admin-highlight{ animation-name:adminHighlightPulseDark; }
+  @keyframes adminHighlightPulseDark{
+    0%,100%{ box-shadow:0 0 0 0 rgba(168,134,247,0); }
+    15%,55%{ box-shadow:0 0 0 4px rgba(168,134,247,.55); }
+  }
+  @media (prefers-reduced-motion:reduce){ .admin-highlight{ animation:none; box-shadow:0 0 0 3px rgba(139,92,246,.5); } }
+
   /* ===== Dark mode ===== */
   /* The custom dropdown (.sel) and date-picker (.dp) widgets in
      admin-tailwind-config.php are built entirely on these CSS variables, not

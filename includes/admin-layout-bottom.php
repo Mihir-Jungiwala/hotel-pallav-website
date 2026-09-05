@@ -130,6 +130,28 @@ document.addEventListener('click', function(e){
   }
   document.addEventListener('DOMContentLoaded', initRichText);
 </script>
+
+<script>
+/* Landing on the exact record a "Go to record" link (Activity Log) points to.
+   Rooms and users have their own edit page (?id=...) and need nothing further, but
+   services/policies/gallery/pricing are all cards on one long list page - a link to
+   the page alone would land at the top and leave the admin to search for the item
+   themselves. ?highlight=<id> matches the card's existing data-id attribute, scrolls
+   it into view and pulses it, then the param is stripped so a refresh doesn't repeat it. */
+(function(){
+  var id = new URLSearchParams(location.search).get('highlight');
+  if (!id) return;
+  var target = document.querySelector('[data-id="' + CSS.escape(id) + '"]');
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('admin-highlight');
+    setTimeout(function(){ target.classList.remove('admin-highlight'); }, 3300);
+  }
+  var url = new URL(location.href);
+  url.searchParams.delete('highlight');
+  history.replaceState(null, '', url);
+})();
+</script>
 <script src="<?= e(APP_URL) ?>/assets/js/admin-pickers.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>

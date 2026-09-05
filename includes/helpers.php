@@ -306,6 +306,22 @@ function picture_tag(string $path, string $imgAttrs): string
     return '<picture><source srcset="' . e(UPLOADS_URL . '/' . $webpRel) . '" type="image/webp">' . $img . '</picture>';
 }
 
+/**
+ * Keeps a copyright year current without the admin having to remember to update it
+ * every January. footer_credit is free-text the admin can edit to say anything, so
+ * rather than hardcoding "© {year}" in the template (which would stop it being
+ * editable at all), the year typed into that text is swapped for the real current
+ * year at render time - only the digits right after the © symbol, so a founder's
+ * year mentioned anywhere else in the line is left alone.
+ */
+function auto_copyright_year(string $html): string
+{
+    // ${1} (not $1) is required here - concatenating the year directly onto $1 would
+    // make PCRE read the backreference as "$1" followed by all four digits of the
+    // year, i.e. group "12026", which doesn't exist and replaces with nothing.
+    return preg_replace('/(©\s*)\d{4}/u', '${1}' . date('Y'), $html, 1) ?? $html;
+}
+
 /** Stand-in shown where a secret input would be, for roles that can't view secrets.
  *  Reports only whether a value exists - never the value itself, and never inside a
  *  form field, so there is nothing to read back out of the page source. */

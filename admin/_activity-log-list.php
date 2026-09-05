@@ -20,7 +20,7 @@
         <tbody>
           <?php foreach ($logs as $log):
             [$badgeClass, $badgeLabel] = activity_badge($log['action']);
-            $subjectUrl = activity_subject_url($log['subject_type']);
+            $subjectUrl = activity_subject_url($log['action'], $log['subject_type'], $log['subject_id'] !== null ? (int) $log['subject_id'] : null, $log['description']);
             $userName = $log['user_name'] ?? 'System';
           ?>
           <tr class="border-b border-pallav-50 last:border-0 hover:bg-pallav-50/40 transition-colors">
@@ -38,7 +38,7 @@
             <td class="px-6 py-3.5 text-pallav-700 text-left"><?= e($log['description']) ?></td>
             <td class="px-6 py-3.5 text-center whitespace-nowrap">
               <?php if ($subjectUrl): ?>
-                <a href="<?= e(APP_URL) ?>/<?= e($subjectUrl) ?>" class="inline-flex text-xs font-bold text-pallav-700 bg-pallav-50 hover:bg-pallav-100 rounded-lg px-3 py-1.5 transition hover:-translate-y-0.5">View</a>
+                <a href="<?= e(APP_URL) ?>/<?= e($subjectUrl) ?>" class="icon-btn bg-pallav-100 hover:bg-pallav-200 text-pallav-700" title="Go to this record" aria-label="Go to this record"><?= ICON_ARROW ?></a>
               <?php endif; ?>
             </td>
           </tr>
@@ -52,7 +52,7 @@
   <div class="sm:hidden space-y-3">
     <?php foreach ($logs as $log):
       [$badgeClass, $badgeLabel] = activity_badge($log['action']);
-      $subjectUrl = activity_subject_url($log['subject_type']);
+      $subjectUrl = activity_subject_url($log['action'], $log['subject_type'], $log['subject_id'] !== null ? (int) $log['subject_id'] : null, $log['description']);
       $userName = $log['user_name'] ?? 'System';
     ?>
     <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-4">
@@ -68,7 +68,7 @@
       </div>
       <p class="text-sm text-pallav-700 leading-relaxed"><?= e($log['description']) ?></p>
       <?php if ($subjectUrl): ?>
-        <a href="<?= e(APP_URL) ?>/<?= e($subjectUrl) ?>" class="inline-flex mt-2.5 text-xs font-bold text-pallav-700 bg-pallav-50 hover:bg-pallav-100 rounded-lg px-3 py-1.5 transition hover:-translate-y-0.5">View Subject</a>
+        <a href="<?= e(APP_URL) ?>/<?= e($subjectUrl) ?>" class="inline-flex items-center gap-1.5 mt-2.5 text-xs font-bold text-pallav-700 bg-pallav-50 hover:bg-pallav-100 rounded-lg px-3 py-1.5 transition hover:-translate-y-0.5">Go to record <?= ICON_ARROW ?></a>
       <?php endif; ?>
     </div>
     <?php endforeach; ?>

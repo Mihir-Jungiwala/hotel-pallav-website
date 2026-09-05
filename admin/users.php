@@ -32,7 +32,10 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         ob_start();
         ?>
         <a href="<?= e(APP_URL) ?>/admin/user-edit.php?id=<?= $u['id'] ?>" title="Edit" aria-label="Edit" class="icon-btn bg-pallav-100 hover:bg-pallav-200 text-pallav-700"><?= ICON_EDIT ?></a>
-        <?php if (is_master_admin() && !$isMaster): ?>
+        <?php // Only an Admin-role account can be handed the Master Admin crown - an Editor
+        // or Viewer would otherwise gain full control by a single click from the Master
+        // Admin, skipping the normal Admin promotion step entirely. ?>
+        <?php if (is_master_admin() && !$isMaster && $u['role'] === 'admin'): ?>
         <form method="POST" action="<?= e(APP_URL) ?>/admin/user-transfer-master.php" data-confirm="Make <?= e($u['name']) ?> the Master Admin? You will become a regular Admin.">
           <?= csrf_field() ?><input type="hidden" name="id" value="<?= $u['id'] ?>">
           <button title="Make Master" aria-label="Make Master" class="icon-btn bg-gold-50 hover:bg-gold-100 text-gold-700"><?= ICON_CROWN ?></button>
@@ -74,11 +77,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             if ($canDelete && $u['role'] === 'admin' && $adminTierCount <= 1) $canDelete = false;
           ?>
           <tr class="border-b border-pallav-50 last:border-0 hover:bg-pallav-50/40 text-center">
-            <td class="px-6 py-3.5 font-semibold text-pallav-900 text-left"><?= e($u['name']) ?> <?php if ($isMe): ?><span class="text-xs text-pallav-400 font-normal">(you)</span><?php endif; ?></td>
-            <td class="px-6 py-3.5 text-pallav-600">@<?= e($u['username']) ?></td>
-            <td class="px-6 py-3.5"><span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide <?= $roleBadge[$u['role']] ?? 'bg-pallav-50 text-pallav-500' ?>"><?= e(USER_ROLE_LABELS[$u['role']] ?? $u['role']) ?></span></td>
-            <td class="px-6 py-3.5 text-pallav-600 text-left"><?= e($u['email']) ?></td>
-            <td class="px-6 py-3.5 text-pallav-500"><?= date('d M Y', strtotime($u['created_at'])) ?></td>
+            <td class="px-6 py-3.5 font-semibold text-pallav-900 text-left whitespace-nowrap"><?= e($u['name']) ?> <?php if ($isMe): ?><span class="text-xs text-pallav-400 font-normal">(you)</span><?php endif; ?></td>
+            <td class="px-6 py-3.5 text-pallav-600 whitespace-nowrap">@<?= e($u['username']) ?></td>
+            <td class="px-6 py-3.5 whitespace-nowrap"><span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide <?= $roleBadge[$u['role']] ?? 'bg-pallav-50 text-pallav-500' ?>"><?= e(USER_ROLE_LABELS[$u['role']] ?? $u['role']) ?></span></td>
+            <td class="px-6 py-3.5 text-pallav-600 text-left whitespace-nowrap"><?= e($u['email']) ?></td>
+            <td class="px-6 py-3.5 text-pallav-500 whitespace-nowrap"><?= date('d M Y', strtotime($u['created_at'])) ?></td>
             <td class="px-6 py-3.5">
               <div class="flex justify-center gap-2 flex-wrap"><?= $userActionsHtml($u, $isMaster, $isMe, $canDelete) ?></div>
             </td>

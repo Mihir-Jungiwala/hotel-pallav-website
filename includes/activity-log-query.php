@@ -50,17 +50,36 @@ function activity_badge(string $action): array
     };
 }
 
-/** Where a subject links to, if there's somewhere sensible to send the admin. */
-function activity_subject_url(?string $type): ?string
+/**
+ * Where a subject links to, if there's somewhere sensible to send the admin - and
+ * always the exact record, not just the top of its list page. Enquiries deep-link via
+ * their reference (extracted from the log description, since the enquiry itself may
+ * since have changed status); rooms and users have their own edit pages; everything
+ * else is a card on a list page, so it links there with ?highlight=<id> for the
+ * shared highlight-and-scroll script in admin-layout-bottom.php to find and reveal.
+ *
+ * Returns null - no "View" link at all - once the record itself has been deleted,
+ * since there is nowhere left to send the admin.
+ */
+function activity_subject_url(string $action, ?string $type, ?int $id, string $description): ?string
 {
+    if ($type === null || $id === null) return null;
+    $verb = substr($action, strrpos($action, '.') + 1);
+    if (str_contains($verb, 'delet')) return null;
+
+    if ($type === 'enquiry') {
+        return preg_match('/\bHP-[A-Za-z0-9-]+\b/', $description, $m)
+            ? 'admin/bookings.php?filter=all&q=' . urlencode($m[0])
+            : 'admin/bookings.php';
+    }
+
     return match ($type) {
-        'booking' => 'admin/bookings.php',
-        'enquiry' => 'admin/bookings.php?filter=enquiry',
-        'room' => 'admin/rooms.php',
-        'user' => 'admin/users.php',
-        'policy_card' => 'admin/policies.php',
-        'gallery_photo' => 'admin/gallery.php',
-        'rate_plan' => 'admin/pricing.php',
+        'user' => 'admin/user-edit.php?id=' . $id,
+        'room' => 'admin/room-edit.php?id=' . $id,
+        'service' => 'admin/services.php?highlight=' . $id,
+        'policy_card' => 'admin/policies.php?highlight=' . $id,
+        'gallery_photo' => 'admin/gallery.php?highlight=' . $id,
+        'rate_plan' => 'admin/pricing.php?highlight=' . $id,
         default => null,
     };
 }

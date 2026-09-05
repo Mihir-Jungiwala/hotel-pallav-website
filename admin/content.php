@@ -13,7 +13,16 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <p class="text-sm text-pallav-500 mt-1">Edit the actual wording on the homepage - hero, about, enquiry section and footer.</p>
   </div>
 
-  <form method="POST" action="<?= e(APP_URL) ?>/admin/content-save.php" enctype="multipart/form-data" x-data="{ tab: 'hero' }">
+  <?php
+  // Saving submits this form as a real POST, so the browser leaves the page and comes
+  // back - Alpine's in-memory `tab` state doesn't survive that round trip on its own,
+  // which is why every save used to land back on Hero. Remembering the tab in
+  // sessionStorage (cleared when the tab closes, unlike localStorage) means the
+  // reload after a save reopens on whichever section was actually being edited.
+  ?>
+  <form method="POST" action="<?= e(APP_URL) ?>/admin/content-save.php" enctype="multipart/form-data"
+        x-data="{ tab: sessionStorage.getItem('contentTab') || 'hero' }"
+        x-init="$watch('tab', v => sessionStorage.setItem('contentTab', v))">
     <?= csrf_field() ?>
 
     <div class="flex gap-1.5 bg-white rounded-xl ring-1 ring-pallav-100 p-1.5 mb-6 overflow-x-auto no-scrollbar max-w-full">

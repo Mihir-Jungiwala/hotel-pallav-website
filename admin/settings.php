@@ -96,11 +96,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GM WhatsApp Number</label>
-          <input type="text" name="whatsapp" value="<?= e($settings['whatsapp'] ?: '+91 ') ?>" placeholder="919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <input type="text" name="whatsapp" value="<?= e($settings['whatsapp'] ?: '+91 ') ?>" placeholder="+919825735404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Reception WhatsApp Number</label>
-          <input type="text" name="reception_whatsapp" value="<?= e($settings['reception_whatsapp'] ?: '+91 ') ?>" placeholder="917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <input type="text" name="reception_whatsapp" value="<?= e($settings['reception_whatsapp'] ?: '+91 ') ?>" placeholder="+917043535404" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Business Profile Link</label>
