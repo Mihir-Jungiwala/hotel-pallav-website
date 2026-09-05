@@ -24,6 +24,16 @@ th{ text-align:center!important; }
 *{ -webkit-tap-highlight-color:transparent; }
 html,body{ -webkit-tap-highlight-color:transparent; }
 
+/* Same fix as assets/css/site.css's html{} rule on the public site: `overflow-x:hidden`
+   on <body> alone doesn't reliably stop horizontal scroll on mobile - the layout
+   viewport can still expand past 100vw (most visible after a manual browser zoom-out,
+   which is when a page normally hidden by the viewport edge becomes visible as a
+   stray sliver/border), unless <html> itself is width-constrained too. Applies here
+   to both the guest auth pages (login/forgot-password/reset-password, which have
+   negative-offset decorative blur circles right on <body> with no clipping wrapper
+   of their own) and the main admin panel. */
+html{ width:100%; max-width:100vw; overflow-x:hidden; }
+
 /* Rate/inventory calendar cells: the native number spin-buttons only reserve
    layout space on hover/focus, which shifts the centered text left exactly
    while an admin is interacting with the cell. Removing them keeps the number
