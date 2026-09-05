@@ -178,9 +178,10 @@ $me = current_user();
      clickable things actually move.
      ========================================================================= */
 
-  /* Panels - depth on approach, never displacement. */
-  .rounded-2xl.bg-white{ transition:box-shadow .28s var(--admin-ease,cubic-bezier(.22,.9,.28,1)), border-color .28s ease, transform .28s var(--admin-ease,cubic-bezier(.22,.9,.28,1)); }
-  .rounded-2xl.bg-white:hover{ box-shadow:0 10px 30px rgba(74,26,143,.10), 0 2px 8px rgba(74,26,143,.05); }
+  /* Panels deliberately have no hover state. A lifted shadow was tried and removed:
+     the spread reads as a halo on neighbouring cards - badly so on a dark ground,
+     where it looks like the card you are not pointing at is the one reacting. Panels
+     are containers, not controls; only the things you can actually click respond. */
 
   /* Buttons and links styled as buttons: a small press response so a click
      always feels acknowledged even before the page responds. */
@@ -205,12 +206,8 @@ $me = current_user();
   .admin-fade-in:nth-of-type(4){ animation-delay:.17s; }
 
   /* ---- Dark mode ----
-     Drop shadows are close to invisible on a dark ground, so hover reads through
-     a lifted surface and a brightened edge instead. */
-  html[data-theme="dark"] .rounded-2xl.bg-white:hover{
-    box-shadow:0 10px 30px rgba(0,0,0,.42), 0 0 0 1px rgba(139,92,246,.30);
-    background-color:#231B40 !important;
-  }
+     Feedback stays inside the element being pointed at - a background tint, never a
+     spreading shadow, which on a dark ground washes over whatever sits next to it. */
   html[data-theme="dark"] tbody tr:not([class*="hover:bg"]):hover > td{ background-color:rgba(139,92,246,.10); }
   html[data-theme="dark"] .icon-btn:hover{ background:rgba(139,92,246,.18); color:#E4DEFA; }
   html[data-theme="dark"] a:focus-visible, html[data-theme="dark"] button:focus-visible{ outline-color:#A886F7; }
@@ -220,8 +217,8 @@ $me = current_user();
 
   /* Honour a reduced-motion preference: keep the colour feedback, drop movement. */
   @media (prefers-reduced-motion:reduce){
-    .rounded-2xl.bg-white, button, a[class*="rounded-xl"], a[class*="rounded-lg"], .icon-btn{ transition:background-color .2s ease, color .2s ease, box-shadow .2s ease; }
-    .rounded-2xl.bg-white:hover, button:active, a[class*="rounded-xl"]:active, a[class*="rounded-lg"]:active, .icon-btn:hover, .icon-btn:active{ transform:none; }
+    button, a[class*="rounded-xl"], a[class*="rounded-lg"], .icon-btn{ transition:background-color .2s ease, color .2s ease; }
+    button:active, a[class*="rounded-xl"]:active, a[class*="rounded-lg"]:active, .icon-btn:hover, .icon-btn:active{ transform:none; }
     .admin-fade-in{ animation:none; }
   }
 </style>
