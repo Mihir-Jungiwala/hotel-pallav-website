@@ -202,10 +202,40 @@ button{ cursor:pointer; }
 .ctl input.bad{ box-shadow:inset 0 0 0 1.5px #E5484D; background:#FEF2F2; }
 .ctl input.bad+ .hint{ color:#E5484D; }
 .chk-row{ display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:2px 2px 0; }
-.chk-row input[type=checkbox]{ flex:none; width:18px; height:18px; margin-top:1px; accent-color:var(--p700); cursor:pointer; }
 .chk-row span{ font-size:13px; line-height:1.5; font-weight:600; color:var(--ink2); }
-.chk-row a{ color:var(--p700); font-weight:800; text-decoration:underline; text-underline-offset:2px; }
-.chk-row a:hover{ color:var(--p900); }
+/* Custom animated checkbox: the real input stays in place (visually hidden but still
+   focusable/clickable, so keyboard and screen-reader behavior is untouched) and a
+   sibling .chk-box draws the visible square + checkmark, animated purely off the
+   :checked state - no JS needed for the tick itself. */
+.chk-row input[type=checkbox]{ position:absolute; opacity:0; width:19px; height:19px; margin:1px 0 0; cursor:pointer; }
+.chk-box{ flex:none; width:19px; height:19px; margin-top:1px; border-radius:6px; box-shadow:inset 0 0 0 2px var(--line2); background:var(--white);
+  display:flex; align-items:center; justify-content:center; color:#fff;
+  transition:background .22s ease, box-shadow .22s ease, transform .15s ease; }
+.chk-box svg{ stroke-dasharray:24; stroke-dashoffset:24; transition:stroke-dashoffset .28s ease .02s; }
+.chk-row input[type=checkbox]:checked + .chk-box{ background:linear-gradient(140deg,var(--p500),var(--p700)); box-shadow:inset 0 0 0 2px var(--p700); animation:chkPop .32s cubic-bezier(.34,1.6,.64,1); }
+.chk-row input[type=checkbox]:checked + .chk-box svg{ stroke-dashoffset:0; }
+.chk-row input[type=checkbox]:focus-visible + .chk-box{ box-shadow:inset 0 0 0 2px var(--p700), 0 0 0 4px var(--p100); }
+@keyframes chkPop{ 0%{ transform:scale(1) } 45%{ transform:scale(1.22) } 100%{ transform:scale(1) } }
+.terms-link{ background:none; border:none; padding:0; font:inherit; color:var(--p700); font-weight:800; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.terms-link:hover{ color:var(--p900); }
+
+.terms-modal{ position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center; padding:20px;
+  background:rgba(27,18,53,.5); backdrop-filter:blur(3px); opacity:0; transition:opacity .22s ease; }
+.terms-modal.open{ opacity:1; }
+.terms-modal[hidden]{ display:none; }
+.terms-panel{ width:100%; max-width:560px; max-height:min(80vh,640px); display:flex; flex-direction:column; background:var(--white);
+  border-radius:20px; box-shadow:var(--sh-xl); transform:translateY(14px) scale(.98); transition:transform .26s cubic-bezier(.2,.9,.25,1.1); }
+.terms-modal.open .terms-panel{ transform:none; }
+.terms-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 22px; border-bottom:1px solid var(--line); flex:none; }
+.terms-head h3{ margin:0; font-family:'Playfair Display',Georgia,serif; font-size:19px; font-weight:700; color:var(--ink); }
+.terms-x{ flex:none; width:34px; height:34px; border-radius:10px; border:none; background:var(--p50); color:var(--p700);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s ease, transform .2s ease; }
+.terms-x:hover{ background:var(--p100); transform:rotate(90deg); }
+.terms-body{ padding:20px 22px; overflow-y:auto; font-size:13.5px; line-height:1.7; color:var(--ink2); font-weight:600; }
+.terms-body p{ margin:0 0 12px; }
+.terms-body p:last-child{ margin-bottom:0; }
+.terms-foot{ padding:16px 22px 20px; flex:none; }
+.terms-foot .btn{ width:100%; padding:11px 20px; }
 .ctl input[type=number]{ -moz-appearance:textfield; }
 .ctl input[type=number]::-webkit-outer-spin-button,
 .ctl input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }

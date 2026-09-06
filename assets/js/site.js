@@ -839,6 +839,30 @@
     }, {passive:true});
   }
 
+  /* ============ TERMS & CONDITIONS MODAL ============ */
+  (function(){
+    var modal = document.getElementById('termsModal');
+    var openBtn = document.getElementById('termsOpen');
+    if (!modal || !openBtn) return;
+    var closeBtn = document.getElementById('termsClose'), gotIt = document.getElementById('termsGotIt');
+    function open(){
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(function(){ modal.classList.add('open'); });
+    }
+    function close(){
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(function(){ modal.hidden = true; }, 220);
+      openBtn.focus();
+    }
+    openBtn.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (gotIt) gotIt.addEventListener('click', close);
+    modal.addEventListener('click', function(e){ if (e.target === modal) close(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) close(); });
+  })();
+
   /* ============ COOKIE NOTICE ============
      Asks before the form-draft cookie below is ever written. Decision lives in
      localStorage (not a cookie - asking permission via the thing it's permission

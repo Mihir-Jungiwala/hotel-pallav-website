@@ -212,6 +212,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     'adults' => $content['fm_msg_adults'] ?: 'Please enter the number of adults.',
     'children' => $content['fm_msg_children'] ?: 'Please enter the number of children (0 if none).',
     'message' => $content['fm_msg_message'] ?: 'Please tell us anything we should know (or write "none").',
+    'terms' => $content['fm_msg_terms'] ?: 'Please accept the Terms & Conditions to continue.',
   ],
 ]) ?>;</script>
 </head>
@@ -807,7 +808,8 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <div class="f full">
           <label class="chk-row">
             <input type="checkbox" id="m-terms" name="accept_terms" value="1" required>
-            <span>I agree to the <a href="#policies">Terms &amp; Conditions</a> of <?= e(APP_NAME) ?>.</span>
+            <span class="chk-box" aria-hidden="true"><svg aria-hidden="true" focusable="false" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5.5 5.5L20 6"/></svg></span>
+            <span>I agree to the <button type="button" id="termsOpen" class="terms-link">Terms &amp; Conditions</button> of <?= e(APP_NAME) ?>.</span>
           </label>
         </div>
         <div class="f full">
@@ -956,6 +958,27 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
     </a>
     <span class="dial-tag">Our dedicated team is here for you 24/7, whenever you need us.</span>
+  </div>
+</div>
+
+<div class="terms-modal" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle" hidden>
+  <div class="terms-panel">
+    <div class="terms-head">
+      <h3 id="termsModalTitle">Terms &amp; Conditions</h3>
+      <button type="button" class="terms-x" id="termsClose" aria-label="Close">
+        <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="terms-body">
+      <?php if (!empty($content['booking_terms_text'])): ?>
+        <?= $content['booking_terms_text'] ?>
+      <?php else: ?>
+        <p>By submitting this enquiry you agree that the details you have provided are accurate, that a booking is only confirmed once <?= e(APP_NAME) ?> calls you back to verify availability, and that our house policies and cancellation terms (see the Policies section on this page) apply to any stay made through this enquiry.</p>
+      <?php endif; ?>
+    </div>
+    <div class="terms-foot">
+      <button type="button" class="btn btn-p" id="termsGotIt">Got it</button>
+    </div>
   </div>
 </div>
 

@@ -132,6 +132,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Bullet points <span class="normal-case font-semibold text-pallav-300">(one per line)</span></label>
         <textarea name="enquire_points" rows="5" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"><?= e(implode("\n", $enquirePoints)) ?></textarea>
       </div>
+      <div>
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Terms &amp; Conditions <span class="normal-case font-semibold text-pallav-300">(shown in the popup a guest opens from the "I agree to the Terms &amp; Conditions" checkbox)</span></label>
+        <input type="hidden" name="booking_terms_text" value="<?= e($content['booking_terms_text'] ?? '') ?>">
+        <div class="rte" data-target="booking_terms_text"></div>
+      </div>
     </div>
 
     <div x-show="tab==='formmsg'" x-cloak class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8 space-y-5">
@@ -177,6 +182,10 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <div>
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">"Anything we should know" missing</label>
           <input type="text" name="fm_msg_message" value="<?= e($content['fm_msg_message'] ?? '') ?>" required maxlength="150" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Terms &amp; Conditions not accepted</label>
+          <input type="text" name="fm_msg_terms" value="<?= e($content['fm_msg_terms'] ?? '') ?>" required maxlength="150" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
       </div>
     </div>
