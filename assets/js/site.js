@@ -31,6 +31,20 @@
   document.querySelectorAll('[data-years]').forEach(function(el){ el.textContent = YEARS; });
   document.querySelectorAll('[data-years-to]').forEach(function(el){ el.setAttribute('data-to', YEARS); });
 
+  // After a booking-form submit, book-submit.php redirects back to #enquireMsg so the
+  // success/error message lands in view. The browser's own fragment scroll fires
+  // before images/scroll-reveal sections above it finish settling their height, which
+  // can leave it mis-scrolled on some devices - so it's redone explicitly once the
+  // page (and a beat more, for anything still settling) has actually loaded.
+  if (window.location.hash === '#enquireMsg') {
+    window.addEventListener('load', function(){
+      setTimeout(function(){
+        var msg = document.getElementById('enquireMsg');
+        if (msg) { msg.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); msg.focus({ preventScroll: true }); }
+      }, 300);
+    });
+  }
+
   var nav = document.getElementById('nav'), bar = document.getElementById('bar'), toTop = document.getElementById('toTop');
   var scrollCue = document.querySelector('.scroll-cue');
   var devCredit = document.querySelector('.dev');
@@ -864,16 +878,19 @@
   })();
 
   /* ============ COOKIE NOTICE ============
-     Asks before the form-draft cookie below is ever written. Shown on every page
-     load, by request, rather than only until a decision is first made. The consent
-     value itself still lives in localStorage (not a cookie - asking permission via
-     the thing it's permission for would be circular) and still gates whether the
-     draft cookie is actually written each time. */
+     Asks before the form-draft cookie below is ever written - the standard pattern
+     every site uses: ask once, remember the choice, never nag again once decided.
+     The consent value lives in localStorage (not a cookie - asking permission via
+     the thing it's permission for would be circular) and gates whether the draft
+     cookie is actually written. */
   (function(){
     var card = document.getElementById('cookieCard');
     if (!card) return;
     var KEY = 'hp_cookie_consent';
-    setTimeout(function(){ card.hidden = false; }, 900);
+    var decision; try { decision = localStorage.getItem(KEY); } catch (e) { decision = null; }
+    if (!decision) {
+      setTimeout(function(){ card.hidden = false; }, 900);
+    }
     function decide(value){
       try { localStorage.setItem(KEY, value); } catch (e) {}
       card.hidden = true;

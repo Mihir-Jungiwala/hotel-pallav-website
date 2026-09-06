@@ -298,12 +298,6 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 </div>
 <?php endif; ?>
 
-<?php foreach ($flashes as $f): ?>
-<div class="wrap" style="margin-top:14px">
-  <div class="fmsg <?= $f['type'] === 'error' ? 'err' : 'ok' ?>" style="display:block;max-width:640px;margin:0 auto"><?= e($f['message']) ?></div>
-</div>
-<?php endforeach; ?>
-
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="top">
   <div class="hero-mesh"><i></i><i></i><i></i></div>
@@ -805,6 +799,9 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <?= csrf_field() ?>
       <h3>Booking enquiry</h3>
       <p>Just a couple of details and we will call you back.</p>
+      <?php foreach ($flashes as $f): ?>
+        <div id="enquireMsg" class="fmsg <?= $f['type'] === 'error' ? 'err' : 'ok' ?>" style="display:block;margin-bottom:16px" role="status" tabindex="-1"><?= e($f['message']) ?></div>
+      <?php endforeach; ?>
       <input type="text" name="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="pgrid">
         <div class="f"><label for="m-name">Your name *</label><div class="ctl"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5.6 19.5c0-3.3 2.9-5.7 6.4-5.7s6.4 2.4 6.4 5.7"/></svg><input id="m-name" name="name" type="text" placeholder="Full name" required></div></div>
