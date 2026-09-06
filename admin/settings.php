@@ -332,6 +332,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <?= secret_locked_field($settings['smtp_host'] ?? '') ?>
         </div>
         <?php endif; ?>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Manager Name</label>
+          <input type="text" name="notify_name" value="<?= e($settings['notify_name'] ?? '') ?>" placeholder="e.g. Mihir" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Used to greet whoever reads the enquiry/booking alert emails below, e.g. "Dear Mihir,". Leave blank to say "Dear Team,".</p>
+        </div>
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Notification Emails (guest enquiries)</label>
           <textarea name="notify_email" rows="3" placeholder="<?= e($settings['email'] ?? 'yourhotel@gmail.com') ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"><?= e($settings['notify_email'] ?? '') ?></textarea>

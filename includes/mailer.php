@@ -366,6 +366,36 @@ function email_contact_buttons(): string
 }
 
 /**
+ * Email / Call / WhatsApp buttons so whoever reads a staff-facing enquiry alert can
+ * reach the guest directly from the email - the reverse direction of
+ * email_contact_buttons() above, which lets a guest reach the hotel.
+ */
+function email_guest_action_buttons(string $guestEmail, string $guestPhoneRaw): string
+{
+    $tel = preg_replace('/[^0-9+]/', '', $guestPhoneRaw);
+    $wa = preg_replace('/[^0-9]/', '', $guestPhoneRaw);
+    if ($guestEmail === '' && $tel === '' && $wa === '') return '';
+
+    $cells = '';
+    if ($guestEmail !== '') {
+        $cells .= '<td class="ep-btn" align="center" style="padding:0 5px 10px;">'
+            . '<a href="mailto:' . e($guestEmail) . '" style="display:inline-block;background:#5B21B6;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:12px 18px;border-radius:10px;">Email Guest</a></td>';
+    }
+    if ($tel !== '') {
+        $cells .= '<td class="ep-btn" align="center" style="padding:0 5px 10px;">'
+            . '<a href="tel:' . e($tel) . '" style="display:inline-block;background:#FFFFFF;color:#5B21B6;border:2px solid #DFD3FD;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:10px 18px;border-radius:10px;">Call Guest</a></td>';
+    }
+    if ($wa !== '') {
+        $cells .= '<td class="ep-btn" align="center" style="padding:0 5px 10px;">'
+            . '<a href="https://wa.me/' . e($wa) . '" style="display:inline-block;background:#FFFFFF;color:#15803D;border:2px solid #BBF7D0;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:10px 18px;border-radius:10px;">WhatsApp Guest</a></td>';
+    }
+    return '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:22px auto 6px;"><tr>' . $cells . '</tr></table>';
+}
+
+/**
  * One of the 2x2 "For Your Security" feature cards on the password-reset email.
  *
  * Fixed height with mso-height-rule:exactly, rather than letting each card size to
@@ -471,23 +501,39 @@ const EMAIL_TEMPLATE_DEFAULTS = [
     // Staff-facing: sent to the notification addresses when an enquiry is confirmed.
     'enquiry_confirmed' => [
         'subject' => 'Booking confirmed - {{reference}}',
-        'body' => "{{pill_confirmed}}\n"
-            . "<p style=\"margin:0 0 4px;\"><b>{{guest_name}}</b> is now confirmed as a booking. The room has been taken out of availability for these dates.</p>\n"
+        'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
+            . "{{pill_confirmed}}\n"
+            . "<p style=\"margin:0 0 4px;\">We have received a booking. <b>{{guest_name}}</b> is now confirmed, and the room has been taken out of availability for these dates - for details, see below.</p>\n"
             . "{{stay_band}}\n"
-            . "{{staff_table}}",
+            . "{{staff_table}}\n"
+            . "{{guest_action_buttons}}",
     ],
 
     // Staff-facing: sent to the notification addresses when an enquiry is declined.
     'enquiry_declined' => [
         'subject' => 'Enquiry declined - {{reference}}',
-        'body' => "{{pill_declined}}\n"
-            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has been declined. No room is held for these dates.</p>\n"
+        'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
+            . "{{pill_declined}}\n"
+            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has been declined. No room is held for these dates - for details, see below.</p>\n"
             . "{{stay_band}}\n"
             . "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;margin:18px 0 4px;background:#FEF2F2;border-left:3px solid #EF4444;border-radius:10px;\">"
             . "<tr><td style=\"padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#991B1B;\">"
             . "<b>Reason given:</b> {{decision_note}}"
             . "</td></tr></table>\n"
-            . "{{staff_table}}",
+            . "{{staff_table}}\n"
+            . "{{guest_action_buttons}}",
+    ],
+
+    // Staff-facing: the owner/notification-address copy of a fresh enquiry (the guest
+    // gets 'enquiry_received' above; this is the separate copy sent alongside it to
+    // whoever is listed in Settings - Notification Emails).
+    'enquiry_received_owner' => [
+        'subject' => 'We have your enquiry - {{reference}}',
+        'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
+            . "<p style=\"margin:0 0 4px;\">We have received a new booking enquiry. Please find the details below and reach out to the guest to confirm availability.</p>\n"
+            . "{{stay_band}}\n"
+            . "{{staff_table}}\n"
+            . "{{guest_action_buttons}}",
     ],
 ];
 
@@ -540,7 +586,13 @@ function send_templated_mail(string $key, string $toEmail, string $toName, array
     $html = email_shell($heading, $rendered['body']);
     $sent = $toEmail !== '' ? smtp_send($toEmail, $toName ?: 'Guest', $subject, $html) : true;
 
-    $ownerBody = email_shell($heading, $rendered['body'] . ($ownerExtraHtml ?? ''), false);
+    // The owner/notification-address copy is worded for staff, not the guest (greets
+    // the manager by name, states plainly what happened, adds buttons to reach the
+    // guest) - use a "{key}_owner" template when one exists, otherwise fall back to
+    // reusing the guest body as before.
+    $ownerKey = array_key_exists("{$key}_owner", EMAIL_TEMPLATE_DEFAULTS) ? "{$key}_owner" : $key;
+    $ownerRendered = $ownerKey === $key ? $rendered : render_email_template($ownerKey, $vars);
+    $ownerBody = email_shell($heading, $ownerRendered['body'] . ($ownerExtraHtml ?? ''), false);
     foreach (notify_email_list() as $notifyTo) {
         smtp_send($notifyTo, APP_NAME . ' Admin', $subject, $ownerBody, $toEmail !== '' ? $toEmail : null);
     }
@@ -636,12 +688,14 @@ function enquiry_email_vars(array $enquiry, ?array $room = null): array
         'reception_phone' => e(phone_display($s['reception_phone'] ?? '')),
         'checkin_time' => e($checkInTime),
         'checkout_time' => e($checkOutTime),
+        'manager_name' => e(trim((string) ($s['notify_name'] ?? '')) ?: 'Team'),
 
         // Pre-rendered layout blocks
         'details_table' => $detailsTable,
         'staff_table' => $staffTable,
         'stay_band' => email_stay_band($checkIn, $checkOut, $nights, $checkInTime, $checkOutTime),
         'contact_buttons' => email_contact_buttons(),
+        'guest_action_buttons' => email_guest_action_buttons($guestEmail, $guestPhoneRaw),
         'pill_received' => email_status_pill('Enquiry received', '#EFE9FE', '#5B21B6'),
         'pill_confirmed' => email_status_pill('Confirmed', '#DCFCE7', '#15803D'),
         'pill_declined' => email_status_pill('Not available', '#FEE2E2', '#B91C1C'),

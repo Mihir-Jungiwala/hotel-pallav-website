@@ -80,7 +80,7 @@ $notifyEmails = array_filter(array_map('trim', $notifyEmails), fn ($e) => $e !==
 $notifyEmail = $notifyEmails ? implode("\n", array_unique($notifyEmails)) : null;
 
 db_run(
-    'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_email=? WHERE id=?',
+    'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_email=?, notify_name=? WHERE id=?',
     [
         (int) $_POST['opened_year'], trim($_POST['gm_phone']), trim($_POST['reception_phone']), trim($_POST['whatsapp']),
         ($_POST['reception_whatsapp'] ?? '') ?: null,
@@ -98,6 +98,7 @@ db_run(
         $secret('smtp_from_email'),
         $secret('smtp_from_name'),
         $notifyEmail,
+        trim($_POST['notify_name'] ?? '') ?: null,
         $settings['id'],
     ]
 );
