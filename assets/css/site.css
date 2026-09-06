@@ -530,10 +530,11 @@ section{ position:relative; }
   padding:26px 0 40px; margin:-16px 0 -22px; scrollbar-width:none; -ms-overflow-style:none; }
 .rev-grid::-webkit-scrollbar{ display:none; }
 .rev-grid::before, .rev-grid::after{ content:''; flex:0 0 var(--peek); }
-.rev-grid>li, .rev-grid>div{ flex:0 0 60%; max-width:60%; scroll-snap-align:center; }
-@media (max-width:1080px){ .rev-grid>div{ flex-basis:72%; max-width:72%; } }
-@media (max-width:720px){ .rev-grid{ gap:14px; } .rev-grid>div{ flex-basis:84%; max-width:84%; } }
-@media (max-width:460px){ .rev-grid>div{ flex-basis:92%; max-width:92%; } }
+/* One review focused at a time, same as the mobile design, at every screen size -
+   capped in px so a review card doesn't stretch to an unreadable width on a wide
+   desktop monitor the way a plain percentage would. */
+.rev-grid>li, .rev-grid>div{ flex:0 0 min(92%,480px); max-width:min(92%,480px); scroll-snap-align:center; }
+@media (max-width:720px){ .rev-grid{ gap:14px; } }
 
 .rev-side{ position:absolute; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; border:none; cursor:pointer; z-index:4;
   display:flex; align-items:center; justify-content:center; color:var(--p700); background:var(--white);
