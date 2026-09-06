@@ -67,12 +67,12 @@ include __DIR__ . '/../includes/admin-layout-top.php';
   var body = document.getElementById('viewModalBody');
 
   function esc(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
-  function row(label, value){
+  function row(label, value, noWrap){
     if (!value) return '';
-    return '<div class="mb-3"><div class="text-[10px] font-bold uppercase tracking-wide text-pallav-400">' + esc(label) + '</div><div class="text-sm font-semibold text-pallav-900 mt-0.5">' + esc(value) + '</div></div>';
+    return '<div class="mb-3"><div class="text-[10px] font-bold uppercase tracking-wide text-pallav-400">' + esc(label) + '</div><div class="text-sm font-semibold text-pallav-900 mt-0.5' + (noWrap ? ' whitespace-nowrap' : '') + '">' + esc(value) + '</div></div>';
   }
   function badgeClass(status){ return sc[status] || 'bg-pallav-50 text-pallav-500'; }
-  var statusLabel = { confirmed: 'Confirm', declined: 'Cancelled' };
+  var statusLabel = { confirmed: 'Confirmed', declined: 'Cancelled' };
   function badgeText(status){ return statusLabel[status] || status; }
 
   function renderModalBody(p){
@@ -83,12 +83,12 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     html += row('Mobile Number', p.phone);
     html += row('Email', p.email);
     html += row('Room', p.room_name);
-    html += row('Check-in', p.check_in);
-    html += row('Check-out', p.check_out);
-    html += row('Guests', p.guests);
+    html += row('Check-in', p.check_in, true);
+    html += row('Check-out', p.check_out, true);
+    html += row('Guests', p.guests, true);
     html += row('Message', p.message);
     html += row('Reason', p.decision_note);
-    html += row('Received', p.created_at);
+    html += row('Received', p.created_at, true);
     body.innerHTML = html;
   }
 

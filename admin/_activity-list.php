@@ -1,4 +1,4 @@
-  <?php $tabLabel = ['pending' => 'Pending', 'confirmed' => 'Confirm', 'declined' => 'Cancelled']; $sn = $offset; ?>
+  <?php $tabLabel = ['pending' => 'Pending', 'confirmed' => 'Confirmed', 'declined' => 'Cancelled']; $sn = $offset; ?>
   <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-sm min-w-[1560px]">
