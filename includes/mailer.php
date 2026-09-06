@@ -372,8 +372,13 @@ function email_contact_buttons(): string
  */
 function email_guest_action_buttons(string $guestEmail, string $guestPhoneRaw): string
 {
-    $tel = preg_replace('/[^0-9+]/', '', $guestPhoneRaw);
-    $wa = preg_replace('/[^0-9]/', '', $guestPhoneRaw);
+    // Defensive re-normalization, not just a straight digit-strip: an enquiry saved
+    // before normalize_intl_phone() existed could still carry a redundant local
+    // trunk "0" after its country code, which would otherwise reach WhatsApp as one
+    // digit too many and fail to match the guest's real number.
+    $normalized = $guestPhoneRaw !== '' ? normalize_intl_phone($guestPhoneRaw) : '';
+    $tel = preg_replace('/[^0-9+]/', '', $normalized);
+    $wa = preg_replace('/[^0-9]/', '', $normalized);
     if ($guestEmail === '' && $tel === '' && $wa === '') return '';
 
     $cells = '';
@@ -684,7 +689,7 @@ function enquiry_email_vars(array $enquiry, ?array $room = null): array
     $staffTable = email_details_table([
         'Reference' => e($enquiry['reference'] ?? ''),
         'Guest' => e((string) $enquiry['name']),
-        'Phone' => $guestPhone !== '' ? '<a href="tel:' . e(preg_replace('/[^0-9+]/', '', $guestPhoneRaw)) . '" style="color:#6D28D9;text-decoration:none;">' . e($guestPhone) . '</a>' : '',
+        'Phone' => $guestPhone !== '' ? '<a href="tel:' . e(normalize_intl_phone($guestPhoneRaw)) . '" style="color:#6D28D9;text-decoration:none;">' . e($guestPhone) . '</a>' : '',
         'Email' => $guestEmail !== '' ? '<a href="mailto:' . e($guestEmail) . '" style="color:#6D28D9;text-decoration:none;">' . e($guestEmail) . '</a>' : '',
         'Room' => $roomName !== '' ? e($roomName) : '',
         'Guests' => $guests !== '' ? e($guests) : '',

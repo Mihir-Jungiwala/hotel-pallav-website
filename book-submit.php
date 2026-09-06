@@ -26,16 +26,16 @@ $errors = [];
 if ($name === '' || mb_strlen($name) < 2) $errors[] = 'Please enter your name.';
 if ($name !== '' && mb_strlen($name) > 100) $errors[] = 'Name is too long.';
 
-// International-friendly: a bare 10-digit number is assumed Indian (default +91),
-// any other country code + length is accepted too via a sane digit-count range.
-// Always stored with a leading + so the country code is never lost.
-$hasPlus = isset($phone[0]) && $phone[0] === '+';
-$digits = preg_replace('/\D/', '', $phone);
-if (!$hasPlus && strlen($digits) === 10) $digits = '91' . $digits;
+// International-friendly: a bare 10-digit number is assumed Indian (default +91), a
+// country code with a redundant local trunk "0" kept alongside it gets that "0"
+// dropped (see normalize_intl_phone) so tel:/wa.me links from this number always
+// work, and any other country code + length is accepted too via a sane digit-count
+// range. Always stored with a leading + so the country code is never lost.
+$phone = normalize_intl_phone($phone);
+$digits = ltrim($phone, '+');
 if (strlen($digits) < 7 || strlen($digits) > 15) {
     $errors[] = 'Please enter a valid phone number with country code.';
 }
-$phone = '+' . $digits;
 
 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'That email address does not look right.';
@@ -88,6 +88,27 @@ $enquiryId = db_insert(
     ]
 );
 
+$content = get_page_content();
+$successMsg = trim((string) ($content['fm_msg_success'] ?? '')) ?: 'Thank you! Your enquiry reference is {{reference}}. We will call you shortly to confirm.';
+flash('success', str_replace('{{reference}}', $reference, $successMsg));
+
+// The guest shouldn't have to wait through a real SMTP round-trip per notification
+// recipient (each one a live network conversation with Gmail, easily 1-3 seconds)
+// just to see their confirmation - send the redirect the moment we actually know
+// where they're going, then keep the request alive just long enough to send mail.
+// fastcgi_finish_request() (PHP-FPM/LiteSpeed, i.e. the real Hostinger environment)
+// does this properly; the plain-flush fallback still returns the page before this
+// script exits everywhere else PHP can run as a CGI/module.
+header('Location: ' . rtrim(APP_URL, '/') . '/index.php#mainMsg');
+session_write_close();
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+} else {
+    ignore_user_abort(true);
+    if (ob_get_level() > 0) ob_end_flush();
+    flush();
+}
+
 if (smtp_is_configured()) {
     $enquiry = db_one('SELECT * FROM enquiries WHERE id = ?', [$enquiryId]);
     if ($enquiry) {
@@ -95,6 +116,3 @@ if (smtp_is_configured()) {
         send_templated_mail('enquiry_received', $enquiry['email'] ?? '', $enquiry['name'], enquiry_email_vars($enquiry, $room), $adminLink);
     }
 }
-
-flash('success', "Thank you! Your enquiry reference is {$reference}. We will call you shortly to confirm.");
-redirect('index.php#mainMsg');

@@ -266,6 +266,11 @@ button{ cursor:pointer; }
 .book-note{ margin-top:15px; font-size:12.5px; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:8px; position:relative; z-index:1; }
 .book-note svg{ color:var(--p500); flex:none; }
 .fmsg{ margin-top:14px; padding:13px 16px; border-radius:12px; font-size:13.5px; font-weight:600; text-align:center; display:none; position:relative; z-index:1; }
+/* Focused by JS purely to move a screen reader's attention to the message after a
+   redirect (see site.js) - not a real keyboard-focus target, so the visible focus
+   ring that :focus-visible would otherwise draw here (in the site's purple) is
+   suppressed; screen readers still announce it via role="status" regardless. */
+.fmsg:focus,.fmsg:focus-visible{ outline:none; }
 .fmsg.ok{ display:block; background:#E6F8F0; color:#0B7A53; box-shadow:inset 0 0 0 1px #BFE9D6; }
 .fmsg.err{ display:block; background:#FDECEC; color:#B02525; box-shadow:inset 0 0 0 1px #F6CFCF; }
 
@@ -680,7 +685,8 @@ section{ position:relative; }
 .foot .fc .phones{ display:flex; flex-direction:column; gap:5px; }
 .foot .fc .prow{ display:flex; align-items:baseline; gap:8px; }
 .foot .fc .prow i{ font-style:normal; display:inline-block; min-width:70px; color:rgba(255,255,255,.5); }
-.foot .fc .prow a{ color:inherit; }
+.foot .fc a{ color:inherit; text-decoration:none; transition:color .2s ease; }
+.foot .fc a:hover{ color:var(--gold); text-decoration:underline; text-underline-offset:2px; }
 .socials{ display:flex; gap:10px; margin-top:20px; }
 .socials a{ width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.07); color:#fff;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.1); transition:transform .25s var(--ease), background .25s ease, box-shadow .25s ease; }

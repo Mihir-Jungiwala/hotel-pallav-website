@@ -42,7 +42,16 @@
     window.addEventListener('load', function(){
       setTimeout(function(){
         var msg = document.getElementById('mainMsg');
-        if (msg) { msg.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); msg.focus({ preventScroll: true }); }
+        if (!msg) return;
+        msg.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+        msg.focus({ preventScroll: true });
+        // The success confirmation clears itself out after a while so the form
+        // doesn't sit there permanently saying "Thank you" days later if the guest
+        // reloads or comes back to this page - an error stays, since that's still
+        // something the guest needs to notice and act on.
+        if (msg.classList.contains('ok')) {
+          setTimeout(function(){ msg.style.display = 'none'; msg.textContent = ''; }, 10000);
+        }
       }, 300);
     });
   }

@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS page_content (
   fm_msg_children VARCHAR(150) NOT NULL DEFAULT 'Please enter the number of children (0 if none).',
   fm_msg_message VARCHAR(150) NOT NULL DEFAULT 'Please tell us anything we should know (or write "none").',
   fm_msg_terms VARCHAR(150) NOT NULL DEFAULT 'Please accept the Terms & Conditions to continue.',
+  fm_msg_success VARCHAR(250) NOT NULL DEFAULT 'Thank you! Your enquiry reference is {{reference}}. We will call you shortly to confirm.',
   about_kicker VARCHAR(50) NOT NULL DEFAULT 'Our Story',
   about_heading VARCHAR(150) NOT NULL DEFAULT 'A family hotel that never stopped caring',
   about_p1 TEXT NULL,

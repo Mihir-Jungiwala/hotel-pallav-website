@@ -188,6 +188,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Terms &amp; Conditions not accepted</label>
           <input type="text" name="fm_msg_terms" value="<?= e($content['fm_msg_terms'] ?? '') ?>" required maxlength="150" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Success message <span class="normal-case font-semibold text-pallav-300">(shown after a guest successfully submits)</span></label>
+          <input type="text" name="fm_msg_success" value="<?= e($content['fm_msg_success'] ?? '') ?>" required maxlength="250" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Use <code class="bg-pallav-50 px-1 py-0.5 rounded font-mono">{{reference}}</code> where the enquiry reference number should appear.</p>
+        </div>
       </div>
     </div>
 

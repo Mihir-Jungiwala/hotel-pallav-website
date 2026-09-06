@@ -31,6 +31,57 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Country calling codes long enough to matter here (guests booking from abroad) - not
+ * a full ITU list, just enough to catch the actual bug reported: entering a number as
+ * "+<code>0<local number>" (keeping the local trunk "0" that should be dropped once a
+ * country code is present) produces a wa.me link with one extra digit that WhatsApp
+ * can't match to a real account, even though it looks fine to a human. Ordered
+ * longest-first so a 3-digit code like 971 is tried before a 1-digit one could
+ * wrongly match its first digit.
+ */
+const PHONE_CALLING_CODES = [
+    '971', '972', '973', '974', '966', '968', '965', '962', '961', '963', '964',
+    '880', '977', '960', '976', '975', '673',
+    '86', '81', '82', '84', '65', '60', '66', '63', '62', '91', '92', '93', '94', '95', '98',
+    '44', '49', '33', '39', '34', '31', '32', '41', '43', '46', '47', '45', '48', '30', '36', '61', '64', '20', '27', '55', '52', '54', '51', '57', '58',
+    '1', '7',
+];
+
+/**
+ * Normalizes a guest-entered phone number to a clean "+<countrycode><number>" string,
+ * safe to hand to both tel: links and wa.me (which needs digits only, no leading
+ * trunk zero, and rejects a number that carries one).
+ *
+ * Handles the two failure modes actually seen in practice:
+ *  - No country code, no "+": a bare 10-digit number is assumed Indian (the hotel's
+ *    guest base is overwhelmingly domestic) and gets "91" prepended.
+ *  - Country code present but the local trunk "0" was kept too (e.g. a UK number
+ *    entered as "+44 07574650997" instead of "+44 7574650997") - detected via the
+ *    calling-code list above and that redundant "0" is dropped.
+ * Anything else is returned as digits-only with a leading "+", unchanged, since
+ * guessing further without a real phone-number database risks doing the wrong thing.
+ */
+function normalize_intl_phone(string $raw): string
+{
+    $hasPlus = isset($raw[0]) && $raw[0] === '+';
+    $digits = preg_replace('/\D/', '', $raw);
+
+    if (!$hasPlus && strlen($digits) === 10) {
+        $digits = '91' . $digits;
+    } elseif ($hasPlus) {
+        foreach (PHONE_CALLING_CODES as $code) {
+            $len = strlen($code);
+            if (substr($digits, 0, $len) === $code && substr($digits, $len, 1) === '0') {
+                $digits = $code . substr($digits, $len + 1);
+                break;
+            }
+        }
+    }
+
+    return '+' . $digits;
+}
+
 /** Display-only formatting: "+919825735404" -> "+91 98257 35404". tel: hrefs should keep the raw value. */
 function phone_display(?string $raw): string
 {
