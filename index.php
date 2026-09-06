@@ -805,6 +805,12 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <div class="f full"><p class="fnote" style="display:flex;align-items:flex-start;justify-content:center;gap:8px;padding-left:14px"><svg aria-hidden="true" focusable="false" width="14" height="14" style="position:static;flex:none;margin-top:1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.01"/></svg><span style="text-align:center">Children <b>9 years and above count as adults</b> - please include them in the adults box.</span></p></div>
         <div class="f full"><label for="m-msg">Anything we should know? *</label><div class="ctl"><textarea id="m-msg" name="message" placeholder="Early check-in, ground floor room, extra bed, food preference…" required></textarea></div></div>
         <div class="f full">
+          <label class="chk-row">
+            <input type="checkbox" id="m-terms" name="accept_terms" value="1" required>
+            <span>I agree to the <a href="#policies">Terms &amp; Conditions</a> of <?= e(APP_NAME) ?>.</span>
+          </label>
+        </div>
+        <div class="f full">
           <button type="submit" class="btn btn-p btn-lg" style="width:100%">
             Send Enquiry
             <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
@@ -893,6 +899,20 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
   <button class="fab top" id="toTop" aria-label="Back to top">
     <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
   </button>
+</div>
+
+<div class="cookie-card" id="cookieCard" role="dialog" aria-live="polite" aria-label="Cookie notice" hidden>
+  <div class="cookie-ic">
+    <svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1010 10c-1.5 0-2.7-1.2-2.7-2.7 0-.5.1-.9.4-1.3-.4-.6-.6-1.3-.6-2 0-1.9 1.5-3.4 3.3-3.5A10 10 0 0012 2z"/><circle cx="8.3" cy="9.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="9.5" cy="14.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="13.5" cy="16" r="1.1" fill="currentColor" stroke="none"/></svg>
+  </div>
+  <div class="cookie-body">
+    <h4>A quick word about cookies</h4>
+    <p>We use one small cookie to save your enquiry form as you type, so a slow connection or an accidental reload never costs you the details you already entered. Nothing is tracked or sold.</p>
+    <div class="cookie-btns">
+      <button type="button" class="btn btn-p" id="cookieAccept">Sounds good</button>
+      <button type="button" class="btn btn-o" id="cookieDecline">No thanks</button>
+    </div>
+  </div>
 </div>
 
 <div class="mbar" id="mbar">

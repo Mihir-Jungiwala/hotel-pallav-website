@@ -445,6 +445,9 @@
       if(children && children.value.trim() === ''){ e.preventDefault(); show('err', FM.children || 'Please enter the number of children (0 if none).'); children.focus(); return; }
       if(message && message.value.trim() === ''){ e.preventDefault(); show('err', FM.message || 'Please tell us anything we should know (or write "none").'); message.focus(); return; }
 
+      var terms = form.querySelector('[name=accept_terms]');
+      if(terms && !terms.checked){ e.preventDefault(); show('err', FM.terms || 'Please accept the Terms & Conditions to continue.'); terms.focus(); return; }
+
       var btn = form.querySelector('button[type=submit]');
       if (btn) { btn.disabled = true; btn.style.opacity = '.75'; }
       // validation passed — allow the browser's normal POST to proceed to book-submit.php.
@@ -836,6 +839,32 @@
     }, {passive:true});
   }
 
+  /* ============ COOKIE NOTICE ============
+     Asks before the form-draft cookie below is ever written. Decision lives in
+     localStorage (not a cookie - asking permission via the thing it's permission
+     for would be circular), so it only ever prompts once per browser. */
+  (function(){
+    var card = document.getElementById('cookieCard');
+    if (!card) return;
+    var KEY = 'hp_cookie_consent';
+    var decision; try { decision = localStorage.getItem(KEY); } catch (e) { decision = null; }
+    if (!decision) {
+      setTimeout(function(){ card.hidden = false; }, 900);
+    }
+    function decide(value){
+      try { localStorage.setItem(KEY, value); } catch (e) {}
+      card.hidden = true;
+    }
+    var accept = document.getElementById('cookieAccept');
+    var decline = document.getElementById('cookieDecline');
+    if (accept) accept.addEventListener('click', function(){ decide('accepted'); });
+    if (decline) decline.addEventListener('click', function(){
+      decide('declined');
+      // Honor it immediately - clear any draft already saved before this decision.
+      document.cookie = 'hp_booking_draft=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    });
+  })();
+
   /* ============ FORM DRAFT AUTOSAVE (cookies) ============
      Saves #mainForm field values to a cookie as the guest types, so a reload, a
      validation error, or coming back later doesn't lose what they'd filled in.
@@ -843,6 +872,12 @@
   (function(){
     var form = document.getElementById('mainForm');
     if (!form) return;
+    // Checked live inside saveDraft() below, not once here - the guest can accept the
+    // cookie notice at any point while already on this page, and that has to start
+    // saving immediately rather than only on a page the notice was accepted before.
+    function hasConsent(){
+      try { return localStorage.getItem('hp_cookie_consent') === 'accepted'; } catch (e) { return false; }
+    }
     var COOKIE = 'hp_booking_draft', DAYS = 14;
     var fields = ['name', 'phone', 'email', 'checkin', 'checkout', 'room', 'adults', 'children', 'message'];
 
@@ -857,20 +892,23 @@
     function clearCookie(name){ document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'; }
 
     // Restore any saved draft (only into fields the guest hasn't already filled, e.g. via browser autofill).
-    try {
-      var saved = JSON.parse(getCookie(COOKIE) || 'null');
-      if (saved) {
-        fields.forEach(function(name){
-          var el = form.elements[name];
-          if (el && !el.value && saved[name]) el.value = saved[name];
-        });
-      }
-    } catch (e) {}
+    if (hasConsent()) {
+      try {
+        var saved = JSON.parse(getCookie(COOKIE) || 'null');
+        if (saved) {
+          fields.forEach(function(name){
+            var el = form.elements[name];
+            if (el && !el.value && saved[name]) el.value = saved[name];
+          });
+        }
+      } catch (e) {}
+    }
 
     var saveTimer = null;
     function saveDraft(){
       clearTimeout(saveTimer);
       saveTimer = setTimeout(function(){
+        if (!hasConsent()) return;
         var data = {};
         fields.forEach(function(name){
           var el = form.elements[name];

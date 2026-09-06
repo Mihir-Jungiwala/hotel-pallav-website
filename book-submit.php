@@ -45,6 +45,7 @@ if ($checkin === '' || !strtotime($checkin)) $errors[] = 'Please pick a check-in
 if ($checkout === '' || !strtotime($checkout)) $errors[] = 'Please pick a check-out date.';
 if ($roomQuery === '') $errors[] = 'Please pick a room.';
 if ($message === '') $errors[] = 'Please tell us anything we should know (or write "none").';
+if (empty($_POST['accept_terms'])) $errors[] = 'Please accept the Terms & Conditions to continue.';
 
 if ($errors) {
     flash('error', implode(' ', $errors));
