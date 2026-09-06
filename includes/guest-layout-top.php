@@ -19,10 +19,12 @@ $favicon = favicon_url();
 
   <div class="auth-wrap relative min-h-screen flex items-center justify-center px-4 py-12">
     <div class="w-full max-w-md">
+      <?php if (empty($hideAuthHeader)): ?>
       <div class="auth-header flex flex-col items-center mb-8">
         <span class="auth-logo w-14 h-14 rounded-2xl overflow-hidden shadow-xl mb-3"><?php render_brand_mark(56); ?></span>
         <div class="text-white font-display font-bold text-xl">Hotel Pallav</div>
         <div class="text-pallav-300 text-[11px] font-bold tracking-[.22em] uppercase mt-1">Admin Control Panel</div>
       </div>
+      <?php endif; ?>
 
       <div class="auth-card bg-white rounded-3xl shadow-2xl p-8 sm:p-10">

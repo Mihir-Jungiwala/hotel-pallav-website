@@ -22,7 +22,13 @@ foreach ($rooms as &$room) {
     $room['sold'] = array_map(fn($s) => $s['sold'], room_availability((int) $room['id'], $days));
     foreach ($room['plans'] as &$plan) {
         $plan['date_rates'] = [];
-        foreach (db_all('SELECT * FROM plan_date_rates WHERE rate_plan_id = ? AND date BETWEEN ? AND ?', [$plan['id'], $rangeStart, $rangeEnd]) as $dr) {
+        // recently_changed is computed in SQL (updated_at vs MySQL's own NOW()), not
+        // read back into PHP and compared with time() - same class of bug as the
+        // password-reset token expiry: if this server's MySQL and PHP disagree on
+        // timezone, a PHP-side strtotime($updated_at) > time() - 3600 check can be
+        // wrong by however large that gap is. Comparing both sides inside MySQL is
+        // correct regardless of which timezone the database session is actually in.
+        foreach (db_all('SELECT *, (updated_at > NOW() - INTERVAL 1 HOUR) AS recently_changed FROM plan_date_rates WHERE rate_plan_id = ? AND date BETWEEN ? AND ?', [$plan['id'], $rangeStart, $rangeEnd]) as $dr) {
             $plan['date_rates'][$dr['date']] = $dr;
         }
     }
@@ -50,7 +56,7 @@ function price_for_date(array $plan, string $date, string $occ): array {
     $overridden = $o !== null && $o['price_' . $occ] !== null;
     // The gold highlight is a "just changed" flag, not a permanent "this date has
     // an override" marker - it fades back to the plain look an hour after the edit.
-    $recentlyChanged = $overridden && !empty($o['updated_at']) && strtotime($o['updated_at']) > time() - 3600;
+    $recentlyChanged = $overridden && !empty($o['updated_at']) && (bool) ($o['recently_changed'] ?? false);
     return ['value' => $val, 'overridden' => $overridden, 'recentlyChanged' => $recentlyChanged];
 }
 

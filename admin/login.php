@@ -33,20 +33,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $title = 'Sign In';
 include __DIR__ . '/../includes/guest-layout-top.php';
 ?>
-  <h1 class="font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Welcome Back</h1>
-  <p class="text-sm text-pallav-500 mb-6 text-center">Sign in securely to manage guest activity, rooms and settings</p>
+  <h1 class="auth-title font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Welcome Back</h1>
+  <p class="auth-subtitle text-sm text-pallav-500 mb-6 text-center">Sign in securely to manage guest activity, rooms and settings</p>
 
   <?php if (!empty($_GET['expired'])): ?>
-    <div class="mb-5 rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200 px-4 py-3 text-sm font-semibold text-center">For your security, your session ended after 30 minutes of inactivity, please sign in again</div>
+    <div class="auth-banner mb-5 rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200 px-4 py-3 text-sm font-semibold text-center">For your security, your session ended after 30 minutes of inactivity, please sign in again</div>
   <?php endif; ?>
   <?php foreach (get_flashes() as $f): ?>
-    <div class="mb-5 rounded-xl <?= $f['type'] === 'error' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' ?> px-4 py-3 text-sm font-semibold text-center"><?= e($f['message']) ?></div>
+    <div class="auth-banner mb-5 rounded-xl <?= $f['type'] === 'error' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' ?> px-4 py-3 text-sm font-semibold text-center"><?= e($f['message']) ?></div>
   <?php endforeach; ?>
   <?php foreach ($errors as $err): ?>
-    <div class="mb-5 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-4 py-3 text-sm font-semibold text-center"><?= e($err) ?></div>
+    <div class="auth-banner mb-5 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-4 py-3 text-sm font-semibold text-center"><?= e($err) ?></div>
   <?php endforeach; ?>
 
-  <form method="POST" class="space-y-4">
+  <form method="POST" class="auth-form space-y-4">
     <?= csrf_field() ?>
     <div>
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Username</label>

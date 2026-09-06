@@ -37,23 +37,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $title = 'Forgot Password';
+// The fallback box (raw reset link, shown when the email itself couldn't be sent) is
+// rare and only reachable here, but its content is long enough that the card overflows
+// even a normal-height phone screen with no height squeeze involved at all - a
+// max-height media query can't help since the problem isn't a short screen, it's this
+// one box being unusually tall. Simplest fix: skip the decorative header outright
+// whenever this box is about to show, freeing space unconditionally rather than only
+// under a height threshold that this specific case falls outside of.
+$hideAuthHeader = !empty($resetLinkFallback);
 include __DIR__ . '/../includes/guest-layout-top.php';
 ?>
-  <h1 class="font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Reset Your Password</h1>
-  <p class="text-sm text-pallav-500 mb-6 text-center">Enter your username or email and we will send you a secure reset link</p>
+  <h1 class="auth-title font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Reset Your Password</h1>
+  <p class="auth-subtitle text-sm text-pallav-500 mb-6 text-center">Enter your username or email and we will send you a secure reset link</p>
 
   <?php if ($status): ?>
-    <div class="mb-5 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-4 py-3 text-sm font-semibold text-center"><?= e($status) ?></div>
+    <div class="auth-banner mb-5 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-4 py-3 text-sm font-semibold text-center"><?= e($status) ?></div>
   <?php endif; ?>
 
   <?php if ($resetLinkFallback): ?>
-    <div class="mb-5 rounded-xl bg-pallav-50 ring-1 ring-pallav-200 px-4 py-3 text-xs break-all">
-      <b class="block text-pallav-700 mb-1">Reset link, shown here only because SMTP email is not yet configured in Settings, once configured this will be emailed instead</b>
+    <div class="auth-fallback mb-5 rounded-xl bg-pallav-50 ring-1 ring-pallav-200 px-4 py-3 text-xs break-all">
+      <b class="block text-pallav-700 mb-1">Reset link, shown here only because the email could not be sent just now - copy it before leaving this page</b>
       <a href="<?= e($resetLinkFallback) ?>" class="text-pallav-600 font-bold underline"><?= e($resetLinkFallback) ?></a>
     </div>
   <?php endif; ?>
 
-  <form method="POST" class="space-y-4">
+  <form method="POST" class="auth-form space-y-4">
     <?= csrf_field() ?>
     <div>
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Username or Email</label>

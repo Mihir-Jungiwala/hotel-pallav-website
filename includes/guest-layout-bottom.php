@@ -1,5 +1,5 @@
       </div>
-      <p class="text-center text-pallav-300 text-xs mt-6">&copy; <?= date('Y') ?> Hotel Pallav. Admin access only.</p>
+      <p class="auth-footer text-center text-pallav-300 text-xs mt-6">&copy; <?= date('Y') ?> Hotel Pallav. Admin access only.</p>
     </div>
   </div>
 <!-- ============ PASSWORD SHOW/HIDE TOGGLE (any input wrapped in .pw-field) ============ -->

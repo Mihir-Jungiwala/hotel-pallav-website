@@ -49,15 +49,35 @@ html{ width:100%; max-width:100vw; overflow-x:hidden; }
    to more than the viewport even with zero browser-chrome illusion involved (measured
    645px of content against a 571px viewport at 375x667) - real overflow, not a unit
    quirk. Trimmed only under a real height squeeze, never on width alone, so nothing
-   changes on a normal-height phone or on desktop/tablet. */
+   changes on a normal-height phone or on desktop/tablet.
+   First pass only compacted the base form; the flash/error banners
+   (session-expired, wrong-password, "reset link sent", "link expired") and the
+   two-field reset-password form each add their own height on top of that, and at
+   360x640/375x667 - real, common phone sizes - that was still enough to overflow by
+   11-75px depending on which banner was showing. Hiding the header outright (rather
+   than just shrinking it) at the same breakpoint the rest of this already compacts at
+   frees enough room to cover every one of those cases with margin to spare, instead of
+   needing a separate, taller threshold per banner variant. */
 @media (max-height:700px){
-  .auth-wrap{ padding-top:20px!important; padding-bottom:20px!important; }
-  .auth-header{ margin-bottom:16px!important; }
-  .auth-header .auth-logo{ width:40px!important; height:40px!important; margin-bottom:6px!important; }
-  .auth-card{ padding:24px!important; }
-}
-@media (max-height:560px){
-  .auth-header{ display:none; }
+  .auth-wrap{ padding-top:12px!important; padding-bottom:12px!important; }
+  .auth-header{ display:none!important; }
+  .auth-card{ padding:22px!important; }
+  .auth-banner{ margin-bottom:12px!important; padding-top:10px!important; padding-bottom:10px!important; }
+  .auth-title{ margin-bottom:2px!important; }
+  .auth-subtitle{ margin-bottom:14px!important; }
+  /* Only the reset-password form (two password fields) still overflowed after the
+     above - the login and forgot-password forms (one field) already fit. Rather than
+     add a third, taller-only breakpoint for just that one page, tightening the field
+     gap and input height here covers it with room left over, and does nothing visible
+     on the single-field forms beyond a couple of px of tighter spacing. */
+  .auth-form.space-y-4 > * + *{ margin-top:12px!important; }
+  .auth-form input[type=password],.auth-form input[type=text]{ padding-top:10px!important; padding-bottom:10px!important; }
+  /* The "email failed to send, here's the raw link" fallback (forgot-password.php) -
+     rare (only on a genuine SMTP failure) and admin-only, but still real, visible
+     content someone might hit on a short screen. Only the padding/line-height shrink;
+     the link text itself is never touched, so it stays fully readable and clickable. */
+  .auth-fallback{ padding-top:10px!important; padding-bottom:10px!important; margin-bottom:12px!important; line-height:1.4!important; }
+  .auth-footer{ margin-top:10px!important; }
 }
 
 /* Rate/inventory calendar cells: the native number spin-buttons only reserve

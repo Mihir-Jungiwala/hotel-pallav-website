@@ -44,18 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $title = 'Reset Password';
 include __DIR__ . '/../includes/guest-layout-top.php';
 ?>
-  <h1 class="font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Choose a New Password</h1>
-  <p class="text-sm text-pallav-500 mb-6 text-center">8+ characters, with an uppercase letter, a lowercase letter, a digit, and a symbol</p>
+  <h1 class="auth-title font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Choose a New Password</h1>
+  <p class="auth-subtitle text-sm text-pallav-500 mb-6 text-center">8+ characters, with an uppercase letter, a lowercase letter, a digit, and a symbol</p>
 
   <?php if (!$validToken): ?>
-    <div class="mb-5 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-4 py-3 text-sm font-semibold text-center">This reset link is invalid or has expired, <a href="<?= e(APP_URL) ?>/admin/forgot-password.php" class="underline">request a new one</a></div>
+    <div class="auth-banner mb-5 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-4 py-3 text-sm font-semibold text-center">This reset link is invalid or has expired, <a href="<?= e(APP_URL) ?>/admin/forgot-password.php" class="underline">request a new one</a></div>
   <?php endif; ?>
   <?php foreach ($errors as $err): ?>
-    <div class="mb-5 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-4 py-3 text-sm font-semibold text-center"><?= e($err) ?></div>
+    <div class="auth-banner mb-5 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-4 py-3 text-sm font-semibold text-center"><?= e($err) ?></div>
   <?php endforeach; ?>
 
   <?php if ($validToken): ?>
-  <form method="POST" class="space-y-4">
+  <form method="POST" class="auth-form space-y-4">
     <?= csrf_field() ?>
     <input type="hidden" name="email" value="<?= e($email) ?>">
     <input type="hidden" name="token" value="<?= e($token) ?>">
