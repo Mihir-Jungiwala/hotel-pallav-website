@@ -2,22 +2,36 @@
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
 
+// Financial year filter for the stat tiles and Recent Enquiries below (1 April -
+// 31 March, same accounting year convention generate_reference() already uses for
+// enquiry reference numbers). Upcoming Arrivals stays unfiltered further down - it's
+// "what's happening right now", not a historical report, so a past FY selection
+// wouldn't mean anything there.
+$earliestYear = (int) date('Y', strtotime(db_one("SELECT MIN(created_at) m FROM enquiries")['m'] ?? 'now'));
+$currentFy = (int) date('n') >= 4 ? (int) date('Y') : (int) date('Y') - 1;
+$earliestFy = min($earliestYear, $currentFy);
+$fyOptions = range($currentFy, $earliestFy, -1);
+$fy = (int) ($_GET['fy'] ?? $currentFy);
+if (!in_array($fy, $fyOptions, true)) $fy = $currentFy;
+$fyStart = $fy . '-04-01';
+$fyEnd = ($fy + 1) . '-03-31';
+
 // Same All / Pending / Confirmed / Declined breakdown as the Guest Activity page, so
 // the dashboard tiles match what that page's pills show. A "booking" isn't a
 // different record - it's just an enquiry whose status is 'confirmed'.
-$statAll = (int) db_one("SELECT COUNT(*) c FROM enquiries")['c'];
+$statAll = (int) db_one("SELECT COUNT(*) c FROM enquiries WHERE created_at BETWEEN ? AND ?", [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'])['c'];
 // Same-day enquiries sit in 'new' until promote_stale_enquiries() flips them to
 // 'pending' after midnight - counted as pending here too so the tile isn't short.
-$statPending = (int) db_one("SELECT COUNT(*) c FROM enquiries WHERE status IN ('new', 'pending')")['c'];
-$statConfirmed = (int) db_one("SELECT COUNT(*) c FROM enquiries WHERE status = 'confirmed'")['c'];
-$statDeclined = (int) db_one("SELECT COUNT(*) c FROM enquiries WHERE status = 'declined'")['c'];
+$statPending = (int) db_one("SELECT COUNT(*) c FROM enquiries WHERE status IN ('new', 'pending') AND created_at BETWEEN ? AND ?", [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'])['c'];
+$statConfirmed = (int) db_one("SELECT COUNT(*) c FROM enquiries WHERE status = 'confirmed' AND created_at BETWEEN ? AND ?", [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'])['c'];
+$statDeclined = (int) db_one("SELECT COUNT(*) c FROM enquiries WHERE status = 'declined' AND created_at BETWEEN ? AND ?", [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'])['c'];
 
 // Arrivals: confirmed enquiries only - a room isn't actually being checked into
 // unless the booking was confirmed, so pending/declined enquiries don't count here.
 $todayArrivals = db_all("SELECT e.*, r.name AS room_name FROM enquiries e LEFT JOIN rooms r ON r.id = e.room_id WHERE e.status = 'confirmed' AND e.check_in = CURDATE() ORDER BY e.name");
 $weekArrivals = db_all("SELECT e.*, r.name AS room_name FROM enquiries e LEFT JOIN rooms r ON r.id = e.room_id WHERE e.status = 'confirmed' AND e.check_in > CURDATE() AND e.check_in <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) ORDER BY e.check_in, e.name");
 
-$recent = db_all("SELECT e.*, r.name AS room_name FROM enquiries e LEFT JOIN rooms r ON r.id = e.room_id ORDER BY e.created_at DESC LIMIT 10");
+$recent = db_all("SELECT e.*, r.name AS room_name FROM enquiries e LEFT JOIN rooms r ON r.id = e.room_id WHERE e.created_at BETWEEN ? AND ? ORDER BY e.created_at DESC LIMIT 10", [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59']);
 $recentActivity = db_all("SELECT a.*, COALESCE(a.user_name, u.name) AS user_name FROM activity_log a LEFT JOIN users u ON u.id = a.user_id ORDER BY a.created_at DESC LIMIT 6");
 $blockedRanges = blocked_date_ranges();
 
@@ -49,10 +63,20 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900">Welcome back<?= $firstName ? ', ' . e($firstName) : '' ?></h1>
       <p class="text-sm text-pallav-500 mt-1">Here's what's happening at Hotel Pallav today.</p>
     </div>
-    <a href="<?= e(APP_URL) ?>/admin/bookings.php?filter=pending" class="hidden sm:inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">
-      Review Pending
-      <?php if ($statPending): ?><span class="inline-flex items-center justify-center w-[19px] h-[19px] shrink-0 text-[10px] bg-gold-500 text-pallav-900 rounded-full font-extrabold leading-none"><?= $statPending ?></span><?php endif; ?>
-    </a>
+    <div class="flex items-center gap-3">
+      <form method="GET" action="<?= e(APP_URL) ?>/admin/dashboard.php" class="flex items-center gap-1.5 text-xs text-pallav-500">
+        Financial Year
+        <select name="fy" onchange="this.form.submit()" class="rounded-lg border border-pallav-200 text-xs font-bold text-pallav-700 py-1.5 pl-2 pr-6 focus:border-pallav-500 outline-none">
+          <?php foreach ($fyOptions as $y): ?>
+            <option value="<?= $y ?>" <?= $y === $fy ? 'selected' : '' ?>>FY <?= $y ?>-<?= substr((string) ($y + 1), 2) ?><?= $y === $currentFy ? ' (Current)' : '' ?></option>
+          <?php endforeach; ?>
+        </select>
+      </form>
+      <a href="<?= e(APP_URL) ?>/admin/bookings.php?filter=pending" class="hidden sm:inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">
+        Review Pending
+        <?php if ($statPending): ?><span class="inline-flex items-center justify-center w-[19px] h-[19px] shrink-0 text-[10px] bg-gold-500 text-pallav-900 rounded-full font-extrabold leading-none"><?= $statPending ?></span><?php endif; ?>
+      </a>
+    </div>
   </div>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
