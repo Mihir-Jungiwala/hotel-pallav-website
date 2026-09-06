@@ -40,7 +40,7 @@
               </td>
               <td class="px-4 py-3.5 align-top text-center text-sm text-pallav-700 whitespace-nowrap"><?= e($e['room_name'] ?? '—') ?></td>
               <td class="px-4 py-3.5 align-top text-center text-sm text-pallav-700 whitespace-nowrap">
-                <?= $e['guests'] ? (int) $e['guests'] . ' guest' . ((int) $e['guests'] === 1 ? '' : 's') : '<span class="text-pallav-300">—</span>' ?>
+                <?= $e['guests'] ? e(guests_label($e['guests'], $e['children'] ?? null)) : '<span class="text-pallav-300">—</span>' ?>
               </td>
               <td class="px-4 py-3.5 align-top text-center text-sm text-pallav-700 whitespace-nowrap">
                 <?= $e['check_in'] ? date('d/m/Y', strtotime($e['check_in'])) : '<span class="text-pallav-300">—</span>' ?>
@@ -61,7 +61,7 @@
                       'status' => $status, 'message' => $e['message'], 'room_name' => $e['room_name'] ?? null,
                       'check_in' => $e['check_in'] ? date('d M Y', strtotime($e['check_in'])) : null,
                       'check_out' => $e['check_out'] ? date('d M Y', strtotime($e['check_out'])) : null,
-                      'guests' => $e['guests'], 'decision_note' => $e['decision_note'],
+                      'guests' => guests_label($e['guests'], $e['children'] ?? null), 'decision_note' => $e['decision_note'],
                       'created_at' => date('d M Y, H:i', strtotime($e['created_at'])),
                   ]);
                 ?>

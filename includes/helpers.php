@@ -83,6 +83,26 @@ function normalize_intl_phone(string $raw): string
 }
 
 /** Display-only formatting: "+919825735404" -> "+91 98257 35404". tel: hrefs should keep the raw value. */
+/**
+ * "3 Guests" or, once a breakdown is known, "2 Guests + 1 Child" - the booking form
+ * collects adults and children as two separate fields, but until now only their sum
+ * was ever stored, so nobody looking at an enquiry later (dashboard, Guest Activity,
+ * the notification email) could tell a party of "2 adults + 1 child" apart from a
+ * plain "3 guests". $totalGuests is adults+children together (the existing `guests`
+ * column); $children is the new column, null for enquiries saved before it existed.
+ */
+function guests_label(?int $totalGuests, ?int $children): string
+{
+    $totalGuests = (int) $totalGuests;
+    $children = (int) $children;
+    if ($totalGuests <= 0) return '';
+    if ($children <= 0) {
+        return $totalGuests . ' Guest' . ($totalGuests === 1 ? '' : 's');
+    }
+    $adults = max(0, $totalGuests - $children);
+    return $adults . ' Guest' . ($adults === 1 ? '' : 's') . ' + ' . $children . ' Child' . ($children === 1 ? '' : 'ren');
+}
+
 function phone_display(?string $raw): string
 {
     $digits = preg_replace('/\D/', '', $raw ?? '');

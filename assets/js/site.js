@@ -50,7 +50,7 @@
         // reloads or comes back to this page - an error stays, since that's still
         // something the guest needs to notice and act on.
         if (msg.classList.contains('ok')) {
-          setTimeout(function(){ msg.style.display = 'none'; msg.textContent = ''; }, 10000);
+          setTimeout(function(){ msg.style.display = 'none'; msg.textContent = ''; }, 8000);
         }
       }, 300);
     });

@@ -671,7 +671,7 @@ function enquiry_email_vars(array $enquiry, ?array $room = null): array
     $guestPhone = $guestPhoneRaw !== '' ? phone_display($guestPhoneRaw) : '';
     $guestEmail = trim((string) ($enquiry['email'] ?? ''));
     $roomName = $room['name'] ?? '';
-    $guests = (string) ($enquiry['guests'] ?? '');
+    $guests = guests_label($enquiry['guests'] ?? null, $enquiry['children'] ?? null);
     $checkInTime = trim((string) ($s['checkin_time'] ?? ''));
     $checkOutTime = trim((string) ($s['checkout_time'] ?? ''));
     $message = trim((string) ($enquiry['message'] ?? ''));

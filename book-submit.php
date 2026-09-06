@@ -55,12 +55,17 @@ if ($errors) {
 $adults = max(1, min(20, $adults ?: 1));
 $children = max(0, min(9, $children));
 
+// "Not sure yet" is a real, deliberate answer - it must never silently turn into
+// "whichever room happens to be first in the table" the way an actually-unmatched
+// room name still should (so a typo or an old removed room name doesn't just vanish
+// into "no room" either). $room stays null only for the "not sure" case; enquiries
+// keep showing "-" for room rather than a room the guest never actually picked.
 $room = null;
-if ($roomQuery !== '') {
+if ($roomQuery !== '' && strcasecmp($roomQuery, 'Not sure yet') !== 0) {
     $room = db_one("SELECT * FROM rooms WHERE name LIKE ? ORDER BY id LIMIT 1", ['%' . $roomQuery . '%']);
-}
-if (!$room) {
-    $room = db_one('SELECT * FROM rooms ORDER BY id LIMIT 1');
+    if (!$room) {
+        $room = db_one('SELECT * FROM rooms ORDER BY id LIMIT 1');
+    }
 }
 
 $checkinDate = $checkin !== '' ? $checkin : date('Y-m-d', strtotime('+1 day'));
@@ -72,8 +77,8 @@ if (strtotime($checkoutDate) < strtotime($checkinDate)) {
 $reference = generate_reference();
 
 $enquiryId = db_insert(
-    'INSERT INTO enquiries (reference, room_id, name, phone, email, check_in, check_out, guests, message, status, ip_address, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "new", ?, NOW(), NOW())',
+    'INSERT INTO enquiries (reference, room_id, name, phone, email, check_in, check_out, guests, children, message, status, ip_address, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "new", ?, NOW(), NOW())',
     [
         $reference,
         $room['id'] ?? null,
@@ -83,6 +88,7 @@ $enquiryId = db_insert(
         $checkinDate,
         $checkoutDate,
         $adults + $children,
+        $children,
         $message !== '' ? $message : null,
         $_SERVER['REMOTE_ADDR'] ?? null,
     ]

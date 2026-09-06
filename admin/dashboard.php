@@ -122,7 +122,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             <td class="px-6 py-3.5 text-center text-sm text-pallav-700 whitespace-nowrap"><?= e($a['reference']) ?></td>
             <td class="px-6 py-3.5 text-left text-sm text-pallav-700 whitespace-nowrap"><?= e($a['name']) ?></td>
             <td class="px-6 py-3.5 text-center text-sm text-pallav-700"><?= e($a['room_name'] ?? '-') ?></td>
-            <td class="px-6 py-3.5 text-center text-sm text-pallav-700"><?= (int) $a['guests'] ?></td>
+            <td class="px-6 py-3.5 text-center text-sm text-pallav-700"><?= e(guests_label($a['guests'], $a['children'] ?? null)) ?></td>
             <td class="px-6 py-3.5 text-center text-sm text-pallav-700 whitespace-nowrap"><?php if ($a['phone']): ?><a href="tel:<?= e($a['phone']) ?>" class="hover:text-pallav-900"><?= e(phone_display($a['phone'])) ?></a><?php else: ?>-<?php endif; ?></td>
             <td class="px-6 py-3.5 text-center">
               <a href="<?= e(APP_URL) ?>/admin/bookings.php?filter=confirmed&q=<?= urlencode($a['reference']) ?>" class="icon-btn bg-pallav-100 hover:bg-pallav-200 text-pallav-700" title="View booking details" aria-label="View booking details"><?= ICON_ARROW ?></a>
@@ -154,7 +154,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             <td class="px-6 py-3.5 text-center text-sm text-pallav-700 whitespace-nowrap"><?= e($a['reference']) ?></td>
             <td class="px-6 py-3.5 text-left text-sm text-pallav-700 whitespace-nowrap"><?= e($a['name']) ?></td>
             <td class="px-6 py-3.5 text-center text-sm text-pallav-700"><?= e($a['room_name'] ?? '-') ?></td>
-            <td class="px-6 py-3.5 text-center text-sm text-pallav-700"><?= (int) $a['guests'] ?></td>
+            <td class="px-6 py-3.5 text-center text-sm text-pallav-700"><?= e(guests_label($a['guests'], $a['children'] ?? null)) ?></td>
             <td class="px-6 py-3.5 text-center text-sm text-pallav-700 whitespace-nowrap"><?php if ($a['phone']): ?><a href="tel:<?= e($a['phone']) ?>" class="hover:text-pallav-900"><?= e(phone_display($a['phone'])) ?></a><?php else: ?>-<?php endif; ?></td>
             <td class="px-6 py-3.5 text-center">
               <a href="<?= e(APP_URL) ?>/admin/bookings.php?filter=confirmed&q=<?= urlencode($a['reference']) ?>" class="icon-btn bg-pallav-100 hover:bg-pallav-200 text-pallav-700" title="View booking details" aria-label="View booking details"><?= ICON_ARROW ?></a>

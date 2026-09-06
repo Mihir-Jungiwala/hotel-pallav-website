@@ -233,6 +233,7 @@ CREATE TABLE IF NOT EXISTS enquiries (
   check_in DATE NULL,
   check_out DATE NULL,
   guests TINYINT UNSIGNED NULL,
+  children TINYINT UNSIGNED NULL,
   status ENUM('new','pending','confirmed','declined') NOT NULL DEFAULT 'new',
   decision_note VARCHAR(255) NULL,
   approved_by INT UNSIGNED NULL,
