@@ -48,12 +48,3 @@ $rows = db_all(
     array_merge($statusParams, $searchParams)
 );
 $totalPages = max(1, (int) ceil($total / $perPage));
-
-function time_ago(string $dt): string {
-    $diff = time() - strtotime($dt);
-    if ($diff < 60) return 'just now';
-    if ($diff < 3600) return floor($diff / 60) . ' min ago';
-    if ($diff < 86400) return floor($diff / 3600) . ' hr ago';
-    if ($diff < 2592000) return floor($diff / 86400) . ' days ago';
-    return date('d M Y', strtotime($dt));
-}

@@ -107,10 +107,3 @@ $hasFilters = $filterUser || $filterCategory !== '' || $filterSearch !== '' || $
 
 $todayCount = (int) db_one("SELECT COUNT(*) c FROM activity_log WHERE DATE(created_at) = CURDATE()")['c'];
 $activeUserCount = (int) db_one("SELECT COUNT(DISTINCT user_id) c FROM activity_log WHERE created_at >= ?", [date('Y-m-d H:i:s', strtotime('-7 days'))])['c'];
-
-function activity_page_url(int $p): string
-{
-    $q = $_GET;
-    $q['page'] = $p;
-    return e(APP_URL) . '/admin/activity.php?' . http_build_query($q);
-}
