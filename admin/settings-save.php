@@ -79,29 +79,40 @@ $notifyEmails = preg_split('/[\r\n,]+/', $_POST['notify_email'] ?? '');
 $notifyEmails = array_filter(array_map('trim', $notifyEmails), fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL));
 $notifyEmail = $notifyEmails ? implode("\n", array_unique($notifyEmails)) : null;
 
-db_run(
-    'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_email=?, notify_name=? WHERE id=?',
-    [
-        (int) $_POST['opened_year'], trim($_POST['gm_phone']), trim($_POST['reception_phone']), trim($_POST['whatsapp']),
-        ($_POST['reception_whatsapp'] ?? '') ?: null,
-        trim($_POST['email']), trim($_POST['address']), trim($_POST['checkin_time']), trim($_POST['checkout_time']),
-        ($_POST['meta_title'] ?? '') ?: null, ($_POST['meta_description'] ?? '') ?: null, ($_POST['meta_keywords'] ?? '') ?: null,
-        $logoPath, $faviconPath, ($_POST['gbp_link'] ?? '') ?: null,
-        ($_POST['facebook_link'] ?? '') ?: null, ($_POST['instagram_link'] ?? '') ?: null,
-        $secret('google_maps_api_key'), ($_POST['google_place_id'] ?? '') ?: null,
-        max(1, min(5, (int) ($_POST['google_min_review_rating'] ?? 3))),
-        $secret('gbp_oauth_client_id'), $secret('gbp_oauth_client_secret'),
-        $secret('smtp_host'),
-        can_view_secrets() ? ((int) ($_POST['smtp_port'] ?? 587) ?: 587) : (int) ($settings['smtp_port'] ?? 587),
-        $secret('smtp_username'),
-        can_view_secrets() ? $smtpPassword : ($settings['smtp_password'] ?? null),
-        $secret('smtp_from_email'),
-        $secret('smtp_from_name'),
-        $notifyEmail,
-        trim($_POST['notify_name'] ?? '') ?: null,
-        $settings['id'],
-    ]
-);
+try {
+    db_run(
+        'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_email=?, notify_name=? WHERE id=?',
+        [
+            (int) $_POST['opened_year'], trim($_POST['gm_phone']), trim($_POST['reception_phone']), trim($_POST['whatsapp']),
+            ($_POST['reception_whatsapp'] ?? '') ?: null,
+            trim($_POST['email']), trim($_POST['address']), trim($_POST['checkin_time']), trim($_POST['checkout_time']),
+            ($_POST['meta_title'] ?? '') ?: null, ($_POST['meta_description'] ?? '') ?: null, ($_POST['meta_keywords'] ?? '') ?: null,
+            $logoPath, $faviconPath, ($_POST['gbp_link'] ?? '') ?: null,
+            ($_POST['facebook_link'] ?? '') ?: null, ($_POST['instagram_link'] ?? '') ?: null,
+            $secret('google_maps_api_key'), ($_POST['google_place_id'] ?? '') ?: null,
+            max(1, min(5, (int) ($_POST['google_min_review_rating'] ?? 3))),
+            $secret('gbp_oauth_client_id'), $secret('gbp_oauth_client_secret'),
+            $secret('smtp_host'),
+            can_view_secrets() ? ((int) ($_POST['smtp_port'] ?? 587) ?: 587) : (int) ($settings['smtp_port'] ?? 587),
+            $secret('smtp_username'),
+            can_view_secrets() ? $smtpPassword : ($settings['smtp_password'] ?? null),
+            $secret('smtp_from_email'),
+            $secret('smtp_from_name'),
+            $notifyEmail,
+            trim($_POST['notify_name'] ?? '') ?: null,
+            $settings['id'],
+        ]
+    );
+} catch (\Throwable $e) {
+    // A raw fatal error here shows the visitor a blank 500 page with no explanation -
+    // most commonly because the database is missing a column this code expects (a
+    // migration that hasn't been run yet on this environment). Log the real cause for
+    // whoever can fix it, but tell the person who just clicked Save something they can
+    // actually act on instead of a blank white screen.
+    error_log('Settings save failed: ' . $e->getMessage());
+    flash('error', 'Settings could not be saved due to a server error. If this keeps happening, a recent update may need a database migration to be run - check error.log for the exact cause.');
+    redirect('admin/settings.php');
+}
 
 log_activity('settings.updated', 'Updated site settings');
 flash('success', 'Settings saved.');
