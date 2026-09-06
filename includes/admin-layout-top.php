@@ -278,10 +278,12 @@ $me = current_user();
         View live site
       </a>
       <div class="flex items-center gap-2.5 mt-1 px-2 py-2 rounded-xl hover:bg-pallav-50 transition">
-        <span class="w-8 h-8 rounded-full bg-gradient-to-br from-pallav-500 to-pallav-800 text-white flex items-center justify-center font-extrabold text-xs shadow shrink-0"><?= e(strtoupper(substr($me['name'] ?? 'A', 0, 1))) ?></span>
-        <div class="flex-1 min-w-0">
-          <div class="truncate text-xs font-bold text-pallav-900"><?= e($me['name'] ?? 'Admin') ?></div>
-        </div>
+        <a href="<?= e(APP_URL) ?>/admin/profile.php" class="flex items-center gap-2.5 flex-1 min-w-0" title="My Profile">
+          <span class="w-8 h-8 rounded-full bg-gradient-to-br from-pallav-500 to-pallav-800 text-white flex items-center justify-center font-extrabold text-xs shadow shrink-0"><?= e(strtoupper(substr($me['name'] ?? 'A', 0, 1))) ?></span>
+          <div class="flex-1 min-w-0">
+            <div class="truncate text-xs font-bold text-pallav-900"><?= e($me['name'] ?? 'Admin') ?></div>
+          </div>
+        </a>
         <form method="POST" action="<?= e(APP_URL) ?>/admin/logout.php">
           <?= csrf_field() ?>
           <button type="submit" title="Sign out" class="w-7 h-7 rounded-lg flex items-center justify-center text-pallav-400 hover:text-rose-500 hover:bg-rose-50 transition shrink-0">
@@ -343,10 +345,12 @@ $me = current_user();
           View live site
         </a>
         <div class="flex items-center gap-2.5 px-1 py-2 rounded-xl">
-          <span class="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center font-extrabold text-xs shrink-0"><?= e(strtoupper(substr($me['name'] ?? 'A', 0, 1))) ?></span>
-          <div class="flex-1 min-w-0">
-            <div class="truncate text-xs font-bold text-white"><?= e($me['name'] ?? 'Admin') ?></div>
-          </div>
+          <a href="<?= e(APP_URL) ?>/admin/profile.php" class="flex items-center gap-2.5 flex-1 min-w-0" @click="drawer=false">
+            <span class="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center font-extrabold text-xs shrink-0"><?= e(strtoupper(substr($me['name'] ?? 'A', 0, 1))) ?></span>
+            <div class="flex-1 min-w-0">
+              <div class="truncate text-xs font-bold text-white"><?= e($me['name'] ?? 'Admin') ?></div>
+            </div>
+          </a>
           <form method="POST" action="<?= e(APP_URL) ?>/admin/logout.php">
             <?= csrf_field() ?>
             <button type="submit" title="Sign out" aria-label="Sign out" class="w-7 h-7 rounded-lg flex items-center justify-center text-pallav-200 hover:text-white hover:bg-white/10 transition shrink-0">
