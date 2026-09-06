@@ -5,11 +5,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('index.php');
 }
 
-verify_csrf('index.php#enquireMsg');
+verify_csrf('index.php#mainMsg');
 
 // Honeypot - bots fill hidden fields, humans never see them.
 if (trim($_POST['company'] ?? '') !== '') {
-    redirect('index.php#enquireMsg');
+    redirect('index.php#mainMsg');
 }
 
 $name = trim($_POST['name'] ?? '');
@@ -49,7 +49,7 @@ if (empty($_POST['accept_terms'])) $errors[] = 'Please accept the Terms & Condit
 
 if ($errors) {
     flash('error', implode(' ', $errors));
-    redirect('index.php#enquireMsg');
+    redirect('index.php#mainMsg');
 }
 
 $adults = max(1, min(20, $adults ?: 1));
@@ -97,4 +97,4 @@ if (smtp_is_configured()) {
 }
 
 flash('success', "Thank you! Your enquiry reference is {$reference}. We will call you shortly to confirm.");
-redirect('index.php#enquireMsg');
+redirect('index.php#mainMsg');

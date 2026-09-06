@@ -31,15 +31,17 @@
   document.querySelectorAll('[data-years]').forEach(function(el){ el.textContent = YEARS; });
   document.querySelectorAll('[data-years-to]').forEach(function(el){ el.setAttribute('data-to', YEARS); });
 
-  // After a booking-form submit, book-submit.php redirects back to #enquireMsg so the
-  // success/error message lands in view. The browser's own fragment scroll fires
-  // before images/scroll-reveal sections above it finish settling their height, which
-  // can leave it mis-scrolled on some devices - so it's redone explicitly once the
-  // page (and a beat more, for anything still settling) has actually loaded.
-  if (window.location.hash === '#enquireMsg') {
+  // After a booking-form submit, book-submit.php redirects back to #mainMsg (the same
+  // message slot used for live client-side validation errors, at the bottom of the
+  // form next to the submit button) so the success/error message lands in view. The
+  // browser's own fragment scroll fires before images/scroll-reveal sections above it
+  // finish settling their height, which can leave it mis-scrolled on some devices -
+  // so it's redone explicitly once the page (and a beat more, for anything still
+  // settling) has actually loaded.
+  if (window.location.hash === '#mainMsg') {
     window.addEventListener('load', function(){
       setTimeout(function(){
-        var msg = document.getElementById('enquireMsg');
+        var msg = document.getElementById('mainMsg');
         if (msg) { msg.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); msg.focus({ preventScroll: true }); }
       }, 300);
     });

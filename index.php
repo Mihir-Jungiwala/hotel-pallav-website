@@ -799,9 +799,6 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <?= csrf_field() ?>
       <h3>Booking enquiry</h3>
       <p>Just a couple of details and we will call you back.</p>
-      <?php foreach ($flashes as $f): ?>
-        <div id="enquireMsg" class="fmsg <?= $f['type'] === 'error' ? 'err' : 'ok' ?>" style="display:block;margin-bottom:16px" role="status" tabindex="-1"><?= e($f['message']) ?></div>
-      <?php endforeach; ?>
       <input type="text" name="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="pgrid">
         <div class="f"><label for="m-name">Your name *</label><div class="ctl"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5.6 19.5c0-3.3 2.9-5.7 6.4-5.7s6.4 2.4 6.4 5.7"/></svg><input id="m-name" name="name" type="text" placeholder="Full name" required></div></div>
@@ -840,7 +837,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 3.2v5c0 4.6-3.1 8.6-7.5 9.8-4.4-1.2-7.5-5.2-7.5-9.8v-5z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg>
         Your details go straight to our reception. Never shared or sold.
       </div>
-      <div class="fmsg" id="mainMsg" role="status"></div>
+      <div class="fmsg<?= $flashes ? ' ' . ($flashes[0]['type'] === 'error' ? 'err' : 'ok') : '' ?>" id="mainMsg" role="status" tabindex="-1"<?= $flashes ? ' style="display:block"' : '' ?>><?= $flashes ? e($flashes[0]['message']) : '' ?></div>
     </form>
   </div>
 </section>
