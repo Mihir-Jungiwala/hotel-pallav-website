@@ -4,22 +4,28 @@ require_admin();
 
 // Every signed-in role (viewer included) can reach this page - it only ever touches
 // the signed-in user's own row, never anyone else's, so it needs no require_role().
+// Name/username/email are identity fields - only an Admin or Master Admin can change
+// them (for themselves here, or for anyone via Users Management). An Editor/Viewer
+// can only change their own password on this page.
 $user = current_user();
+$canEditIdentity = can_manage_users();
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
-    $name = trim($_POST['name'] ?? '');
-    $username = trim($_POST['username'] ?? '');
-    $email = trim($_POST['email'] ?? '');
+    $name = $canEditIdentity ? trim($_POST['name'] ?? '') : $user['name'];
+    $username = $canEditIdentity ? trim($_POST['username'] ?? '') : $user['username'];
+    $email = $canEditIdentity ? trim($_POST['email'] ?? '') : $user['email'];
     $password = $_POST['password'] ?? '';
     $confirm = $_POST['password_confirmation'] ?? '';
 
-    if ($name === '') $errors[] = 'Name is required.';
-    if ($username === '' || !preg_match('/^[a-zA-Z0-9_.]{3,50}$/', $username)) $errors[] = 'Username must be 3-50 characters: letters, numbers, dot or underscore only.';
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
-    if ($username && ($existingU = db_one('SELECT id FROM users WHERE username = ?', [$username])) && (int) $existingU['id'] !== (int) $user['id']) $errors[] = 'That username is already in use.';
-    if ($email && ($existing = db_one('SELECT id FROM users WHERE email = ?', [$email])) && (int) $existing['id'] !== (int) $user['id']) $errors[] = 'That email is already in use.';
+    if ($canEditIdentity) {
+        if ($name === '') $errors[] = 'Name is required.';
+        if ($username === '' || !preg_match('/^[a-zA-Z0-9_.]{3,50}$/', $username)) $errors[] = 'Username must be 3-50 characters: letters, numbers, dot or underscore only.';
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
+        if ($username && ($existingU = db_one('SELECT id FROM users WHERE username = ?', [$username])) && (int) $existingU['id'] !== (int) $user['id']) $errors[] = 'That username is already in use.';
+        if ($email && ($existing = db_one('SELECT id FROM users WHERE email = ?', [$email])) && (int) $existing['id'] !== (int) $user['id']) $errors[] = 'That email is already in use.';
+    }
     if ($password !== '') {
         $strengthError = validate_password_strength($password);
         if ($strengthError) $errors[] = $strengthError;
@@ -46,7 +52,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
   <div class="mb-8 max-w-xl mx-auto">
     <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900">My Profile</h1>
-    <p class="text-sm text-pallav-500 mt-1">Update your own name, username, email or password. Signed in as <?= e(USER_ROLE_LABELS[$user['role']] ?? $user['role']) ?>.</p>
+    <p class="text-sm text-pallav-500 mt-1"><?= $canEditIdentity ? 'Update your own name, username, email or password.' : 'Update your own password. Name, username and email can only be changed by an Admin or Master Admin.' ?> Signed in as <?= e(USER_ROLE_LABELS[$user['role']] ?? $user['role']) ?>.</p>
   </div>
 
   <?php foreach ($errors as $err): ?><div class="mb-6 rounded-xl bg-rose-50 text-rose-700 ring-1 ring-rose-200 px-5 py-3.5 text-sm font-semibold max-w-xl mx-auto"><?= e($err) ?></div><?php endforeach; ?>
@@ -55,15 +61,27 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <?= csrf_field() ?>
     <div>
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Name</label>
-      <input type="text" name="name" value="<?= e($user['name']) ?>" required autofocus class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+      <?php if ($canEditIdentity): ?>
+        <input type="text" name="name" value="<?= e($user['name']) ?>" required autofocus class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+      <?php else: ?>
+        <div class="rounded-xl bg-pallav-50 ring-1 ring-pallav-100 px-4 py-2.5 text-sm font-semibold text-pallav-500"><?= e($user['name']) ?></div>
+      <?php endif; ?>
     </div>
     <div>
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Username</label>
-      <input type="text" name="username" value="<?= e($user['username']) ?>" required autocapitalize="off" autocorrect="off" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+      <?php if ($canEditIdentity): ?>
+        <input type="text" name="username" value="<?= e($user['username']) ?>" required autocapitalize="off" autocorrect="off" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+      <?php else: ?>
+        <div class="rounded-xl bg-pallav-50 ring-1 ring-pallav-100 px-4 py-2.5 text-sm font-semibold text-pallav-500"><?= e($user['username']) ?></div>
+      <?php endif; ?>
     </div>
     <div>
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Email</label>
-      <input type="email" name="email" value="<?= e($user['email']) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+      <?php if ($canEditIdentity): ?>
+        <input type="email" name="email" value="<?= e($user['email']) ?>" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+      <?php else: ?>
+        <div class="rounded-xl bg-pallav-50 ring-1 ring-pallav-100 px-4 py-2.5 text-sm font-semibold text-pallav-500"><?= e($user['email']) ?></div>
+      <?php endif; ?>
     </div>
     <div>
       <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Role</label>
@@ -74,7 +92,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <div>
         <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">New Password</label>
         <div class="relative pw-field">
-          <input type="password" name="password" class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <input type="password" name="password" <?= $canEditIdentity ? '' : 'autofocus' ?> class="w-full rounded-xl border border-pallav-200 pl-4 pr-11 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
           <?= password_toggle_button() ?>
         </div>
         <p class="text-[11px] font-semibold text-pallav-300 mt-1">Leave blank to keep current, 8+ chars, upper, lower, digit &amp; symbol</p>
