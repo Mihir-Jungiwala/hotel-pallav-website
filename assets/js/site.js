@@ -864,17 +864,16 @@
   })();
 
   /* ============ COOKIE NOTICE ============
-     Asks before the form-draft cookie below is ever written. Decision lives in
-     localStorage (not a cookie - asking permission via the thing it's permission
-     for would be circular), so it only ever prompts once per browser. */
+     Asks before the form-draft cookie below is ever written. Shown on every page
+     load, by request, rather than only until a decision is first made. The consent
+     value itself still lives in localStorage (not a cookie - asking permission via
+     the thing it's permission for would be circular) and still gates whether the
+     draft cookie is actually written each time. */
   (function(){
     var card = document.getElementById('cookieCard');
     if (!card) return;
     var KEY = 'hp_cookie_consent';
-    var decision; try { decision = localStorage.getItem(KEY); } catch (e) { decision = null; }
-    if (!decision) {
-      setTimeout(function(){ card.hidden = false; }, 900);
-    }
+    setTimeout(function(){ card.hidden = false; }, 900);
     function decide(value){
       try { localStorage.setItem(KEY, value); } catch (e) {}
       card.hidden = true;

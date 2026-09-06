@@ -977,6 +977,9 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 <div class="terms-modal" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle" hidden>
   <div class="terms-panel">
     <div class="terms-head">
+      <span class="terms-badge" aria-hidden="true">
+        <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h8l4 4V20a1 1 0 01-1 1H6a1 1 0 01-1-1V4.5a1 1 0 011-1z"/><path d="M13.5 3.6V8h4.3M8.5 13h7M8.5 16.5h4.5"/></svg>
+      </span>
       <h3 id="termsModalTitle">Terms &amp; Conditions</h3>
       <button type="button" class="terms-x" id="termsClose" aria-label="Close">
         <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
