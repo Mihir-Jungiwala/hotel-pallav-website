@@ -476,6 +476,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
           }
         ?>
         <?php if ($planRows): ?>
+        <p class="rate-date-note">Rates for Today, <?= e(date('j M Y')) ?></p>
         <div class="plan-table-wrap">
           <table class="plan-table">
             <thead><tr><th>Plan</th><th>1 Person</th><th>2 Person</th><?php if ($show3rd): ?><th>Extra Person</th><?php endif; ?></tr></thead>
