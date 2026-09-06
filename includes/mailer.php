@@ -402,13 +402,17 @@ function mail_password_reset(string $toEmail, string $toName, string $resetLink)
         . '<p style="margin:0 0 4px;">We received a request to reset the password for your <b>' . e(APP_NAME) . '</b> admin account.</p>'
         . '<p style="margin:10px 0 0;">Click the button below to choose a new password. This link is valid for <b>10 minutes</b>.</p>'
 
-        // Reset button card
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;margin:20px 0;background:#5B21B6;border-radius:14px;">'
+        // Reset button - solid brand purple with white text, same convention as the
+        // "Call the hotel" button elsewhere in these emails (not a gradient: background-image
+        // gradients don't render in Outlook desktop, so a solid fill is the one that's
+        // guaranteed to actually look like the site's purple everywhere, rather than a plain
+        // white pill that doesn't match any button on the real site).
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;margin:20px 0;background:#F7F4FF;border-radius:14px;">'
         . '<tr><td align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:24px 20px;">'
-        . '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;"><tr><td align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;background:#FFFFFF;border-radius:10px;">'
-        . '<a href="' . e($resetLink) . '" style="display:inline-block;color:#5B21B6;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 34px;">Reset Your Password</a>'
+        . '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;"><tr><td align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;background:#5B21B6;border-radius:10px;">'
+        . '<a href="' . e($resetLink) . '" style="display:inline-block;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 34px;">Reset Your Password</a>'
         . '</td></tr></table>'
-        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1px;color:#E4DEFA;text-transform:uppercase;padding-top:14px;">Valid for 10 Minutes</div>'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1px;color:#5B21B6;text-transform:uppercase;padding-top:14px;">Valid for 10 Minutes</div>'
         . '</td></tr></table>'
 
         // Security notice

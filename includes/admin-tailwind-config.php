@@ -34,6 +34,32 @@ html,body{ -webkit-tap-highlight-color:transparent; }
    of their own) and the main admin panel. */
 html{ width:100%; max-width:100vw; overflow-x:hidden; }
 
+/* min-h-screen (Tailwind: min-height:100vh) is what let the auth pages scroll on
+   mobile despite everything visually fitting "one screen": 100vh is calculated
+   against the browser's maximum possible viewport, as if the address bar were
+   already hidden, but it's visible at first paint - so the page lays out taller
+   than what's actually on screen, and that gap is exactly what you can scroll into.
+   100dvh tracks the real, currently-visible viewport instead. Older browsers that
+   don't understand dvh simply drop this line and keep Tailwind's own 100vh rule
+   above it in the cascade, so this is purely additive, never a regression. */
+.min-h-screen{ min-height:100dvh; }
+
+/* The auth pages (login/forgot-password/reset-password) also had a second, separate
+   problem: on genuinely short screens the header block + card + their padding add up
+   to more than the viewport even with zero browser-chrome illusion involved (measured
+   645px of content against a 571px viewport at 375x667) - real overflow, not a unit
+   quirk. Trimmed only under a real height squeeze, never on width alone, so nothing
+   changes on a normal-height phone or on desktop/tablet. */
+@media (max-height:700px){
+  .auth-wrap{ padding-top:20px!important; padding-bottom:20px!important; }
+  .auth-header{ margin-bottom:16px!important; }
+  .auth-header .auth-logo{ width:40px!important; height:40px!important; margin-bottom:6px!important; }
+  .auth-card{ padding:24px!important; }
+}
+@media (max-height:560px){
+  .auth-header{ display:none; }
+}
+
 /* Rate/inventory calendar cells: the native number spin-buttons only reserve
    layout space on hover/focus, which shifts the centered text left exactly
    while an admin is interacting with the cell. Removing them keeps the number

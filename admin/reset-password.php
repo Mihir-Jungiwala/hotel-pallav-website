@@ -5,8 +5,16 @@ $email = $_GET['email'] ?? $_POST['email'] ?? '';
 $token = $_GET['token'] ?? $_POST['token'] ?? '';
 $errors = [];
 
-$resetRow = db_one('SELECT * FROM password_resets WHERE email = ?', [$email]);
-$validToken = $resetRow && password_verify($token, $resetRow['token']) && (strtotime($resetRow['created_at']) > time() - 600);
+// The 10-minute expiry check happens entirely inside MySQL (created_at > NOW() - INTERVAL),
+// not via PHP's strtotime($resetRow['created_at']) > time() - 600 as before. That version
+// re-parsed a MySQL-written timestamp using PHP's own configured timezone (Asia/Kolkata) -
+// correct only if the database server's clock also happens to be set to that timezone. Many
+// hosts (this one included, apparently) run MySQL in UTC regardless of the app's timezone,
+// which made a token look created 5.5 hours in the past the instant it was issued - expired
+// before the email even arrived. NOW() and created_at are both read from the same MySQL
+// session, so this comparison is correct no matter what timezone that session is actually in.
+$resetRow = db_one("SELECT *, (created_at > NOW() - INTERVAL 10 MINUTE) AS still_fresh FROM password_resets WHERE email = ?", [$email]);
+$validToken = $resetRow && password_verify($token, $resetRow['token']) && (bool) $resetRow['still_fresh'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
