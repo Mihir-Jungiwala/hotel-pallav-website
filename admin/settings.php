@@ -6,6 +6,17 @@ $settings = get_settings();
 $logoUrl = $settings['logo_path'] ? UPLOADS_URL . '/' . $settings['logo_path'] : null;
 $faviconUrl = $settings['favicon_path'] ? UPLOADS_URL . '/' . $settings['favicon_path'] : null;
 
+// Pre-fill from the new per-recipient list once it's been saved; until then, bridge
+// from the old single Manager Name + one-per-line email textarea it replaced, so
+// existing entries show up here instead of looking wiped on first visit.
+$notifyRecipients = json_decode($settings['notify_recipients'] ?? '', true);
+if (!is_array($notifyRecipients) || !$notifyRecipients) {
+    $legacyName = trim((string) ($settings['notify_name'] ?? ''));
+    $legacyEmails = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) ($settings['notify_email'] ?? ''))));
+    $notifyRecipients = array_map(fn ($e) => ['name' => $legacyName, 'email' => $e], array_values($legacyEmails));
+}
+if (!$notifyRecipients) $notifyRecipients = [['name' => '', 'email' => '']];
+
 $title = 'Settings';
 include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
@@ -332,15 +343,24 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <?= secret_locked_field($settings['smtp_host'] ?? '') ?>
         </div>
         <?php endif; ?>
-        <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Manager Name</label>
-          <input type="text" name="notify_name" value="<?= e($settings['notify_name'] ?? '') ?>" placeholder="e.g. Mihir" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-          <p class="text-[11px] text-pallav-400 mt-1">Used to greet whoever reads the enquiry/booking alert emails below, e.g. "Dear Mihir,". Leave blank to say "Dear Team,".</p>
-        </div>
-        <div class="sm:col-span-2">
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Notification Emails (guest enquiries)</label>
-          <textarea name="notify_email" rows="3" placeholder="<?= e($settings['email'] ?? 'yourhotel@gmail.com') ?>" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none"><?= e($settings['notify_email'] ?? '') ?></textarea>
-          <p class="text-[11px] text-pallav-400 mt-1">One email per line (or comma-separated) - every address listed here gets new enquiry alerts and confirm/decline updates. Leave blank to use the hotel Email above.</p>
+        <div class="sm:col-span-2" x-data="{ recipients: <?= e(json_encode($notifyRecipients)) ?> }">
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Notification Recipients</label>
+          <p class="text-[11px] text-pallav-400 mb-2.5">Each person listed here gets new-enquiry alerts and confirm/decline updates, greeted by their own name (e.g. "Dear Mihir,"). Add as many as you like.</p>
+          <div class="space-y-2">
+            <template x-for="(r, i) in recipients" :key="i">
+              <div class="flex items-center gap-2">
+                <input type="text" :name="'notify_name[' + i + ']'" x-model="r.name" placeholder="Name" class="w-1/3 rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+                <input type="email" :name="'notify_email[' + i + ']'" x-model="r.email" placeholder="email@example.com" class="flex-1 rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+                <button type="button" @click="recipients.splice(i,1)" class="w-8 h-8 shrink-0 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+            </template>
+            <button type="button" @click="recipients.push({name:'', email:''})" class="text-xs font-bold text-pallav-600 hover:text-pallav-800 inline-flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
+              Add recipient
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -562,14 +562,35 @@ function render_email_template(string $key, array $vars): array
     ];
 }
 
-/** Splits Settings' notify_email (one address per line, or comma-separated) into a clean list. */
-function notify_email_list(): array
+/**
+ * Every staff notification recipient - each with their own name (for "Dear {{name}},")
+ * and email, editable as a growable list in Settings. Falls back to the old single
+ * notify_name + notify_email textarea (that name applied to every address) so an
+ * install that hasn't re-saved Settings since this list replaced them still works.
+ */
+function notify_recipients_list(): array
 {
     $s = get_settings();
-    $raw = $s['notify_email'] ?? $s['email'] ?? '';
-    $emails = preg_split('/[\r\n,]+/', (string) $raw);
+    $raw = $s['notify_recipients'] ?? null;
+    if ($raw) {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $out = [];
+            foreach ($decoded as $r) {
+                $email = trim((string) ($r['email'] ?? ''));
+                if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+                $out[] = ['name' => trim((string) ($r['name'] ?? '')) ?: 'Team', 'email' => $email];
+            }
+            if ($out) return $out;
+        }
+    }
+
+    // Legacy fallback: the old textarea + single name field.
+    $legacyName = trim((string) ($s['notify_name'] ?? '')) ?: 'Team';
+    $legacyRaw = $s['notify_email'] ?? $s['email'] ?? '';
+    $emails = preg_split('/[\r\n,]+/', (string) $legacyRaw);
     $emails = array_filter(array_map('trim', $emails), fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL));
-    return array_values(array_unique($emails));
+    return array_map(fn ($e) => ['name' => $legacyName, 'email' => $e], array_values(array_unique($emails)));
 }
 
 /**
@@ -587,14 +608,16 @@ function send_templated_mail(string $key, string $toEmail, string $toName, array
     $sent = $toEmail !== '' ? smtp_send($toEmail, $toName ?: 'Guest', $subject, $html) : true;
 
     // The owner/notification-address copy is worded for staff, not the guest (greets
-    // the manager by name, states plainly what happened, adds buttons to reach the
-    // guest) - use a "{key}_owner" template when one exists, otherwise fall back to
-    // reusing the guest body as before.
+    // each recipient by their own name, states plainly what happened, adds buttons to
+    // reach the guest) - use a "{key}_owner" template when one exists, otherwise fall
+    // back to reusing the guest body as before. Re-rendered per recipient since each
+    // one's {{manager_name}} differs.
     $ownerKey = array_key_exists("{$key}_owner", EMAIL_TEMPLATE_DEFAULTS) ? "{$key}_owner" : $key;
-    $ownerRendered = $ownerKey === $key ? $rendered : render_email_template($ownerKey, $vars);
-    $ownerBody = email_shell($heading, $ownerRendered['body'] . ($ownerExtraHtml ?? ''), false);
-    foreach (notify_email_list() as $notifyTo) {
-        smtp_send($notifyTo, APP_NAME . ' Admin', $subject, $ownerBody, $toEmail !== '' ? $toEmail : null);
+    foreach (notify_recipients_list() as $r) {
+        $rVars = array_merge($vars, ['manager_name' => e($r['name'])]);
+        $ownerRendered = $ownerKey === $key ? render_email_template($key, $rVars) : render_email_template($ownerKey, $rVars);
+        $ownerBody = email_shell($heading, $ownerRendered['body'] . ($ownerExtraHtml ?? ''), false);
+        smtp_send($r['email'], $r['name'], $subject, $ownerBody, $toEmail !== '' ? $toEmail : null);
     }
     return $sent;
 }
@@ -606,12 +629,13 @@ function send_templated_mail(string $key, string $toEmail, string $toName, array
  */
 function send_admin_notification(string $key, array $vars, ?string $ownerExtraHtml = null): void
 {
-    $rendered = render_email_template($key, $vars);
     $heading = EMAIL_TEMPLATE_LABELS[$key] ?? APP_NAME;
-    $subject = APP_NAME . ' - ' . $rendered['subject'];
-    $html = email_shell($heading, $rendered['body'] . ($ownerExtraHtml ?? ''), false);
-    foreach (notify_email_list() as $notifyTo) {
-        smtp_send($notifyTo, APP_NAME . ' Admin', $subject, $html);
+    foreach (notify_recipients_list() as $r) {
+        $rVars = array_merge($vars, ['manager_name' => e($r['name'])]);
+        $rendered = render_email_template($key, $rVars);
+        $subject = APP_NAME . ' - ' . $rendered['subject'];
+        $html = email_shell($heading, $rendered['body'] . ($ownerExtraHtml ?? ''), false);
+        smtp_send($r['email'], $r['name'], $subject, $html);
     }
 }
 

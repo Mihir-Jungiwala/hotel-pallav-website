@@ -73,15 +73,26 @@ $secret = function (string $key) use ($settings) {
     return trim($_POST[$key] ?? '') ?: null;
 };
 
-// One or more notification addresses, entered one per line or comma-separated -
-// keep only the ones that actually look like an email, store one per line.
-$notifyEmails = preg_split('/[\r\n,]+/', $_POST['notify_email'] ?? '');
-$notifyEmails = array_filter(array_map('trim', $notifyEmails), fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL));
-$notifyEmail = $notifyEmails ? implode("\n", array_unique($notifyEmails)) : null;
+// Each notification recipient is a name + email pair from the growable list in
+// Settings - keep only rows with a real email address, name is optional (falls back
+// to "Team" in the greeting if left blank).
+$notifyNames = $_POST['notify_name'] ?? [];
+$notifyEmailsRaw = $_POST['notify_email'] ?? [];
+$notifyRecipients = [];
+$seenEmails = [];
+foreach ((array) $notifyEmailsRaw as $i => $email) {
+    $email = trim((string) $email);
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+    $emailLower = strtolower($email);
+    if (isset($seenEmails[$emailLower])) continue;
+    $seenEmails[$emailLower] = true;
+    $notifyRecipients[] = ['name' => trim((string) ($notifyNames[$i] ?? '')), 'email' => $email];
+}
+$notifyRecipientsJson = $notifyRecipients ? json_encode($notifyRecipients) : null;
 
 try {
     db_run(
-        'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_email=?, notify_name=? WHERE id=?',
+        'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_recipients=? WHERE id=?',
         [
             (int) $_POST['opened_year'], trim($_POST['gm_phone']), trim($_POST['reception_phone']), trim($_POST['whatsapp']),
             ($_POST['reception_whatsapp'] ?? '') ?: null,
@@ -98,8 +109,7 @@ try {
             can_view_secrets() ? $smtpPassword : ($settings['smtp_password'] ?? null),
             $secret('smtp_from_email'),
             $secret('smtp_from_name'),
-            $notifyEmail,
-            trim($_POST['notify_name'] ?? '') ?: null,
+            $notifyRecipientsJson,
             $settings['id'],
         ]
     );
