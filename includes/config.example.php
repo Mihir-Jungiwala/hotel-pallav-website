@@ -21,6 +21,13 @@ define('APP_NAME', 'Hotel Pallav');
 define('APP_TIMEZONE', 'Asia/Kolkata');
 define('SESSION_LIFETIME_MINUTES', 30); // admin session auto-expiry
 
+// When true, the "forgot password" page shows the raw reset link on screen if the
+// email fails to send, so you can still test the flow without a working mailbox.
+// Keep this false on the live site - otherwise anyone who knows a valid staff
+// username can get a working reset link handed to them on screen if SMTP ever
+// breaks, with no need to read that mailbox at all.
+define('APP_DEBUG', false);
+
 // ===== Paths =====
 define('ROOT_PATH', dirname(__DIR__));
 define('UPLOADS_PATH', ROOT_PATH . '/uploads');

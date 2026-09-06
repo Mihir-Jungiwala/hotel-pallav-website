@@ -29,8 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $sent = smtp_is_configured() && mail_password_reset($email, $user['name'], $resetLink);
             if (!$sent) {
-                // No SMTP configured (or send failed) - fall back to showing the link directly.
-                $resetLinkFallback = $resetLink;
+                // No SMTP configured (or send failed). Only ever show the raw link on
+                // screen in local dev (APP_DEBUG) - on the live site that would hand a
+                // working reset link to anyone who knows a valid username, with no
+                // email access needed at all. Defaults to false (safe) even on a live
+                // config.php that predates this constant.
+                if (defined('APP_DEBUG') && APP_DEBUG) {
+                    $resetLinkFallback = $resetLink;
+                } else {
+                    error_log("Password reset email failed to send for {$email} - reset link could not be delivered.");
+                    $status = 'We could not send the reset email just now, please try again shortly or contact the administrator';
+                }
             }
         }
     }
