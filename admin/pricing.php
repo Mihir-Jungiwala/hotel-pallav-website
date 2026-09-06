@@ -37,7 +37,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
 
   <div class="space-y-8" x-data>
   <?php foreach ($rooms as $room): ?>
-    <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden" x-data="{ openPlan: false }">
+    <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden" x-data="{ openPlan: false, editId: null }">
       <div class="p-6 sm:p-7 bg-gradient-to-r from-pallav-900 via-pallav-800 to-pallav-700 text-white relative overflow-hidden">
         <div class="absolute -right-10 -top-16 w-56 h-56 rounded-full bg-white/5"></div>
         <div class="relative flex flex-wrap items-center justify-between gap-5">
@@ -161,6 +161,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
               </div>
               <div class="flex gap-2 mt-3">
                 <?php if (can_edit_site()): ?>
+                <button type="button" @click="editId = editId === <?= (int) $plan['id'] ?> ? null : <?= (int) $plan['id'] ?>" class="text-[11px] font-bold bg-pallav-600 hover:bg-pallav-700 text-white rounded-lg px-2.5 py-1 transition" x-text="editId === <?= (int) $plan['id'] ?> ? 'Cancel' : 'Edit'"></button>
                 <form method="POST" action="<?= e(APP_URL) ?>/admin/rate-plan-toggle.php"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $plan['id'] ?>">
                   <button class="text-[11px] font-bold bg-pallav-100 hover:bg-pallav-200 text-pallav-700 rounded-lg px-2.5 py-1 transition"><?= $plan['active'] ? 'Pause' : 'Resume' ?></button>
                 </form>
@@ -172,6 +173,58 @@ include __DIR__ . '/../includes/admin-layout-top.php';
                 <?php endif; ?>
               </div>
             </div>
+
+            <?php if (can_edit_site()): ?>
+            <form x-show="editId === <?= (int) $plan['id'] ?>" x-cloak x-transition method="POST" action="<?= e(APP_URL) ?>/admin/rate-plan-save.php"
+                  x-data="{ tiers: <?= e(json_encode(price_ladder($plan) ?: [['guests' => 1, 'price' => ''], ['guests' => 2, 'price' => '']])) ?> }"
+                  class="sm:col-span-2 lg:col-span-3 rounded-xl bg-pallav-50 ring-1 ring-pallav-100 p-4 space-y-4">
+              <?= csrf_field() ?>
+              <input type="hidden" name="id" value="<?= (int) $plan['id'] ?>">
+              <input type="hidden" name="room_id" value="<?= $room['id'] ?>">
+              <div class="grid sm:grid-cols-3 gap-3 items-end">
+                <div class="sm:col-span-2">
+                  <label class="block text-[10px] font-bold text-pallav-500 uppercase tracking-wide mb-1">Plan Name</label>
+                  <input type="text" name="name" value="<?= e($plan['name']) ?>" required class="w-full rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-pallav-500 uppercase tracking-wide mb-1">Short Code</label>
+                  <input type="text" name="code" value="<?= e($plan['code']) ?>" maxlength="10" required class="w-full rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-pallav-500 uppercase tracking-wide mb-2">Price by Occupancy <span class="normal-case font-semibold text-pallav-300"> - shown directly on the site, not in a dropdown</span></label>
+                <div class="space-y-2">
+                  <template x-for="(t, i) in tiers" :key="i">
+                    <div class="flex items-center gap-2">
+                      <div class="flex items-center gap-1.5 w-32 shrink-0">
+                        <input type="number" min="1" max="20" :name="'occupancy_guests['+i+']'" x-model.number="t.guests" class="w-14 rounded-lg border border-pallav-200 px-2 py-2 text-sm font-semibold text-center focus:border-pallav-500 outline-none">
+                        <span class="text-xs font-bold text-pallav-500" x-text="t.guests == 1 ? 'Person' : 'Persons'"></span>
+                      </div>
+                      <span class="text-pallav-300 font-bold">₹</span>
+                      <input type="number" min="0" :name="'occupancy_price['+i+']'" x-model.number="t.price" placeholder="Price" required class="flex-1 rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+                      <button type="button" @click="tiers.splice(i,1)" class="w-8 h-8 shrink-0 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                      </button>
+                    </div>
+                  </template>
+                  <button type="button" @click="tiers.push({guests: tiers.length ? tiers[tiers.length-1].guests + 1 : 1, price:''})" class="text-xs font-bold text-pallav-600 hover:text-pallav-800 inline-flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
+                    Add another occupancy tier
+                  </button>
+                </div>
+              </div>
+
+              <div class="max-w-xs">
+                <label class="block text-[10px] font-bold text-pallav-500 uppercase tracking-wide mb-1">Extra Person Price (₹) <span class="normal-case font-semibold text-pallav-300">optional</span></label>
+                <input type="number" name="extra_person_price" min="0" value="<?= e($plan['extra_person_price'] ?? '') ?>" placeholder="e.g. 500 per additional guest" class="w-full rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+              </div>
+
+              <div class="flex justify-end">
+                <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-xs font-bold shadow transition hover:-translate-y-0.5">Save Changes</button>
+              </div>
+            </form>
+            <?php endif; ?>
             <?php endforeach; ?>
           </div>
           <?php endif; ?>

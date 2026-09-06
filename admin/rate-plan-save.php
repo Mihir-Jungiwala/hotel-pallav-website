@@ -6,6 +6,7 @@ require_role(['master_admin', 'admin', 'editor']);
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { redirect('admin/pricing.php'); }
 verify_csrf();
 
+$id = (int) ($_POST['id'] ?? 0);
 $roomId = (int) ($_POST['room_id'] ?? 0);
 $name = trim($_POST['name'] ?? '');
 $code = trim($_POST['code'] ?? 'EP');
@@ -33,14 +34,33 @@ foreach ($ladder as $t) {
 }
 $priceDouble = $priceDouble ?? $ladder[0]['price'];
 
+$room = db_one('SELECT name FROM rooms WHERE id = ?', [$roomId]);
+
+if ($id) {
+    // Editing an existing plan - must still belong to the room posted (a stale form
+    // pointing at a plan that moved/was deleted since the page loaded is just ignored,
+    // same as any other not-found update in this codebase).
+    $existing = db_one('SELECT id FROM rate_plans WHERE id = ? AND room_id = ?', [$id, $roomId]);
+    if (!$existing) {
+        flash('error', 'That tariff plan no longer exists.');
+        redirect('admin/pricing.php');
+    }
+    db_run(
+        'UPDATE rate_plans SET name=?, code=?, price_double=?, price_single=?, occupancy_prices=?, extra_person_price=? WHERE id=?',
+        [$name, $code, $priceDouble, $priceSingle, json_encode($ladder), $extra, $id]
+    );
+    log_activity('rate_plan.updated', "Updated tariff plan \"{$name}\" for " . ($room['name'] ?? ''), 'rate_plan', $id);
+    flash('success', "\"{$name}\" updated.");
+    redirect('admin/pricing.php');
+}
+
 $sortOrder = (int) (db_one('SELECT MAX(sort_order) m FROM rate_plans WHERE room_id = ?', [$roomId])['m'] ?? 0) + 1;
 
-$id = db_insert(
+$newId = db_insert(
     'INSERT INTO rate_plans (room_id, name, code, price_double, price_single, occupancy_prices, extra_person_price, sort_order, active) VALUES (?,?,?,?,?,?,?,?,1)',
     [$roomId, $name, $code, $priceDouble, $priceSingle, json_encode($ladder), $extra, $sortOrder]
 );
 
-$room = db_one('SELECT name FROM rooms WHERE id = ?', [$roomId]);
-log_activity('rate_plan.created', "Added tariff plan \"{$name}\" for " . ($room['name'] ?? ''), 'rate_plan', $id);
+log_activity('rate_plan.created', "Added tariff plan \"{$name}\" for " . ($room['name'] ?? ''), 'rate_plan', $newId);
 flash('success', "\"{$name}\" added.");
 redirect('admin/pricing.php');

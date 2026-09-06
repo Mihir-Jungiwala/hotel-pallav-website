@@ -71,11 +71,24 @@ $dialAttr = ($gm && $rc) ? ' data-dial="call"' : '';
 /** Price ladder for a rate plan - occupancy_prices JSON with fallback to legacy columns. Mirrors admin/pricing.php price_ladder(). */
 function price_ladder(array $plan): array
 {
-    if (!empty($plan['occupancy_prices'])) return $plan['occupancy_prices'];
-    $ladder = [];
-    if (!empty($plan['price_single'])) $ladder[] = ['guests' => 1, 'price' => $plan['price_single']];
-    if (!empty($plan['price_double'])) $ladder[] = ['guests' => 2, 'price' => $plan['price_double']];
-    if (!empty($plan['extra_person_price'])) $ladder[] = ['guests' => 3, 'price' => $plan['extra_person_price']];
+    if (!empty($plan['occupancy_prices'])) {
+        $ladder = $plan['occupancy_prices'];
+    } else {
+        $ladder = [];
+        if (!empty($plan['price_single'])) $ladder[] = ['guests' => 1, 'price' => $plan['price_single']];
+        if (!empty($plan['price_double'])) $ladder[] = ['guests' => 2, 'price' => $plan['price_double']];
+    }
+
+    // extra_person_price is a separate field from the occupancy tiers above (set via its
+    // own "Extra Person Price" input in the admin, not as an occupancy tier) but the
+    // "Extra Person" column on the site is driven entirely by a guests=3 tier - so it
+    // has to be merged in here, unless an explicit 3-guest tier already covers it.
+    $hasThreeGuestTier = false;
+    foreach ($ladder as $t) { if ((int) $t['guests'] === 3) { $hasThreeGuestTier = true; break; } }
+    if (!$hasThreeGuestTier && !empty($plan['extra_person_price'])) {
+        $ladder[] = ['guests' => 3, 'price' => $plan['extra_person_price']];
+    }
+
     return $ladder;
 }
 
