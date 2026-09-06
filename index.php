@@ -498,7 +498,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
           <?php if (empty($room['available'])): ?>
             <button class="btn btn-o" disabled style="opacity:.55;cursor:not-allowed">Currently unavailable</button>
           <?php else: ?>
-            <button class="btn btn-p pick" data-room="<?= e($room['name']) ?>">Enquire About <?= e($room['name']) ?></button>
+            <button class="btn btn-p pick" data-room="<?= e($room['name']) ?>">Enquire Now</button>
           <?php endif; ?>
           <a href="tel:<?= e($mainPhone) ?>"<?= $dialAttr ?> class="btn btn-o">Call to Enquire</a>
         </div>

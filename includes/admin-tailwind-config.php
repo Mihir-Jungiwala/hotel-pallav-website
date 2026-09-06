@@ -44,6 +44,20 @@ html{ width:100%; max-width:100vw; overflow-x:hidden; }
    above it in the cascade, so this is purely additive, never a regression. */
 .min-h-screen{ min-height:100dvh; }
 
+/* Forcing the auth card to vertically center inside a full 100dvh (above) still leaves
+   a taller box than the card actually needs on phones and tablets - that's the
+   "stretched" look, and it's also what kept the page scrollable there even after the
+   100vh/100dvh fix: on any device where the real rendered height (different font
+   metrics while a webfont is still loading, a browser toolbar that doesn't fully
+   collapse, etc.) nudges even a few px past that forced minimum, the extra space
+   becomes a scrollbar. Below desktop widths, drop the centering requirement entirely -
+   the wrap just flows top-down, sized by its actual content, so there is no artificial
+   height left to overflow past. Desktop keeps the centered look from .min-h-screen
+   above since this rule only applies under 1024px. */
+@media (max-width:1023px){
+  .auth-wrap{ min-height:0!important; display:block!important; padding-top:28px!important; padding-bottom:28px!important; }
+}
+
 /* The auth pages (login/forgot-password/reset-password) also had a second, separate
    problem: on genuinely short screens the header block + card + their padding add up
    to more than the viewport even with zero browser-chrome illusion involved (measured
