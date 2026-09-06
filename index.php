@@ -761,7 +761,14 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <?php endif; ?>
     <div class="pol-foot">
       <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.01"/></svg>
-      <span>Rates, availability and terms are confirmed by our reception when we call you back. Management reserves the right to refuse a booking. For anything you are unsure about, call the General Manager on <a href="tel:<?= e($gm) ?>" style="color:var(--p700);font-weight:800"><?= e(phone_display($gm)) ?></a> before booking.</span>
+      <span><?php
+        $gmPhoneLink = '<a href="tel:' . e($gm) . '" style="color:var(--p700);font-weight:800">' . e(phone_display($gm)) . '</a>';
+        $policiesNote = $content['policies_footer_note'] ?? '';
+        if (trim(strip_tags($policiesNote)) === '') {
+            $policiesNote = 'Rates, availability and terms are confirmed by our reception when we call you back. Management reserves the right to refuse a booking. For anything you are unsure about, call the General Manager on {{gm_phone}} before booking.';
+        }
+        echo str_replace('{{gm_phone}}', $gmPhoneLink, $policiesNote);
+      ?></span>
     </div>
   </div>
 </section>

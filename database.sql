@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS page_content (
   enquire_lead TEXT NULL,
   enquire_points JSON NULL,
   booking_terms_text TEXT NULL,
+  policies_footer_note TEXT NULL,
   footer_tagline TEXT NULL,
   footer_credit TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

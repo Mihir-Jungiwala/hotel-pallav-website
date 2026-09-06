@@ -31,6 +31,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <button type="button" @click="tab='about'" :class="tab==='about' ? 'bg-pallav-700 text-white' : 'text-pallav-500 hover:bg-pallav-50'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap">About</button>
       <button type="button" @click="tab='enquire'" :class="tab==='enquire' ? 'bg-pallav-700 text-white' : 'text-pallav-500 hover:bg-pallav-50'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap">Enquiry Section</button>
       <button type="button" @click="tab='formmsg'" :class="tab==='formmsg' ? 'bg-pallav-700 text-white' : 'text-pallav-500 hover:bg-pallav-50'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap">Form Messages</button>
+      <button type="button" @click="tab='policies'" :class="tab==='policies' ? 'bg-pallav-700 text-white' : 'text-pallav-500 hover:bg-pallav-50'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap">Policies</button>
       <button type="button" @click="tab='footer'" :class="tab==='footer' ? 'bg-pallav-700 text-white' : 'text-pallav-500 hover:bg-pallav-50'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap">Footer</button>
     </div>
 
@@ -187,6 +188,17 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Terms &amp; Conditions not accepted</label>
           <input type="text" name="fm_msg_terms" value="<?= e($content['fm_msg_terms'] ?? '') ?>" required maxlength="150" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
+      </div>
+    </div>
+
+    <div x-show="tab==='policies'" x-cloak class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8 space-y-5">
+      <h2 class="font-display font-bold text-lg text-pallav-900 mb-1">Policies Section</h2>
+      <p class="text-xs text-pallav-400 mb-4">The note at the bottom of the Policies &amp; Terms section near the end of the homepage.</p>
+      <div>
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Footer note</label>
+        <input type="hidden" name="policies_footer_note" value="<?= e($content['policies_footer_note'] ?? '') ?>">
+        <div class="rte" data-target="policies_footer_note"></div>
+        <p class="text-[11px] text-pallav-400 mt-1.5">Use <code class="bg-pallav-50 px-1 py-0.5 rounded font-mono">{{gm_phone}}</code> anywhere you want the General Manager's phone number (from Settings) to appear as a clickable link.</p>
       </div>
     </div>
 

@@ -12,7 +12,7 @@ $content = get_page_content();
 // unescaped on the homepage), so each one goes through the allow-list sanitizer -
 // otherwise anyone who can reach this page could store a script that runs for every
 // visitor. Everything else on the form is escaped at output and needs no treatment.
-$richFields = ['hero_lead', 'about_p1', 'about_p2', 'about_p3', 'enquire_lead', 'footer_tagline', 'booking_terms_text'];
+$richFields = ['hero_lead', 'about_p1', 'about_p2', 'about_p3', 'enquire_lead', 'footer_tagline', 'booking_terms_text', 'policies_footer_note'];
 $clean = [];
 foreach ($richFields as $field) {
     $clean[$field] = sanitize_rich_text($_POST[$field] ?? '');
@@ -33,7 +33,7 @@ foreach ($required as $field) {
 $points = array_values(array_filter(array_map('trim', explode("\n", $_POST['enquire_points'] ?? ''))));
 
 db_run(
-    'UPDATE page_content SET hero_title_line1=?, hero_title_emphasis=?, hero_lead=?, quick_check_title=?, qc_msg_pick_dates=?, qc_msg_available=?, qc_msg_unavailable=?, qc_msg_error=?, fm_msg_name=?, fm_msg_phone=?, fm_msg_email=?, fm_msg_checkin=?, fm_msg_checkout=?, fm_msg_room=?, fm_msg_adults=?, fm_msg_children=?, fm_msg_message=?, fm_msg_terms=?, about_kicker=?, about_heading=?, about_p1=?, about_p2=?, about_p3=?, enquire_heading=?, enquire_lead=?, enquire_points=?, booking_terms_text=?, footer_tagline=? WHERE id=?',
+    'UPDATE page_content SET hero_title_line1=?, hero_title_emphasis=?, hero_lead=?, quick_check_title=?, qc_msg_pick_dates=?, qc_msg_available=?, qc_msg_unavailable=?, qc_msg_error=?, fm_msg_name=?, fm_msg_phone=?, fm_msg_email=?, fm_msg_checkin=?, fm_msg_checkout=?, fm_msg_room=?, fm_msg_adults=?, fm_msg_children=?, fm_msg_message=?, fm_msg_terms=?, about_kicker=?, about_heading=?, about_p1=?, about_p2=?, about_p3=?, enquire_heading=?, enquire_lead=?, enquire_points=?, booking_terms_text=?, policies_footer_note=?, footer_tagline=? WHERE id=?',
     [
         trim($_POST['hero_title_line1']), trim($_POST['hero_title_emphasis']), $rich('hero_lead'), trim($_POST['quick_check_title']),
         trim($_POST['qc_msg_pick_dates']), trim($_POST['qc_msg_available']), trim($_POST['qc_msg_unavailable']), trim($_POST['qc_msg_error']),
@@ -43,6 +43,7 @@ db_run(
         $rich('about_p1') ?: null, $rich('about_p2') ?: null, $rich('about_p3') ?: null,
         trim($_POST['enquire_heading']), $rich('enquire_lead'), json_encode($points),
         $rich('booking_terms_text') ?: null,
+        $rich('policies_footer_note') ?: null,
         $rich('footer_tagline'),
         $content['id'],
     ]
