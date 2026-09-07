@@ -351,12 +351,17 @@ function email_stay_band(string $checkIn, string $checkOut, string $nights, stri
         . '</tr></table>';
 }
 
-/** Status pill (Confirmed / Declined / Received) shown under the heading. */
+/**
+ * Status label (Confirmed / Declined / Received) shown under the heading - a plain
+ * uppercase label with an underline, not a rounded "capsule" badge, by request.
+ * $bg is unused now (kept in the signature so every call site didn't need editing)
+ * since a flat label has no fill to color.
+ */
 function email_status_pill(string $text, string $bg, string $fg): string
 {
-    return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 4px;">'
-        . '<tr><td style="background:' . $bg . ';border-radius:999px;padding:7px 18px;'
-        . 'font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:' . $fg . ';">'
+    return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 16px;">'
+        . '<tr><td style="border-bottom:2px solid ' . $fg . ';padding:0 2px 6px;'
+        . 'font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' . $fg . ';">'
         . e($text) . '</td></tr></table>';
 }
 
