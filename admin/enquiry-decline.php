@@ -24,13 +24,26 @@ if ($enq) {
         flash('error', "Enquiry {$enq['reference']} is already declined.");
         redirect('admin/bookings.php?filter=declined');
     }
+    // "Decline" (a still-pending enquiry that was never confirmed) and "Cancel" (a
+    // confirmed booking being called off) are the same status change underneath, but
+    // the admin UI already treats them as two different actions - capture which one
+    // this actually was, from the status before this update overwrites it, so the
+    // notification email can say the right thing too.
+    $wasConfirmed = $enq['status'] === 'confirmed';
+
     db_run("UPDATE enquiries SET status = 'declined', approved_by = ?, decided_at = NOW(), decision_note = ? WHERE id = ?", [current_user()['id'], $note, $id]);
-    log_activity('enquiry.declined', "Declined enquiry {$enq['reference']} for {$enq['name']}", 'enquiry', $id, ['note' => $note]);
+    log_activity('enquiry.declined', ($wasConfirmed ? 'Cancelled booking' : 'Declined enquiry') . " {$enq['reference']} for {$enq['name']}", 'enquiry', $id, ['note' => $note]);
     if (smtp_is_configured()) {
         $enq['decision_note'] = $note;
         $room = $enq['room_id'] ? db_one('SELECT * FROM rooms WHERE id = ?', [$enq['room_id']]) : null;
         $adminLink = '<p><a href="' . e(APP_URL) . '/admin/bookings.php?filter=declined">Open in admin panel</a></p>';
-        send_admin_notification('enquiry_declined', enquiry_email_vars($enq, $room), $adminLink);
+        $vars = enquiry_email_vars($enq, $room);
+        if ($wasConfirmed) {
+            $vars['decline_heading'] = 'Booking Cancelled';
+            $vars['decline_verb'] = 'cancelled';
+            $vars['decline_pill'] = email_status_pill('Cancelled', '#FEE2E2', '#B91C1C');
+        }
+        send_admin_notification('enquiry_declined', $vars, $adminLink);
     }
     flash('success', "Enquiry {$enq['reference']} declined.");
 }

@@ -232,9 +232,12 @@ function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true
   .ep-cell{ display:block!important; width:100%!important; }
   .ep-cell-l{ padding-bottom:2px!important; border-bottom:0!important; }
   .ep-cell-v{ padding-top:0!important; }
-  /* Check-in and check-out stack, so neither date has to wrap mid-word. */
-  .ep-half{ display:block!important; width:100%!important; padding:14px 10px!important; }
-  .ep-mid{ display:block!important; width:100%!important; padding:0 0 10px!important; }
+  /* Check-in/check-out stay side by side at every width, by request - only the
+     padding/font-size shrink on a narrow phone, the two dates never stack into rows.
+     d/m/Y dates and short times are compact enough to never wrap at this width. */
+  .ep-half{ padding:12px 4px!important; }
+  .ep-half>div:nth-child(2){ font-size:16px!important; }
+  .ep-mid{ padding:12px 0!important; }
   .ep-btn{ display:block!important; width:100%!important; padding:0 0 10px!important; }
   .ep-footer{ padding:20px 18px!important; }
 }
@@ -398,20 +401,22 @@ function email_guest_action_buttons(string $guestEmail, string $guestPhoneRaw): 
     $cells = '';
     if ($guestEmail !== '') {
         $cells .= '<td class="ep-btn" align="center" style="padding:0 5px 10px;">'
-            . '<a href="mailto:' . e($guestEmail) . '" style="display:inline-block;background:#5B21B6;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;'
-            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:12px 18px;border-radius:10px;">Email Guest</a></td>';
+            . '<a href="mailto:' . e($guestEmail) . '" style="display:block;background:#5B21B6;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:13px 18px;border-radius:10px;">&#9993;&nbsp; Email Guest</a></td>';
     }
     if ($tel !== '') {
         $cells .= '<td class="ep-btn" align="center" style="padding:0 5px 10px;">'
-            . '<a href="tel:' . e($tel) . '" style="display:inline-block;background:#FFFFFF;color:#5B21B6;border:2px solid #DFD3FD;font-family:Arial,Helvetica,sans-serif;'
-            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:10px 18px;border-radius:10px;">Call Guest</a></td>';
+            . '<a href="tel:' . e($tel) . '" style="display:block;background:#FFFFFF;color:#5B21B6;border:2px solid #DFD3FD;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:11px 18px;border-radius:10px;">&#9742;&nbsp; Call Guest</a></td>';
     }
     if ($wa !== '') {
         $cells .= '<td class="ep-btn" align="center" style="padding:0 5px 10px;">'
-            . '<a href="https://wa.me/' . e($wa) . '" style="display:inline-block;background:#FFFFFF;color:#15803D;border:2px solid #BBF7D0;font-family:Arial,Helvetica,sans-serif;'
-            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:10px 18px;border-radius:10px;">WhatsApp Guest</a></td>';
+            . '<a href="https://wa.me/' . e($wa) . '" style="display:block;background:#FFFFFF;color:#15803D;border:2px solid #BBF7D0;font-family:Arial,Helvetica,sans-serif;'
+            . 'font-size:13px;font-weight:bold;text-decoration:none;padding:11px 18px;border-radius:10px;">&#128172;&nbsp; WhatsApp Guest</a></td>';
     }
-    return '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:22px auto 6px;"><tr>' . $cells . '</tr></table>';
+    if ($cells === '') return '';
+    return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#8B5CF6;text-align:center;margin:22px 0 10px;">Reach the Guest</div>'
+        . '<table role="presentation" width="100%" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 6px;"><tr>' . $cells . '</tr></table>';
 }
 
 /**
@@ -510,7 +515,7 @@ const EMAIL_TEMPLATE_DEFAULTS = [
             . "{{details_table}}\n"
             . "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;margin:4px 0 6px;background:#FFFBEB;border-left:3px solid #C9A227;border-radius:10px;\">"
             . "<tr><td style=\"padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#7A5B12;\">"
-            . "<b>Please note:</b> this is an enquiry, not a confirmed booking. Your room is held only once we have spoken with you and confirmed it."
+            . "<div style=\"font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#8A6D1A;padding-bottom:4px;\">&#8505;&nbsp; Please Note</div>This is an enquiry, not a confirmed booking. Your room is held only once we have spoken with you and confirmed it."
             . "</td></tr></table>\n"
             . "<p style=\"margin:16px 0 0;\">We will call you on <b>{{guest_phone}}</b> shortly to confirm availability and settle the details. If you would rather reach us first, we are always glad to hear from you.</p>\n"
             . "{{contact_buttons}}\n"
@@ -533,16 +538,24 @@ const EMAIL_TEMPLATE_DEFAULTS = [
             . "{{guest_action_buttons}}",
     ],
 
-    // Staff-facing: sent to the notification addresses when an enquiry is declined.
+    // Staff-facing: sent when an enquiry is declined or cancelled - same event
+    // (status becomes 'declined'), but the site's own admin UI already calls this
+    // two different things depending on what it was before ("Decline" for a still-
+    // pending enquiry that never got confirmed, "Cancel" for a booking that was
+    // confirmed and is now being called off) - {{decline_heading}}/{{decline_verb}}/
+    // {{decline_pill}} carry that same distinction into the email. Set by whichever
+    // vars() call passes them (see admin/enquiry-decline.php); default to "Declined"
+    // if a caller doesn't set them, so nothing breaks if this template is ever used
+    // without that context.
     'enquiry_declined' => [
-        'subject' => 'Enquiry declined - {{reference}}',
+        'subject' => '{{decline_heading}} - {{reference}}',
         'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
-            . "{{pill_declined}}\n"
-            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has just been declined. No room is held for these dates - details below.</p>\n"
+            . "{{decline_pill}}\n"
+            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has just been {{decline_verb}}. No room is held for these dates - details below.</p>\n"
             . "{{stay_band}}\n"
             . "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;margin:18px 0 4px;background:#FEF2F2;border-left:3px solid #EF4444;border-radius:10px;\">"
             . "<tr><td style=\"padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#991B1B;\">"
-            . "<b>Reason given:</b> {{decision_note}}"
+            . "<div style=\"font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#B91C1C;padding-bottom:4px;\">&#9888;&nbsp; Reason Given</div>{{decision_note}}"
             . "</td></tr></table>\n"
             . "{{staff_table}}\n"
             . "{{guest_action_buttons}}",
@@ -657,7 +670,11 @@ function send_templated_mail(string $key, string $toEmail, string $toName, array
  */
 function send_admin_notification(string $key, array $vars, ?string $ownerExtraHtml = null): void
 {
-    $heading = EMAIL_TEMPLATE_LABELS[$key] ?? APP_NAME;
+    // {{decline_heading}} (set by the caller for enquiry_declined - see
+    // admin/enquiry-decline.php) overrides the fixed EMAIL_TEMPLATE_LABELS heading,
+    // since "Enquiry Declined" vs "Booking Cancelled" depends on what the enquiry's
+    // status was before this event, not on which template key was used.
+    $heading = $vars['decline_heading'] ?? (EMAIL_TEMPLATE_LABELS[$key] ?? APP_NAME);
     foreach (notify_recipients_list() as $r) {
         $rVars = array_merge($vars, ['manager_name' => e($r['name'])]);
         $rendered = render_email_template($key, $rVars);
@@ -751,5 +768,13 @@ function enquiry_email_vars(array $enquiry, ?array $room = null): array
         'pill_received' => email_status_pill('Enquiry received', '#EFE9FE', '#5B21B6'),
         'pill_confirmed' => email_status_pill('Confirmed', '#DCFCE7', '#15803D'),
         'pill_declined' => email_status_pill('Not available', '#FEE2E2', '#B91C1C'),
+
+        // Defaults for enquiry_declined's {{decline_*}} placeholders - "declined" (a
+        // still-pending enquiry that never got confirmed). admin/enquiry-decline.php
+        // overrides these to the "cancelled" wording when the enquiry was already
+        // confirmed before this action.
+        'decline_heading' => 'Enquiry Declined',
+        'decline_verb' => 'declined',
+        'decline_pill' => email_status_pill('Not available', '#FEE2E2', '#B91C1C'),
     ];
 }
