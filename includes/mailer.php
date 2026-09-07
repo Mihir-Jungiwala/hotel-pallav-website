@@ -176,6 +176,18 @@ function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true
     }
     $footerContact = implode('', $footerBits);
 
+    // Staff-facing mail otherwise looked visually identical to a guest email (same
+    // header, same colors) - the only difference used to be whether the "call us"
+    // strip appeared at the bottom, which isn't visible until the reader has already
+    // opened it and started reading. This strip is the first thing under the header,
+    // so it's the first thing a reader (or an inbox preview pane) sees.
+    $internalStrip = '';
+    if (!$guestFacing) {
+        $internalStrip = '<tr><td style="mso-table-lspace:0pt;mso-table-rspace:0pt;background:#FFFBEB;border-bottom:1px solid #F5E6B8;padding:10px 24px;text-align:center;">'
+            . '<span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.5px;color:#8A6D1A;text-transform:uppercase;">Staff Notification &middot; Guest Activity System</span>'
+            . '</td></tr>';
+    }
+
     // "Call us if you need anything" only belongs on mail going to a guest - on a staff
     // notification it would be the hotel inviting itself to phone itself.
     $helpStrip = '';
@@ -248,6 +260,8 @@ function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true
   <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:bold;color:#FFFFFF;letter-spacing:.5px;">{$hotel}</div>
   <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:2px;color:#DDD3FA;text-transform:uppercase;margin-top:4px;">{$tagline}</div>
 </td></tr>
+
+{$internalStrip}
 
 <tr><td class="ep-pad" style="mso-table-lspace:0pt;mso-table-rspace:0pt;padding:32px 40px 8px;box-sizing:border-box;">
   <div class="ep-heading" style="font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:32px;font-weight:bold;color:#4A1A8F;text-align:center;padding-bottom:20px;">{$heading}</div>
@@ -489,7 +503,8 @@ const EMAIL_TEMPLATE_DEFAULTS = [
     // Guest-facing. Warm, specific, and honest that nothing is reserved yet.
     'enquiry_received' => [
         'subject' => 'We have your enquiry - {{reference}}',
-        'body' => "<p style=\"margin:0 0 14px;\">Dear {{guest_first_name}},</p>\n"
+        'body' => "<p style=\"margin:0 0 2px;\">Dear {{guest_first_name}},</p>\n"
+            . "<p style=\"margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#C9A227;\">Reference {{reference}}</p>\n"
             . "<p style=\"margin:0 0 4px;\">Thank you for thinking of {{hotel_name}} for your stay in Rajkot. We have your enquiry and our front desk is checking availability for your dates now.</p>\n"
             . "{{stay_band}}\n"
             . "{{details_table}}\n"
@@ -504,11 +519,15 @@ const EMAIL_TEMPLATE_DEFAULTS = [
     ],
 
     // Staff-facing: sent to the notification addresses when an enquiry is confirmed.
+    // Written in the third person about an event that happened ("X's enquiry was
+    // confirmed") rather than hotel-to-guest service language, so it's unmistakably
+    // a system alert about someone else's booking, not a message meant for the
+    // reader themselves.
     'enquiry_confirmed' => [
         'subject' => 'Booking confirmed - {{reference}}',
         'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
             . "{{pill_confirmed}}\n"
-            . "<p style=\"margin:0 0 4px;\">We have received a booking. <b>{{guest_name}}</b> is now confirmed, and the room has been taken out of availability for these dates - for details, see below.</p>\n"
+            . "<p style=\"margin:0 0 4px;\"><b>{{guest_name}}</b>'s enquiry has just been confirmed as a booking. The room is now blocked for these dates - details below.</p>\n"
             . "{{stay_band}}\n"
             . "{{staff_table}}\n"
             . "{{guest_action_buttons}}",
@@ -519,7 +538,7 @@ const EMAIL_TEMPLATE_DEFAULTS = [
         'subject' => 'Enquiry declined - {{reference}}',
         'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
             . "{{pill_declined}}\n"
-            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has been declined. No room is held for these dates - for details, see below.</p>\n"
+            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has just been declined. No room is held for these dates - details below.</p>\n"
             . "{{stay_band}}\n"
             . "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;margin:18px 0 4px;background:#FEF2F2;border-left:3px solid #EF4444;border-radius:10px;\">"
             . "<tr><td style=\"padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#991B1B;\">"
@@ -533,9 +552,10 @@ const EMAIL_TEMPLATE_DEFAULTS = [
     // gets 'enquiry_received' above; this is the separate copy sent alongside it to
     // whoever is listed in Settings - Notification Emails).
     'enquiry_received_owner' => [
-        'subject' => 'We have your enquiry - {{reference}}',
+        'subject' => 'New enquiry - {{reference}}',
         'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
-            . "<p style=\"margin:0 0 4px;\">We have received a new booking enquiry. Please find the details below and reach out to the guest to confirm availability.</p>\n"
+            . "{{pill_received}}\n"
+            . "<p style=\"margin:0 0 4px;\"><b>{{guest_name}}</b> just submitted a new enquiry through the website. Review the details below and reach out to confirm availability.</p>\n"
             . "{{stay_band}}\n"
             . "{{staff_table}}\n"
             . "{{guest_action_buttons}}",
@@ -621,8 +641,11 @@ function send_templated_mail(string $key, string $toEmail, string $toName, array
     foreach (notify_recipients_list() as $r) {
         $rVars = array_merge($vars, ['manager_name' => e($r['name'])]);
         $ownerRendered = $ownerKey === $key ? render_email_template($key, $rVars) : render_email_template($ownerKey, $rVars);
+        // Own subject line too, not the guest's - "We have your enquiry" in a
+        // manager's inbox reads as if it's addressed to them as the guest.
+        $ownerSubject = APP_NAME . ' - ' . $ownerRendered['subject'];
         $ownerBody = email_shell($heading, $ownerRendered['body'] . ($ownerExtraHtml ?? ''), false);
-        smtp_send($r['email'], $r['name'], $subject, $ownerBody, $toEmail !== '' ? $toEmail : null);
+        smtp_send($r['email'], $r['name'], $ownerSubject, $ownerBody, $toEmail !== '' ? $toEmail : null);
     }
     return $sent;
 }
