@@ -13,7 +13,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
 
   <div class="flex items-center justify-between gap-3 flex-wrap mb-6">
     <div id="tabBar" class="flex gap-1.5 bg-white rounded-xl ring-1 ring-pallav-100 p-1.5 overflow-x-auto no-scrollbar max-w-full">
-      <?php foreach (['all' => 'All', 'pending' => 'Pending', 'confirmed' => 'Confirm', 'declined' => 'Cancelled'] as $key => $label): ?>
+      <?php foreach (['all' => 'All', 'pending' => 'Pending', 'confirmed' => 'Confirmed', 'declined' => 'Cancelled'] as $key => $label): ?>
         <a href="<?= e(APP_URL) ?>/admin/bookings.php?filter=<?= $key ?><?= $perPage !== 10 ? '&per_page=' . $perPage : '' ?>" data-filter="<?= $key ?>" class="tab-link px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap <?= $filter === $key ? 'bg-pallav-700 text-white' : 'text-pallav-500 hover:bg-pallav-50' ?>">
           <?= $label ?>
         </a>

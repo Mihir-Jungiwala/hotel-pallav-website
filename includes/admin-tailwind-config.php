@@ -137,6 +137,11 @@ select::-ms-expand{ display:none; }
 .sel.open .sel-menu{ opacity:1; visibility:visible; transform:none; }
 .sel.up .sel-menu{ top:auto; bottom:calc(100% + 8px); transform-origin:bottom center; transform:translateY(10px) scale(.96); }
 .sel.up.open .sel-menu{ transform:none; }
+/* Dashboard Financial Year picker: exactly 5 years visible, the rest reachable by
+   scrolling inside the menu - measured against the real row height (40px) plus the
+   menu's own 7px top/bottom padding, rather than the taller default every other
+   enhanced dropdown on the page uses. */
+#fy-select-sel .sel-menu{ max-height:214px; }
 .sel-menu::-webkit-scrollbar{ width:7px } .sel-menu::-webkit-scrollbar-thumb{ background:var(--p200); border:none; border-radius:20px }
 .sel-opt{ display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:10px; cursor:pointer;
   font-size:14.5px; font-weight:600; color:var(--ink2); transition:background .16s, color .16s, transform .16s var(--ease); }

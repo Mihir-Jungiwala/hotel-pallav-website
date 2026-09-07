@@ -66,7 +66,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <div class="flex items-center gap-3">
       <form method="GET" action="<?= e(APP_URL) ?>/admin/dashboard.php" class="flex items-center gap-1.5 text-xs text-pallav-500">
         Financial Year
-        <select name="fy" onchange="this.form.submit()" class="rounded-lg border border-pallav-200 text-xs font-bold text-pallav-700 py-1.5 pl-2 pr-6 focus:border-pallav-500 outline-none">
+        <select name="fy" id="fy-select" onchange="this.form.submit()" class="rounded-lg border border-pallav-200 text-xs font-bold text-pallav-700 py-1.5 pl-2 pr-6 focus:border-pallav-500 outline-none">
           <?php foreach ($fyOptions as $y): ?>
             <option value="<?= $y ?>" <?= $y === $fy ? 'selected' : '' ?>>FY <?= $y ?>-<?= substr((string) ($y + 1), 2) ?><?= $y === $currentFy ? ' (Current)' : '' ?></option>
           <?php endforeach; ?>
@@ -184,7 +184,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
               <tr><td colspan="6" class="px-6 py-10 text-center text-pallav-400">Nothing here yet.</td></tr>
             <?php else:
               $sc = ['new'=>'bg-gold-50 text-gold-700','pending'=>'bg-amber-50 text-amber-700','confirmed'=>'bg-emerald-50 text-emerald-700','declined'=>'bg-rose-50 text-rose-700'];
-              $statusLabel = ['confirmed' => 'Confirm', 'declined' => 'Cancelled'];
+              $statusLabel = ['confirmed' => 'Confirmed', 'declined' => 'Cancelled'];
               foreach ($recent as $e):
             ?>
             <tr class="border-t border-pallav-50">

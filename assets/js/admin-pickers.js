@@ -41,6 +41,11 @@
     native.style.display = 'none';
 
     var box = document.createElement('div'); box.className = 'sel';
+    // Carry the native <select>'s id onto the generated wrapper (as "<id>-sel"), so a
+    // page can target its own dropdown's menu specifically in CSS (e.g. a shorter
+    // max-height for one particular list) without that rule leaking onto every other
+    // enhanced select on the page.
+    if (native.id) box.id = native.id + '-sel';
     var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'sel-btn';
     // Carry over any text/font utility classes the native <select> already had
     // (e.g. a caller wanting purple, bold text) onto the generated button.
