@@ -246,6 +246,14 @@ function email_shell(string $heading, string $bodyHtml, bool $guestFacing = true
   .ep-header{ padding:18px 14px!important; }
   .ep-pad{ padding-left:14px!important; padding-right:14px!important; }
   .ep-heading{ font-size:20px!important; line-height:26px!important; }
+  /* A genuinely narrow phone (iPhone SE and similar) needs the check-in/check-out
+     pair smaller still to keep both comfortably on one line each, without ever
+     falling back to stacking them into rows. */
+  .ep-half{ padding:10px 2px!important; }
+  .ep-half>div:nth-child(1){ font-size:9px!important; letter-spacing:1px!important; }
+  .ep-half>div:nth-child(2){ font-size:14px!important; }
+  .ep-half>div:nth-child(3){ font-size:11px!important; }
+  .ep-mid{ padding:10px 0!important; }
 }
 </style>
 </head>
@@ -313,7 +321,7 @@ function email_details_table(array $pairs): string
             . 'font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#7A7392;vertical-align:top;">'
             . e($label) . '</td>'
             . '<td class="ep-cell ep-cell-v" style="padding:12px 16px;background:' . $bg . ';border-bottom:1px solid #EFE9FE;'
-            . 'font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#1B1235;vertical-align:top;">'
+            . 'font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#1B1235;vertical-align:top;overflow-wrap:break-word;word-break:break-word;">'
             . $value . '</td>'
             . '</tr>';
         $i++;
@@ -335,18 +343,18 @@ function email_stay_band(string $checkIn, string $checkOut, string $nights, stri
 
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:22px 0;background:#F7F4FF;border-radius:14px;">'
         . '<tr>'
-        . '<td class="ep-half" width="44%" align="center" style="width:44%;padding:18px 10px;">'
-        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#8B5CF6;padding-bottom:5px;">Check-in</div>'
-        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:19px;font-weight:bold;color:#4A1A8F;">' . e($checkIn) . '</div>'
-        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A7392;padding-top:3px;">' . $inTime . '</div>'
+        . '<td class="ep-half" width="44%" align="center" style="width:44%;padding:18px 6px;box-sizing:border-box;">'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#8B5CF6;padding-bottom:5px;overflow-wrap:break-word;word-break:break-word;">Check-in</div>'
+        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:19px;font-weight:bold;color:#4A1A8F;overflow-wrap:break-word;word-break:break-word;">' . e($checkIn) . '</div>'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A7392;padding-top:3px;overflow-wrap:break-word;word-break:break-word;">' . $inTime . '</div>'
         . '</td>'
         . '<td class="ep-mid" width="12%" align="center" style="width:12%;padding:18px 0;">'
         . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#A886F7;letter-spacing:.5px;">' . $nightLabel . '</div>'
         . '</td>'
-        . '<td class="ep-half" width="44%" align="center" style="width:44%;padding:18px 10px;">'
-        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#8B5CF6;padding-bottom:5px;">Check-out</div>'
-        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:19px;font-weight:bold;color:#4A1A8F;">' . e($checkOut) . '</div>'
-        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A7392;padding-top:3px;">' . $outTime . '</div>'
+        . '<td class="ep-half" width="44%" align="center" style="width:44%;padding:18px 6px;box-sizing:border-box;">'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#8B5CF6;padding-bottom:5px;overflow-wrap:break-word;word-break:break-word;">Check-out</div>'
+        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:19px;font-weight:bold;color:#4A1A8F;overflow-wrap:break-word;word-break:break-word;">' . e($checkOut) . '</div>'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A7392;padding-top:3px;overflow-wrap:break-word;word-break:break-word;">' . $outTime . '</div>'
         . '</td>'
         . '</tr></table>';
 }
@@ -543,20 +551,15 @@ const EMAIL_TEMPLATE_DEFAULTS = [
             . "{{guest_action_buttons}}",
     ],
 
-    // Staff-facing: sent when an enquiry is declined or cancelled - same event
-    // (status becomes 'declined'), but the site's own admin UI already calls this
-    // two different things depending on what it was before ("Decline" for a still-
-    // pending enquiry that never got confirmed, "Cancel" for a booking that was
-    // confirmed and is now being called off) - {{decline_heading}}/{{decline_verb}}/
-    // {{decline_pill}} carry that same distinction into the email. Set by whichever
-    // vars() call passes them (see admin/enquiry-decline.php); default to "Declined"
-    // if a caller doesn't set them, so nothing breaks if this template is ever used
-    // without that context.
+    // Staff-facing: sent whenever an enquiry's status becomes 'declined' - whether it
+    // was still pending or had already been confirmed. Always worded as "Cancelled"
+    // (never "Declined") by explicit request - "there is not declined, it is only
+    // enquiry, confirmed or cancelled".
     'enquiry_declined' => [
-        'subject' => '{{decline_heading}} - {{reference}}',
+        'subject' => 'Booking cancelled - {{reference}}',
         'body' => "<p style=\"margin:0 0 14px;\">Dear {{manager_name}},</p>\n"
-            . "{{decline_pill}}\n"
-            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has just been {{decline_verb}}. No room is held for these dates - details below.</p>\n"
+            . "{{pill_declined}}\n"
+            . "<p style=\"margin:0 0 4px;\">The enquiry from <b>{{guest_name}}</b> has just been cancelled. No room is held for these dates - details below.</p>\n"
             . "{{stay_band}}\n"
             . "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;margin:18px 0 4px;background:#FEF2F2;border-left:3px solid #EF4444;border-radius:10px;\">"
             . "<tr><td style=\"padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#991B1B;\">"
@@ -584,7 +587,7 @@ const EMAIL_TEMPLATE_DEFAULTS = [
 const EMAIL_TEMPLATE_LABELS = [
     'enquiry_received' => 'Enquiry Received',
     'enquiry_confirmed' => 'Booking Confirmed',
-    'enquiry_declined' => 'Enquiry Declined',
+    'enquiry_declined' => 'Booking Cancelled',
 ];
 
 /** Fixed subject/body for one template key - not admin-editable. */
@@ -675,11 +678,7 @@ function send_templated_mail(string $key, string $toEmail, string $toName, array
  */
 function send_admin_notification(string $key, array $vars, ?string $ownerExtraHtml = null): void
 {
-    // {{decline_heading}} (set by the caller for enquiry_declined - see
-    // admin/enquiry-decline.php) overrides the fixed EMAIL_TEMPLATE_LABELS heading,
-    // since "Enquiry Declined" vs "Booking Cancelled" depends on what the enquiry's
-    // status was before this event, not on which template key was used.
-    $heading = $vars['decline_heading'] ?? (EMAIL_TEMPLATE_LABELS[$key] ?? APP_NAME);
+    $heading = EMAIL_TEMPLATE_LABELS[$key] ?? APP_NAME;
     foreach (notify_recipients_list() as $r) {
         $rVars = array_merge($vars, ['manager_name' => e($r['name'])]);
         $rendered = render_email_template($key, $rVars);
@@ -770,16 +769,8 @@ function enquiry_email_vars(array $enquiry, ?array $room = null): array
         'stay_band' => email_stay_band($checkIn, $checkOut, $nights, $checkInTime, $checkOutTime),
         'contact_buttons' => email_contact_buttons(),
         'guest_action_buttons' => email_guest_action_buttons($guestEmail, $guestPhoneRaw),
-        'pill_received' => email_status_pill('Enquiry received', '#EFE9FE', '#5B21B6'),
+        'pill_received' => email_status_pill('Enquiry', '#EFE9FE', '#5B21B6'),
         'pill_confirmed' => email_status_pill('Confirmed', '#DCFCE7', '#15803D'),
-        'pill_declined' => email_status_pill('Not available', '#FEE2E2', '#B91C1C'),
-
-        // Defaults for enquiry_declined's {{decline_*}} placeholders - "declined" (a
-        // still-pending enquiry that never got confirmed). admin/enquiry-decline.php
-        // overrides these to the "cancelled" wording when the enquiry was already
-        // confirmed before this action.
-        'decline_heading' => 'Enquiry Declined',
-        'decline_verb' => 'declined',
-        'decline_pill' => email_status_pill('Not available', '#FEE2E2', '#B91C1C'),
+        'pill_declined' => email_status_pill('Cancelled', '#FEE2E2', '#B91C1C'),
     ];
 }
