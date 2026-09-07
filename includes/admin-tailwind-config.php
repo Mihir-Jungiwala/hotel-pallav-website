@@ -189,7 +189,7 @@ select::-ms-expand{ display:none; }
 .edit-form .sel-btn{ padding:10px 40px 10px 16px; font-size:14px; }
 .dp-btn .dp-val{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dp-btn .dp-val.ph{ color:#A9A2BC; font-weight:500; }
-.dp-pop{ position:absolute; left:0; z-index:70; width:292px; padding:16px;
+.dp-pop{ position:absolute; left:0; z-index:70; width:292px; max-width:calc(100vw - 32px); padding:16px;
   background:linear-gradient(180deg,var(--white),var(--cream));
   border:1.5px solid var(--line); border-radius:20px; box-shadow:var(--sh-xl), 0 0 0 1px rgba(124,58,237,.07);
   top:calc(100% + 9px);
@@ -197,6 +197,16 @@ select::-ms-expand{ display:none; }
   transition:opacity .2s ease, transform .3s var(--ease), visibility .3s; }
 .dp.open .dp-pop{ opacity:1; visibility:visible; transform:none; }
 .dp-pop.right{ left:auto; right:0; transform-origin:top right; }
+/* .dp-pop normally anchors left:0 against its trigger button - fine when the trigger
+   sits near the left edge, but on a narrow screen a trigger positioned further right
+   (e.g. activity.php's "To" date filter) pushes the fixed-width popup straight past
+   the viewport edge, since nothing ever repositions it. Below tablet width, it's a
+   centered fixed overlay instead - correct regardless of where the trigger is. */
+@media (max-width:640px){
+  .dp-pop{ position:fixed!important; left:16px!important; right:16px!important; top:50%!important;
+    width:auto!important; max-width:none!important; transform:translateY(-50%) scale(.95)!important; }
+  .dp.open .dp-pop{ transform:translateY(-50%) scale(1)!important; }
+}
 .dp-hd{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
 .dp-hd b{ flex:1; text-align:center; font-family:'Playfair Display',serif; font-size:17px; font-weight:700; color:var(--ink); }
 .dp-nav{ width:32px; height:32px; border-radius:10px; border:none; background:var(--p50); color:var(--p700);
