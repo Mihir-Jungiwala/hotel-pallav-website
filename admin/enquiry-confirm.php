@@ -63,7 +63,7 @@ if ($outcome === 'unavailable') {
 log_activity('enquiry.confirmed', "Confirmed enquiry {$enq['reference']} for {$enq['name']}", 'enquiry', $id);
 if (smtp_is_configured()) {
     $room = $enq['room_id'] ? db_one('SELECT * FROM rooms WHERE id = ?', [$enq['room_id']]) : null;
-    $adminLink = '<p><a href="' . e(APP_URL) . '/admin/bookings.php?filter=confirmed">Open in admin panel</a></p>';
+    $adminLink = email_admin_panel_button(APP_URL . '/admin/bookings.php?filter=confirmed');
     send_admin_notification('enquiry_confirmed', enquiry_email_vars($enq, $room), $adminLink);
 }
 flash('success', "Enquiry {$enq['reference']} confirmed.");

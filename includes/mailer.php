@@ -433,6 +433,24 @@ function email_guest_action_buttons(string $guestEmail, string $guestPhoneRaw): 
 }
 
 /**
+ * Standalone "Open Admin Panel" button appended to the manager copy of the
+ * enquiry received/confirmed/declined emails - previously a plain text link,
+ * which read as an afterthought next to the guest-contact buttons above it.
+ * Same solid-purple bulletproof-button pattern as those buttons and the
+ * password-reset email's "Reset Your Password" button, since opening the
+ * admin panel is exactly as much a call to action as either of those.
+ */
+function email_admin_panel_button(string $href): string
+{
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;margin:22px 0 4px;">'
+        . '<tr><td align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;">'
+        . '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;"><tr><td align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;background:#5B21B6;border-radius:10px;">'
+        . '<a href="' . e($href) . '" style="display:inline-block;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:14px;text-decoration:none;padding:13px 30px;">Open Admin Panel &rarr;</a>'
+        . '</td></tr></table>'
+        . '</td></tr></table>';
+}
+
+/**
  * One of the 2x2 "For Your Security" feature cards on the password-reset email.
  *
  * Fixed height with mso-height-rule:exactly, rather than letting each card size to

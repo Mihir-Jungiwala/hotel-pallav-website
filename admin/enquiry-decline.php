@@ -36,7 +36,7 @@ if ($enq) {
     if (smtp_is_configured()) {
         $enq['decision_note'] = $note;
         $room = $enq['room_id'] ? db_one('SELECT * FROM rooms WHERE id = ?', [$enq['room_id']]) : null;
-        $adminLink = '<p><a href="' . e(APP_URL) . '/admin/bookings.php?filter=declined">Open in admin panel</a></p>';
+        $adminLink = email_admin_panel_button(APP_URL . '/admin/bookings.php?filter=declined');
         // The email always says "cancelled" regardless of whether this enquiry was
         // still pending or already confirmed - see enquiry_declined's template.
         send_admin_notification('enquiry_declined', enquiry_email_vars($enq, $room), $adminLink);

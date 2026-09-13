@@ -124,7 +124,7 @@ if (function_exists('fastcgi_finish_request')) {
 if (smtp_is_configured()) {
     $enquiry = db_one('SELECT * FROM enquiries WHERE id = ?', [$enquiryId]);
     if ($enquiry) {
-        $adminLink = '<p><a href="' . e(APP_URL) . '/admin/bookings.php">Open in admin panel</a></p>';
+        $adminLink = email_admin_panel_button(APP_URL . '/admin/bookings.php');
         send_templated_mail('enquiry_received', $enquiry['email'] ?? '', $enquiry['name'], enquiry_email_vars($enquiry, $room), $adminLink);
     }
 }
