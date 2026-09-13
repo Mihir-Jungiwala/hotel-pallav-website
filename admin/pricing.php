@@ -92,16 +92,18 @@ include __DIR__ . '/../includes/admin-layout-top.php';
               <label class="block text-[10px] font-bold text-pallav-500 uppercase tracking-wide mb-2">Price by Occupancy <span class="normal-case font-semibold text-pallav-300"> - shown directly on the site, not in a dropdown</span></label>
               <div class="space-y-2">
                 <template x-for="(t, i) in tiers" :key="i">
-                  <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1.5 w-32 shrink-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-1.5 shrink-0">
                       <input type="number" min="1" max="20" :name="'occupancy_guests['+i+']'" x-model.number="t.guests" class="w-14 rounded-lg border border-pallav-200 px-2 py-2 text-sm font-semibold text-center focus:border-pallav-500 outline-none">
                       <span class="text-xs font-bold text-pallav-500" x-text="t.guests == 1 ? 'Person' : 'Persons'"></span>
                     </div>
-                    <span class="text-pallav-300 font-bold">₹</span>
-                    <input type="number" min="0" :name="'occupancy_price['+i+']'" x-model.number="t.price" placeholder="Price" required class="flex-1 rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
-                    <button type="button" @click="tiers.splice(i,1)" class="w-8 h-8 shrink-0 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                    </button>
+                    <div class="flex items-center gap-2 flex-1 min-w-[150px]">
+                      <span class="text-pallav-300 font-bold">₹</span>
+                      <input type="number" min="0" :name="'occupancy_price['+i+']'" x-model.number="t.price" placeholder="Price" required class="flex-1 min-w-0 rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+                      <button type="button" @click="tiers.splice(i,1)" class="w-8 h-8 shrink-0 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                      </button>
+                    </div>
                   </div>
                 </template>
                 <button type="button" @click="tiers.push({guests: tiers.length ? tiers[tiers.length-1].guests + 1 : 1, price:''})" class="text-xs font-bold text-pallav-600 hover:text-pallav-800 inline-flex items-center gap-1">
@@ -131,7 +133,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             Drag a plan by its handle to reorder - the live website updates to match.
           </p>
           <?php endif; ?>
-          <div class="plan-grid grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="plan-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <?php foreach ($room['rate_plans'] as $plan): ?>
             <div class="plan-card rounded-xl ring-1 ring-pallav-100 p-4 <?= !$plan['active'] ? 'opacity-50' : '' ?> hover:shadow-md transition-shadow duration-300" data-id="<?= (int) $plan['id'] ?>">
               <div class="flex items-center justify-between mb-1">
@@ -196,16 +198,18 @@ include __DIR__ . '/../includes/admin-layout-top.php';
                 <label class="block text-[10px] font-bold text-pallav-500 uppercase tracking-wide mb-2">Price by Occupancy <span class="normal-case font-semibold text-pallav-300"> - shown directly on the site, not in a dropdown</span></label>
                 <div class="space-y-2">
                   <template x-for="(t, i) in tiers" :key="i">
-                    <div class="flex items-center gap-2">
-                      <div class="flex items-center gap-1.5 w-32 shrink-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <div class="flex items-center gap-1.5 shrink-0">
                         <input type="number" min="1" max="20" :name="'occupancy_guests['+i+']'" x-model.number="t.guests" class="w-14 rounded-lg border border-pallav-200 px-2 py-2 text-sm font-semibold text-center focus:border-pallav-500 outline-none">
                         <span class="text-xs font-bold text-pallav-500" x-text="t.guests == 1 ? 'Person' : 'Persons'"></span>
                       </div>
-                      <span class="text-pallav-300 font-bold">₹</span>
-                      <input type="number" min="0" :name="'occupancy_price['+i+']'" x-model.number="t.price" placeholder="Price" required class="flex-1 rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
-                      <button type="button" @click="tiers.splice(i,1)" class="w-8 h-8 shrink-0 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                      </button>
+                      <div class="flex items-center gap-2 flex-1 min-w-[150px]">
+                        <span class="text-pallav-300 font-bold">₹</span>
+                        <input type="number" min="0" :name="'occupancy_price['+i+']'" x-model.number="t.price" placeholder="Price" required class="flex-1 min-w-0 rounded-lg border border-pallav-200 px-3 py-2 text-sm font-semibold focus:border-pallav-500 outline-none">
+                        <button type="button" @click="tiers.splice(i,1)" class="w-8 h-8 shrink-0 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                        </button>
+                      </div>
                     </div>
                   </template>
                   <button type="button" @click="tiers.push({guests: tiers.length ? tiers[tiers.length-1].guests + 1 : 1, price:''})" class="text-xs font-bold text-pallav-600 hover:text-pallav-800 inline-flex items-center gap-1">
