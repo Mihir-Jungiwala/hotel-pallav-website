@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS settings (
   gbp_link VARCHAR(255) NULL,
   facebook_link VARCHAR(255) NULL,
   instagram_link VARCHAR(255) NULL,
+  map_lat DECIMAL(10,7) NULL,
+  map_lng DECIMAL(10,7) NULL,
   google_maps_api_key VARCHAR(100) NULL,
   google_place_id VARCHAR(150) NULL,
   google_min_review_rating TINYINT UNSIGNED NOT NULL DEFAULT 3,
@@ -123,6 +125,9 @@ CREATE TABLE IF NOT EXISTS nearby_places (
   title VARCHAR(80) NOT NULL,
   distance_label VARCHAR(40) NOT NULL,
   map_query VARCHAR(255) NULL,
+  map_url VARCHAR(500) NULL,
+  origin_lat DECIMAL(10,7) NULL,
+  origin_lng DECIMAL(10,7) NULL,
   sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

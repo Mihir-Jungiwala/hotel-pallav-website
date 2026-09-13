@@ -94,9 +94,30 @@ foreach ((array) $notifyEmailsRaw as $i => $email) {
 }
 $notifyRecipientsJson = $notifyRecipients ? json_encode($notifyRecipients) : null;
 
+// The hotel's own precise pin - resolved once here from a pasted Maps link, not
+// re-resolved on every homepage view. A blank field, or a link that fails to
+// resolve, leaves the existing lat/lng untouched rather than wiping them out.
+$hotelMapUrl = trim($_POST['hotel_map_url'] ?? '');
+$mapLat = $settings['map_lat'] ?? null;
+$mapLng = $settings['map_lng'] ?? null;
+if ($hotelMapUrl !== '') {
+    if (!filter_var($hotelMapUrl, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $hotelMapUrl)) {
+        flash('error', "That Google Maps link doesn't look valid - copy it fresh from the Share button and try again.");
+        redirect('admin/settings.php');
+    }
+    $coords = resolve_maps_coordinates($hotelMapUrl);
+    if ($coords) {
+        $mapLat = $coords['lat'];
+        $mapLng = $coords['lng'];
+    } else {
+        flash('error', "Couldn't work out a location from that link - double check it's a Google Maps share link and try again. Your other changes were not saved.");
+        redirect('admin/settings.php');
+    }
+}
+
 try {
     db_run(
-        'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_recipients=? WHERE id=?',
+        'UPDATE settings SET opened_year=?, gm_phone=?, reception_phone=?, whatsapp=?, reception_whatsapp=?, email=?, address=?, checkin_time=?, checkout_time=?, meta_title=?, meta_description=?, meta_keywords=?, logo_path=?, favicon_path=?, gbp_link=?, facebook_link=?, instagram_link=?, map_lat=?, map_lng=?, google_maps_api_key=?, google_place_id=?, google_min_review_rating=?, gbp_oauth_client_id=?, gbp_oauth_client_secret=?, smtp_host=?, smtp_port=?, smtp_username=?, smtp_password=?, smtp_from_email=?, smtp_from_name=?, notify_recipients=? WHERE id=?',
         [
             (int) $_POST['opened_year'], trim($_POST['gm_phone']), trim($_POST['reception_phone']), trim($_POST['whatsapp']),
             ($_POST['reception_whatsapp'] ?? '') ?: null,
@@ -104,6 +125,7 @@ try {
             ($_POST['meta_title'] ?? '') ?: null, ($_POST['meta_description'] ?? '') ?: null, ($_POST['meta_keywords'] ?? '') ?: null,
             $logoPath, $faviconPath, ($_POST['gbp_link'] ?? '') ?: null,
             ($_POST['facebook_link'] ?? '') ?: null, ($_POST['instagram_link'] ?? '') ?: null,
+            $mapLat, $mapLng,
             $secret('google_maps_api_key'), ($_POST['google_place_id'] ?? '') ?: null,
             max(1, min(5, (int) ($_POST['google_min_review_rating'] ?? 3))),
             $secret('gbp_oauth_client_id'), $secret('gbp_oauth_client_secret'),

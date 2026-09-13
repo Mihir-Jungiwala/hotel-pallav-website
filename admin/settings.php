@@ -150,6 +150,19 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <?php endif; ?>
       </div>
       <p class="text-xs text-pallav-400 mb-5">Add these two values to show a real interactive map and pull your actual Google reviews live onto the homepage. Without them, the site falls back to the placeholder map and sample reviews.</p>
+
+      <div class="mb-5">
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Hotel's Google Maps Link <span class="normal-case font-semibold text-pallav-300">(open Hotel Pallav in Google Maps, tap Share, and paste that link here)</span></label>
+        <input type="url" name="hotel_map_url" placeholder="e.g. https://maps.app.goo.gl/xxxxxxxx" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+        <p class="text-[11px] text-pallav-400 mt-1.5">
+          <?php if (!empty($settings['map_lat']) && !empty($settings['map_lng'])): ?>
+            <span class="font-bold text-emerald-600">✓ Set</span> - the homepage map, and Nearby Places' auto-distance, both use this. Paste a new link here any time to update it.
+          <?php else: ?>
+            Not set yet - the homepage map shows an approximate area rather than the exact building, and Nearby Places can't auto-fill distances until this is set once.
+          <?php endif; ?>
+        </p>
+      </div>
+
       <div class="rounded-xl bg-pallav-50 ring-1 ring-pallav-100 p-4 text-xs text-pallav-600 mb-5 leading-relaxed">
         <b class="text-pallav-800">How to get these:</b>
         <ol class="list-decimal pl-4 mt-1.5 space-y-1">

@@ -589,6 +589,106 @@ function normalize_room_photos(array $photos): array
     return array_values(array_filter(array_map('normalize_room_photo', $photos), static fn ($p) => $p['path'] !== ''));
 }
 
+/**
+ * Extracts a [lat, lng] pair from a Google Maps URL, no API key needed.
+ *
+ * A short share link (maps.app.goo.gl/..., goo.gl/maps/...) never carries
+ * coordinates itself - they only appear in the page it redirects to - so those
+ * are resolved first via a HEAD request that just follows the redirect chain
+ * and reads back the final URL, without downloading the page. A full Maps URL
+ * (already containing @lat,lng, a !3d../!4d.. pair, or a q=lat,lng param) is
+ * used as-is. Returns null on anything that doesn't yield coordinates: a
+ * malformed link, a redirect that failed, or a link that genuinely has none
+ * (e.g. a bare unresolved search query).
+ */
+function resolve_maps_coordinates(string $url): ?array
+{
+    $finalUrl = $url;
+    $body = '';
+    if (preg_match('#^https?://(maps\.app\.goo\.gl|goo\.gl)/#i', $url)) {
+        // A real GET, not a HEAD - some redirect hosts only issue their Location
+        // header (or, for maps.app.goo.gl's app-deep-link interstitial, embed the
+        // coordinates in the landing page itself rather than the URL bar) in
+        // response to a full request. The body is kept so it can be searched too.
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 8,
+            CURLOPT_TIMEOUT => 8,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ]);
+        $result = curl_exec($ch);
+        $ok = curl_errno($ch) === 0;
+        $effective = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+        curl_close($ch);
+        if ($ok && $effective) $finalUrl = $effective;
+        if ($ok && is_string($result)) $body = $result;
+    }
+
+    // Try the resolved URL first, then the page content itself - most specific
+    // pattern first (place detail pages carry both a rough @lat,lng for the
+    // viewport AND a precise !3d../!4d.. pair for the pin itself).
+    foreach ([$finalUrl, $body] as $haystack) {
+        if ($haystack === '') continue;
+        if (preg_match('/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/', $haystack, $m)) {
+            return ['lat' => (float) $m[1], 'lng' => (float) $m[2]];
+        }
+        if (preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $haystack, $m)) {
+            return ['lat' => (float) $m[1], 'lng' => (float) $m[2]];
+        }
+        if (preg_match('/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/', $haystack, $m)) {
+            return ['lat' => (float) $m[1], 'lng' => (float) $m[2]];
+        }
+    }
+    return null;
+}
+
+/** Great-circle distance between two lat/lng points, in kilometers - a straight-line
+ *  "as the crow flies" figure, not a driving distance (that needs a paid routing API). */
+function haversine_km(float $lat1, float $lng1, float $lat2, float $lng2): float
+{
+    $earthRadiusKm = 6371.0;
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLng = deg2rad($lng2 - $lng1);
+    $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+    return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
+}
+
+/** "3.2 km" style label from a raw kilometer figure - one decimal under 10km (where it
+ *  matters most for a guest judging walking distance), whole numbers beyond that. */
+function format_km_label(float $km): string
+{
+    return ($km < 10 ? number_format($km, 1) : number_format($km, 0)) . ' km';
+}
+
+/**
+ * Best-guess line icon for a Nearby Place card, matched by keyword against its
+ * title - same currentColor-driven hover recolor as every other icon badge on
+ * the site. Falls back to a plain location pin when nothing matches.
+ */
+function nearby_place_icon(string $title): string
+{
+    $t = mb_strtolower($title);
+    $library = [
+        ['keywords' => ['airport'], 'svg' => '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>'],
+        ['keywords' => ['railway', 'rail station', 'train station'], 'svg' => '<rect x="5" y="3" width="14" height="13" rx="5"/><path d="M5 11h14"/><path d="M8 20l-2 2M16 20l2 2"/><circle cx="9" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7" r="1" fill="currentColor" stroke="none"/>'],
+        ['keywords' => ['bus stand', 'bus station', 'bus depot', 'bus stop'], 'svg' => '<rect x="3" y="6" width="18" height="11" rx="2"/><path d="M3 13h18M6 6V4a1 1 0 011-1h10a1 1 0 011 1v2"/><circle cx="7.5" cy="19.5" r="1.5"/><circle cx="16.5" cy="19.5" r="1.5"/>'],
+        ['keywords' => ['hospital', 'clinic', 'medical'], 'svg' => '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/>'],
+        ['keywords' => ['mall', 'market', 'shopping'], 'svg' => '<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/>'],
+        ['keywords' => ['temple', 'mandir', 'church', 'mosque'], 'svg' => '<path d="M4 21h16M5 21V10l7-6 7 6v11M9 21v-6h6v6"/>'],
+        ['keywords' => ['school', 'college', 'university', 'institute'], 'svg' => '<path d="M12 3L2 8l10 5 10-5-10-5z"/><path d="M6 10.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-5.5"/>'],
+        ['keywords' => ['park', 'garden'], 'svg' => '<circle cx="12" cy="8" r="4"/><path d="M12 12v9M8 21h8"/>'],
+        ['keywords' => ['stadium', 'ground', 'race course'], 'svg' => '<path d="M5 3v18"/><path d="M5 4h11l-2 3.5L16 11H5"/>'],
+    ];
+    foreach ($library as $entry) {
+        foreach ($entry['keywords'] as $kw) {
+            if (str_contains($t, $kw)) return $entry['svg'];
+        }
+    }
+    return '<path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>';
+}
+
 function json_decode_field($value, $default = [])
 {
     if ($value === null || $value === '') {

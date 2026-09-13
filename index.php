@@ -50,6 +50,11 @@ if ($totalRooms === 0) $totalRooms = null;
 // and again further down the page, so they're resolved once here.
 $mapLat = $settings['map_lat'] ?? '22.2865175';
 $mapLng = $settings['map_lng'] ?? '70.7729178';
+// True only once the admin has actually set a real pin in Settings - until then
+// $mapLat/$mapLng above are just a generic fallback point, not the hotel's real
+// door, so anything driving someone TO the hotel (like Nearby Places directions
+// below) should prefer the real address text over that placeholder coordinate.
+$hasPreciseMapPin = !empty($settings['map_lat']) && !empty($settings['map_lng']);
 $schemaImages = [];
 foreach (array_slice($galleryPhotos, 0, 6) as $gp) {
     if (!empty($gp['path'])) $schemaImages[] = UPLOADS_URL . '/' . $gp['path'];
@@ -698,11 +703,23 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     <?php if ($nearbyPlaces): ?>
     <div class="near-strip rv">
       <?php foreach ($nearbyPlaces as $np):
-        $origin = $np['map_query'] ?: $np['title'];
-        $directionsUrl = 'https://www.google.com/maps/dir/?api=1&origin=' . urlencode($origin) . '&destination=' . urlencode($mapLat . ',' . $mapLng) . '&travelmode=driving';
+        $destination = $hasPreciseMapPin ? ($mapLat . ',' . $mapLng) : ($settings['address'] ?? APP_NAME);
+        if (!empty($np['origin_lat']) && !empty($np['origin_lng'])) {
+          // Coordinates already resolved from the admin's pasted Maps link (once,
+          // at save time) - an exact pin-to-pin route, no text search involved.
+          $directionsUrl = 'https://www.google.com/maps/dir/?api=1&origin=' . urlencode($np['origin_lat'] . ',' . $np['origin_lng']) . '&destination=' . urlencode($destination) . '&travelmode=driving';
+        } elseif (!empty($np['map_url'])) {
+          // Link couldn't be resolved to coordinates (an unusual link format, or
+          // the server couldn't reach Google when it was saved) - still better to
+          // send guests to the place's own link than nowhere.
+          $directionsUrl = $np['map_url'];
+        } else {
+          $origin = $np['map_query'] ?: $np['title'];
+          $directionsUrl = 'https://www.google.com/maps/dir/?api=1&origin=' . urlencode($origin) . '&destination=' . urlencode($destination) . '&travelmode=driving';
+        }
       ?>
       <a href="<?= e($directionsUrl) ?>" target="_blank" rel="noopener" class="near-chip" title="Directions from <?= e($np['title']) ?> to <?= e(APP_NAME) ?>">
-        <span class="ic"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+        <span class="ic"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= nearby_place_icon($np['title']) ?></svg></span>
         <span class="tx"><b><?= e($np['title']) ?></b><span><?= e($np['distance_label']) ?></span></span>
         <svg aria-hidden="true" focusable="false" class="go" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
       </a>
