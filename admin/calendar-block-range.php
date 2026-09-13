@@ -52,8 +52,17 @@ for ($cursor = $start; $cursor <= $end; $cursor = date('Y-m-d', strtotime($curso
     $dates[] = $cursor;
 }
 
+// A date with real confirmed bookings isn't "blockable" - it's already unavailable
+// because guests are actually staying there, not because an admin closed it. Only
+// skips turning a date INTO a block; unblocking is always allowed regardless of
+// bookings, same as the single-date toggle.
+$skipped = 0;
 foreach ($rooms as $room) {
     foreach ($dates as $date) {
+        if ($blocked && sold_for_date((int) $room['id'], $date) > 0) {
+            $skipped++;
+            continue;
+        }
         $existing = db_one('SELECT id FROM room_date_inventory WHERE room_id = ? AND date = ?', [$room['id'], $date]);
         if ($existing) {
             db_run('UPDATE room_date_inventory SET blocked = ? WHERE id = ?', [$blocked, $existing['id']]);
@@ -73,4 +82,4 @@ log_activity(
     count($rooms) === 1 ? (int) $rooms[0]['id'] : null
 );
 
-echo json_encode(['ok' => true, 'blocked' => (bool) $blocked, 'days' => count($dates), 'rooms' => count($rooms)]);
+echo json_encode(['ok' => true, 'blocked' => (bool) $blocked, 'days' => count($dates), 'rooms' => count($rooms), 'skipped' => $skipped]);

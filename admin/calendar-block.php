@@ -28,6 +28,21 @@ if (!$room) {
 }
 
 $existing = db_one('SELECT * FROM room_date_inventory WHERE room_id = ? AND date = ?', [$roomId, $date]);
+$goingToBlock = !($existing && $existing['blocked']);
+
+// A date with real confirmed bookings isn't "blockable" - it's already unavailable
+// because guests are actually staying, not because an admin closed it. Only stops
+// turning it INTO a block; unblocking (e.g. a leftover manual block on a date that
+// later got a booking too) is always allowed.
+if ($goingToBlock) {
+    $sold = sold_for_date($roomId, $date);
+    if ($sold > 0) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'error' => "Can't block this date - {$sold} room" . ($sold === 1 ? '' : 's') . " already confirmed for it."]);
+        exit;
+    }
+}
+
 if ($existing) {
     $blocked = $existing['blocked'] ? 0 : 1;
     db_run('UPDATE room_date_inventory SET blocked = ? WHERE id = ?', [$blocked, $existing['id']]);

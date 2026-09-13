@@ -348,7 +348,13 @@ include __DIR__ . '/../includes/admin-layout-top.php';
                 class="cal-inv w-16 mx-auto block text-center rounded-lg border <?= $inv['blocked'] ? 'border-rose-300 bg-rose-50 text-rose-500' : 'border-emerald-200 bg-emerald-50 text-emerald-700' ?> font-bold py-1.5 text-sm focus:border-pallav-500 focus:ring-2 focus:ring-pallav-100 outline-none disabled:opacity-70"
                 value="<?= (int) $inv['rooms_left'] ?>" data-room="<?= $room['id'] ?>" data-date="<?= $d ?>" data-sold="<?= $sold ?>" data-max="<?= (int) $room['total_count'] ?>" <?= ($inv['blocked'] || !can_edit_site()) ? 'disabled' : '' ?>>
               <div class="text-[10px] text-pallav-400 mt-1"><?= $sold ?> sold</div>
-              <?php if (can_edit_site()): ?>
+              <?php if ($sold > 0): ?>
+                <!-- A date with a real confirmed booking can't be "blocked" - it's
+                     already unavailable because a guest is actually staying, not
+                     because an admin closed it. View-only until that booking is
+                     cancelled/deleted, at which point this reverts to normal. -->
+                <span class="text-[10px] font-bold text-pallav-500 mt-0.5 inline-block" title="<?= $sold ?> room<?= $sold === 1 ? '' : 's' ?> already booked for this date - cancel the booking to free it up.">📅 Booked</span>
+              <?php elseif (can_edit_site()): ?>
               <button type="button" class="cal-block text-[10px] font-bold <?= $inv['blocked'] ? 'text-rose-500' : 'text-pallav-300 hover:text-pallav-600' ?> mt-0.5" data-room="<?= $room['id'] ?>" data-date="<?= $d ?>">
                 <?= $inv['blocked'] ? '🔒 Unblock' : 'Block' ?>
               </button>
@@ -662,6 +668,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         date: btn.getAttribute('data-date')
       }).then(function(d){
         if(d.ok){ flash(d.blocked ? 'Date blocked' : 'Date unblocked'); location.reload(); }
+        else { flash(d.error || 'Could not update that date.', 'error'); }
       });
     });
   });
@@ -777,7 +784,9 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       action: 'block'
     }).then(function(d){
       if (d.ok) {
-        flash('Blocked ' + d.days + ' day(s) across ' + d.rooms + ' categor' + (d.rooms === 1 ? 'y' : 'ies'));
+        var msg = 'Blocked ' + d.days + ' day(s) across ' + d.rooms + ' categor' + (d.rooms === 1 ? 'y' : 'ies');
+        if (d.skipped) msg += ' (' + d.skipped + ' date/room combination' + (d.skipped === 1 ? '' : 's') + ' left alone - already booked)';
+        flash(msg);
         rbHide();
         location.reload();
       } else {
