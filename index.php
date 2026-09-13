@@ -743,7 +743,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <?php foreach ($policyCards as $i => $card): ?>
         <div class="pol-card rv<?= $i % 3 ? ' d' . ($i % 3) : '' ?>">
           <div class="pol-head">
-            <div class="ic"><?php render_policy_icon($card['icon_path']); ?></div>
+            <div class="ic"><?php render_policy_icon($card['icon_path'], $card['title'] ?? ''); ?></div>
             <h4><?= e($card['title']) ?></h4>
           </div>
           <ul><?php foreach (($card['lines'] ?? []) as $line): ?><li><?= e(is_string($line) ? $line : '') ?></li><?php endforeach; ?></ul>
