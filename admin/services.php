@@ -59,7 +59,6 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       </div>
     </form>
     <?php endif; ?>
-  </div>
 
   <?php if (can_edit_site()): ?>
   <p class="text-xs text-pallav-400 mb-4 flex items-center gap-1.5">
@@ -113,6 +112,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <p class="text-sm text-pallav-600 leading-relaxed"><?= e($svc['description'] ?: '') ?: '<span class="text-pallav-300 italic">No description yet.</span>' ?></p>
     </div>
     <?php endforeach; endif; ?>
+  </div>
   </div>
 <?php if (can_edit_site()): ?>
 <script>
