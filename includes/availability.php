@@ -63,8 +63,17 @@ function stay_nights(?string $checkIn, ?string $checkOut): array
  *
  * $ignoreEnquiryId excludes one enquiry from the sold count, so re-confirming an
  * already-confirmed enquiry doesn't see itself as competing for its own room.
+ *
+ * $respectOpenWindow (default true) applies the rolling DEFAULT_OPEN_WINDOW_MONTHS
+ * default-block to any date with no explicit override - the right behavior for the
+ * calendar display and the public quick-check widget, where the point is exactly to
+ * stop a far-future date from looking bookable before anyone's reviewed it. Pass
+ * false when deciding whether to CONFIRM an enquiry a guest already sent for a
+ * specific date: an actual admin decision to honor a real request shouldn't be
+ * blocked by "nobody's opened this date yet" - only a genuine per-date block or
+ * running out of physical rooms should stop that.
  */
-function room_availability(int $roomId, array $nights, ?int $ignoreEnquiryId = null): array
+function room_availability(int $roomId, array $nights, ?int $ignoreEnquiryId = null, bool $respectOpenWindow = true): array
 {
     if (!$nights) return [];
 
@@ -104,8 +113,10 @@ function room_availability(int $roomId, array $nights, ?int $ignoreEnquiryId = n
             $capacity = (int) $override['rooms_left'];
         } else {
             // No explicit override: open (the room's real total) inside the rolling
-            // booking window, blocked by default beyond it.
-            $blocked = $night > $openThrough;
+            // booking window, blocked by default beyond it - unless the caller is
+            // deciding whether to honor an actual enquiry, in which case there's no
+            // window at all, just the room's real total.
+            $blocked = $respectOpenWindow && $night > $openThrough;
             $capacity = $blocked ? 0 : $defaultCapacity;
         }
         if ($blocked) $capacity = 0;
@@ -141,7 +152,12 @@ function enquiry_unavailable_night(array $enquiry): ?string
     $nights = stay_nights($enquiry['check_in'] ?? null, $enquiry['check_out'] ?? null);
     if (!$nights) return null;
 
-    $map = room_availability((int) $enquiry['room_id'], $nights, (int) ($enquiry['id'] ?? 0) ?: null);
+    // A real enquiry a guest already sent isn't blocked by the rolling open-booking
+    // window - that window exists to keep the calendar/public site from showing a
+    // far-future date as bookable before anyone's reviewed it, not to stop an admin
+    // from honoring a request that already came in for one. An actual per-date block
+    // or running out of physical rooms still stops it, same as ever.
+    $map = room_availability((int) $enquiry['room_id'], $nights, (int) ($enquiry['id'] ?? 0) ?: null, false);
     foreach ($map as $night => $state) {
         if ($state['free'] < 1) return $night;
     }
