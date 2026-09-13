@@ -18,7 +18,6 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900">Nearby Places</h1>
-        <p class="text-sm text-pallav-500 mt-1">The "how far is it" strip shown above the map on the homepage - airport, railway station and the like, each linking to directions straight to the hotel.</p>
       </div>
       <?php if (can_edit_site()): ?>
       <button type="button" @click="open ? close() : openAdd()" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">
@@ -38,19 +37,16 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <input type="text" name="title" x-model="formTitle" maxlength="80" placeholder="e.g. Rajkot International Airport" required class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Distance <span class="normal-case font-semibold text-pallav-300">(optional with a Maps link below)</span></label>
-          <input type="text" name="distance_label" x-model="distanceLabel" maxlength="40" placeholder="auto-filled from the link" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Distance</label>
+          <input type="text" name="distance_label" x-model="distanceLabel" maxlength="40" placeholder="e.g. 12 km" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
       </div>
       <div>
-        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Maps link <span class="normal-case font-semibold text-pallav-300">(paste the place's own link from Google Maps' Share button - the site works out the exact distance and the directions link to the hotel from it automatically)</span></label>
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Google Maps Link</label>
         <input type="url" name="map_url" x-model="mapUrl" maxlength="500" placeholder="e.g. https://maps.app.goo.gl/xxxxxxxx" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
-        <?php $s = get_settings(); if (empty($s['map_lat']) || empty($s['map_lng'])): ?>
-          <p class="text-xs font-bold text-gold-600 mt-1.5">Set the hotel's own Google Maps link in <a href="<?= e(APP_URL) ?>/admin/settings.php" class="underline">Settings</a> first, or distance won't auto-fill here - you'll need to type it in by hand until then.</p>
-        <?php endif; ?>
       </div>
       <div>
-        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Map search text <span class="normal-case font-semibold text-pallav-300">(used only if no Google Maps link is given above - what Google Maps looks up as the starting point; defaults to the place name)</span></label>
+        <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Search Text</label>
         <input type="text" name="map_query" x-model="mapQuery" maxlength="255" placeholder="e.g. Rajkot International Airport, Gujarat" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
       </div>
       <div class="flex justify-end gap-2">
@@ -90,11 +86,6 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <div class="min-w-0">
             <h3 class="font-display font-bold text-base text-pallav-900 break-words"><?= e($p['title']) ?></h3>
             <div class="text-xs font-bold text-pallav-500 mt-0.5"><?= e($p['distance_label']) ?></div>
-            <?php if (!empty($p['map_url'])): ?>
-              <div class="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mt-1.5 flex items-center gap-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Exact Maps link set</div>
-            <?php else: ?>
-              <div class="text-[10px] font-bold uppercase tracking-wide text-gold-600 mt-1.5">Using search-based link</div>
-            <?php endif; ?>
           </div>
         </div>
         <div class="flex gap-1.5 shrink-0">
