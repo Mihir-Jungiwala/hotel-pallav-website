@@ -585,7 +585,7 @@ section{ position:relative; }
 .near-chip:hover .go{ color:var(--p500); transform:translate(2px,-2px); }
 .loc{ display:grid; grid-template-columns:minmax(0,1fr); grid-template-areas:"card" "near" "map"; gap:26px; align-items:start; }
 .loc>*{ min-width:0; }
-@media (min-width:1240px){ .loc{ grid-template-columns:minmax(0,1fr) minmax(0,.92fr); grid-template-areas:"near map" "card map"; gap:34px; align-items:stretch; } .map{ height:auto; min-height:100%; } }
+@media (min-width:1240px){ .loc{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-areas:"near card" "map map"; gap:34px; align-items:start; } .map{ height:440px; min-height:440px; } }
 .loc-card{ grid-area:card; background:var(--white); border-radius:var(--r-lg); padding:32px; box-shadow:var(--sh-md); display:flex; flex-direction:column; }
 .loc-row{ display:flex; gap:15px; padding:17px 0; border-bottom:1px solid var(--line); border-radius:13px; transition:transform .3s var(--ease), padding .3s var(--ease); }
 .loc-row:last-of-type{ border-bottom:none; }
