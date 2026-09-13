@@ -32,8 +32,11 @@ if ($existing) {
     $blocked = $existing['blocked'] ? 0 : 1;
     db_run('UPDATE room_date_inventory SET blocked = ? WHERE id = ?', [$blocked, $existing['id']]);
 } else {
+    // rooms_left here only matters if this row is later unblocked without also
+    // setting a specific count - it should fall back to the room's real total, not
+    // the separate (and easily stale) rooms.rooms_left column.
     $blocked = 1;
-    db_insert('INSERT INTO room_date_inventory (room_id, date, rooms_left, blocked, created_at, updated_at) VALUES (?,?,?,?,NOW(),NOW())', [$roomId, $date, $room['rooms_left'], $blocked]);
+    db_insert('INSERT INTO room_date_inventory (room_id, date, rooms_left, blocked, created_at, updated_at) VALUES (?,?,?,?,NOW(),NOW())', [$roomId, $date, $room['total_count'], $blocked]);
 }
 
 log_activity('room.date_block_toggled', ($blocked ? 'Blocked' : 'Unblocked') . " {$room['name']} for {$date}", 'room', $roomId);

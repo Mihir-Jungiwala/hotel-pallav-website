@@ -3,8 +3,13 @@ require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
 
 $rooms = db_all('SELECT * FROM rooms ORDER BY sort_order, id');
+$today = date('Y-m-d');
 foreach ($rooms as &$r) {
     $r['photos'] = normalize_room_photos(json_decode_field($r['photos']));
+    // Today's real free count (capacity minus confirmed bookings), not the separate
+    // rooms.rooms_left column - that one is only ever set once, at creation, and
+    // never reflects a later total_count change or today's actual bookings.
+    $r['free_today'] = room_availability((int) $r['id'], [$today])[$today]['free'] ?? 0;
 }
 unset($r);
 
@@ -55,7 +60,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         </div>
         <div class="grid grid-cols-2 gap-3 text-center mb-5">
           <div class="rounded-xl bg-pallav-50 py-3"><div class="font-display font-bold text-lg text-pallav-800"><?= (int) $room['total_count'] ?></div><div class="text-[10px] font-bold uppercase text-pallav-400">Total</div></div>
-          <div class="rounded-xl bg-pallav-50 py-3"><div class="font-display font-bold text-lg text-pallav-800"><?= (int) $room['rooms_left'] ?></div><div class="text-[10px] font-bold uppercase text-pallav-400">Free</div></div>
+          <div class="rounded-xl bg-pallav-50 py-3"><div class="font-display font-bold text-lg text-pallav-800"><?= (int) $room['free_today'] ?></div><div class="text-[10px] font-bold uppercase text-pallav-400">Free Today</div></div>
         </div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <?php if (can_edit_site()): ?>

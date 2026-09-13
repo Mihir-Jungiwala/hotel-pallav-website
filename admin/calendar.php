@@ -13,13 +13,13 @@ $nextWeek = date('Y-m-d', strtotime($start . ' +7 days'));
 $rooms = db_all('SELECT * FROM rooms ORDER BY id');
 foreach ($rooms as &$room) {
     $room['plans'] = db_all('SELECT * FROM rate_plans WHERE room_id = ? AND active = 1 ORDER BY sort_order, id', [$room['id']]);
-    $room['inventory'] = [];
-    foreach (db_all('SELECT * FROM room_date_inventory WHERE room_id = ? AND date BETWEEN ? AND ?', [$room['id'], $rangeStart, $rangeEnd]) as $inv) {
-        $room['inventory'][$inv['date']] = $inv;
-    }
-    // Whole week's sold counts in one go - a per-cell lookup here would be 7 round
-    // trips per room just to render one row.
-    $room['sold'] = array_map(fn($s) => $s['sold'], room_availability((int) $room['id'], $days));
+    // Single source of truth (includes/availability.php) for capacity/blocked/sold,
+    // rather than a second copy of the same default-capacity and open-window rules
+    // re-derived from the raw room_date_inventory rows here - the two had already
+    // drifted apart once (this file didn't know about the rooms.total_count default
+    // or the rolling open-booking window at all) before being unified back onto it.
+    $room['avail'] = room_availability((int) $room['id'], $days);
+    $room['sold'] = array_map(fn($s) => $s['sold'], $room['avail']);
     foreach ($room['plans'] as &$plan) {
         $plan['date_rates'] = [];
         // recently_changed is computed in SQL (updated_at vs MySQL's own NOW()), not
@@ -47,8 +47,8 @@ foreach ($rooms as $room) {
 }
 
 function inv_for_date(array $room, string $date): array {
-    $o = $room['inventory'][$date] ?? null;
-    return ['rooms_left' => $o['rooms_left'] ?? $room['rooms_left'], 'blocked' => (bool) ($o['blocked'] ?? false)];
+    $a = $room['avail'][$date] ?? ['capacity' => 0, 'blocked' => false];
+    return ['rooms_left' => $a['capacity'], 'blocked' => (bool) $a['blocked']];
 }
 function price_for_date(array $plan, string $date, string $occ): array {
     $o = $plan['date_rates'][$date] ?? null;

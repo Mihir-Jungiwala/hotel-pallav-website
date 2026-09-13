@@ -9,8 +9,10 @@
  *
  * The rule itself:
  *   capacity for a date = that date's room_date_inventory.rooms_left if an
- *                         override row exists, otherwise rooms.rooms_left
- *                         (a blocked date has a capacity of 0)
+ *                         override row exists, otherwise rooms.total_count -
+ *                         the room category's real total (a blocked date, or
+ *                         one beyond the open booking window below, has a
+ *                         capacity of 0)
  *   sold for a date     = confirmed enquiries where check_in <= date < check_out
  *   free for a date     = max(0, capacity - sold)
  *
@@ -22,6 +24,15 @@ require_once __DIR__ . '/db.php';
 /** Longest stay the availability walk will consider, in nights. Also caps how much
  *  work a crafted request can ask for. */
 const MAX_STAY_NIGHTS = 60;
+
+/**
+ * How far ahead a date opens for booking by default, with no override row needed -
+ * today through this many months out. Beyond that, a date defaults to blocked (0
+ * capacity) until an admin explicitly opens it (Rate & Inventory Calendar's block/
+ * unblock, per-date or bulk-range) by writing a real room_date_inventory row for it,
+ * which - per the rule above - always wins over this default regardless of date.
+ */
+const DEFAULT_OPEN_WINDOW_MONTHS = 3;
 
 /**
  * The nights a stay actually occupies: check-in date through the night before
@@ -57,8 +68,9 @@ function room_availability(int $roomId, array $nights, ?int $ignoreEnquiryId = n
 {
     if (!$nights) return [];
 
-    $room = db_one('SELECT rooms_left FROM rooms WHERE id = ?', [$roomId]);
-    $defaultCapacity = $room ? (int) $room['rooms_left'] : 0;
+    $room = db_one('SELECT total_count FROM rooms WHERE id = ?', [$roomId]);
+    $defaultCapacity = $room ? (int) $room['total_count'] : 0;
+    $openThrough = date('Y-m-d', strtotime('+' . DEFAULT_OPEN_WINDOW_MONTHS . ' months'));
 
     $from = $nights[0];
     $to = $nights[count($nights) - 1];
@@ -87,8 +99,15 @@ function room_availability(int $roomId, array $nights, ?int $ignoreEnquiryId = n
     $out = [];
     foreach ($nights as $night) {
         $override = $overrides[$night] ?? null;
-        $blocked = $override ? (bool) $override['blocked'] : false;
-        $capacity = $override ? (int) $override['rooms_left'] : $defaultCapacity;
+        if ($override) {
+            $blocked = (bool) $override['blocked'];
+            $capacity = (int) $override['rooms_left'];
+        } else {
+            // No explicit override: open (the room's real total) inside the rolling
+            // booking window, blocked by default beyond it.
+            $blocked = $night > $openThrough;
+            $capacity = $blocked ? 0 : $defaultCapacity;
+        }
         if ($blocked) $capacity = 0;
         $out[$night] = [
             'capacity' => $capacity,

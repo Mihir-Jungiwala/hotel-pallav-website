@@ -58,7 +58,9 @@ foreach ($rooms as $room) {
         if ($existing) {
             db_run('UPDATE room_date_inventory SET blocked = ? WHERE id = ?', [$blocked, $existing['id']]);
         } else {
-            db_insert('INSERT INTO room_date_inventory (room_id, date, rooms_left, blocked, created_at, updated_at) VALUES (?,?,?,?,NOW(),NOW())', [$room['id'], $date, $room['rooms_left'], $blocked]);
+            // See calendar-block.php - fall back to the room's real total, not the
+            // separate (and easily stale) rooms.rooms_left column.
+            db_insert('INSERT INTO room_date_inventory (room_id, date, rooms_left, blocked, created_at, updated_at) VALUES (?,?,?,?,NOW(),NOW())', [$room['id'], $date, $room['total_count'], $blocked]);
         }
     }
 }
