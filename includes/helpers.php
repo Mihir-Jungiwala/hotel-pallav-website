@@ -490,80 +490,16 @@ function blocked_date_ranges(): array {
 }
 
 /**
- * Built-in line-icon library used whenever a service or policy card has no
- * custom uploaded icon, so a card never renders an empty tile just because
- * nobody has picked an icon for it yet. Matched by a case-insensitive substring
- * search against the card's title - first entry whose keyword list contains a
- * match wins, so more specific phrases are listed first (e.g. "accessib" before
- * "parking", since a "Parking & Accessibility" title contains both).
- *
- * Every path uses stroke="currentColor" and no fill, same as the rest of the
- * site's line icons, so it inherits whatever `color` the wrapping .svc-ic/.ic
- * badge is set to - that's the entire hover recolor effect (badge background
- * turns solid purple, icon turns white), already defined once in site.css and
- * shared by these badges and the Easy To Reach section's .loc-row icons.
- */
-const AMENITY_ICON_LIBRARY = [
-    ['keywords' => ['wifi', 'wi-fi'], 'svg' => '<path d="M4 9.5a12 12 0 0116 0"/><path d="M7 13a7.5 7.5 0 0110 0"/><path d="M10 16.3a3 3 0 014 0"/><circle cx="12" cy="19.2" r="1" fill="currentColor" stroke="none"/>'],
-    ['keywords' => ['air condition', ' ac ', 'a/c'], 'svg' => '<path d="M12 3v18M5 7l14 10M19 7L5 17"/>'],
-    ['keywords' => ['room service'], 'svg' => '<path d="M4 18h16"/><path d="M6 18a6 6 0 1112 0"/><path d="M12 6v2"/>'],
-    ['keywords' => ['accessib'], 'svg' => '<circle cx="9" cy="4.5" r="1.8"/><path d="M9 7.5v4.5l3.5 1.8M9 12H6.2M12.5 13.8l2.2 5.7M12.5 13.8l3.8-1"/><circle cx="17.5" cy="18" r="3.8"/>'],
-    ['keywords' => ['parking'], 'svg' => '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M10 16V8h3.2a2.6 2.6 0 010 5.2H10"/>'],
-    ['keywords' => ['power backup', 'power cut', 'backup'], 'svg' => '<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>'],
-    ['keywords' => ['elevator', 'lift'], 'svg' => '<path d="M7 8l5-5 5 5M7 16l5 5 5-5"/>'],
-    ['keywords' => ['housekeep'], 'svg' => '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>'],
-    ['keywords' => ['refrigerat', 'fridge', 'mini bar', 'minibar'], 'svg' => '<rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M6 10h12M9.5 5.5v2M9.5 13v2.5"/>'],
-    ['keywords' => ['cctv', 'camera', 'security'], 'svg' => '<path d="M3 8.5A2.5 2.5 0 015.5 6h6l2 2h5A2.5 2.5 0 0121 10.5v6A2.5 2.5 0 0118.5 19h-13A2.5 2.5 0 013 16.5z"/><circle cx="12" cy="12.5" r="3.2"/>'],
-    ['keywords' => ['entertainment', 'television'], 'svg' => '<rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8M12 18v3"/>'],
-    ['keywords' => ['restaurant', 'dining', 'food'], 'svg' => '<path d="M6 2v8a2 2 0 002 2 2 2 0 002-2V2M8 12v10M17 2c-1.7 0-3 2-3 5s1.3 5 3 5v8"/>'],
-    ['keywords' => ['front desk', 'reception'], 'svg' => '<path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>'],
-    ['keywords' => ['cancel'], 'svg' => '<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/><path d="M9.5 13.5l5 5M14.5 13.5l-5 5"/>'],
-    ['keywords' => ['eligib'], 'svg' => '<circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0114 0"/>'],
-    ['keywords' => ['identif', 'verif', 'id proof', 'valid id'], 'svg' => '<rect x="3" y="5" width="18" height="14" rx="2.4"/><circle cx="8.3" cy="12" r="2"/><path d="M8.3 15.3c-1.8 0-3.3.9-3.3 2M13 10h6M13 14h4"/>'],
-    ['keywords' => ['check-in', 'check in', 'checkin', 'check-out'], 'svg' => '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/>'],
-    ['keywords' => ['extra bed', 'child'], 'svg' => '<path d="M3 18v-7a2 2 0 012-2h14a2 2 0 012 2v7"/><path d="M3 18h18M3 13h18"/><circle cx="7" cy="9" r="1.4" fill="currentColor" stroke="none"/>'],
-    ['keywords' => ['visitor'], 'svg' => '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>'],
-    ['keywords' => ['smoking', 'alcohol'], 'svg' => '<circle cx="12" cy="12" r="9"/><path d="M5.5 5.5l13 13"/>'],
-    ['keywords' => ['pet'], 'svg' => '<circle cx="7" cy="9" r="1.6"/><circle cx="12" cy="6.5" r="1.6"/><circle cx="17" cy="9" r="1.6"/><path d="M12 11.5c-3 0-5.5 2.2-5.5 4.8 0 1.6 1.3 2.4 2.8 2.1.9-.2 1.7-.7 2.7-.7s1.8.5 2.7.7c1.5.3 2.8-.5 2.8-2.1 0-2.6-2.5-4.8-5.5-4.8z"/>'],
-    ['keywords' => ['responsibilit'], 'svg' => '<rect x="5.5" y="4" width="13" height="17" rx="2.3"/><path d="M9 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M9 12.5l2 2 4-4.5"/>'],
-    ['keywords' => ['house rul', 'rules'], 'svg' => '<rect x="5.5" y="4" width="13" height="17" rx="2.3"/><path d="M9 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M9 11h6M9 15h6M9 19h3"/>'],
-];
-
-/** A generic sparkle - used only when a title matches nothing in AMENITY_ICON_LIBRARY. */
-const AMENITY_ICON_FALLBACK = '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>';
-
-/** SVG markup wrapper shared by every built-in amenity icon. */
-function amenity_icon_svg(string $title): string
-{
-    $needle = mb_strtolower($title);
-    $inner = AMENITY_ICON_FALLBACK;
-    foreach (AMENITY_ICON_LIBRARY as $entry) {
-        foreach ($entry['keywords'] as $kw) {
-            if (str_contains($needle, $kw)) {
-                $inner = $entry['svg'];
-                break 2;
-            }
-        }
-    }
-    return '<svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' . $inner . '</svg>';
-}
-
-/**
  * Renders a policy card's icon. SVGs are inlined (sanitized) rather than used as
- * an <img> so CSS `color`/currentColor can drive the hover recolor animation -
+ * an <img> so CSS `color`/currentColor can drive the hover recolor animation - 
  * an <img> can never be recolored by CSS, only inline SVG markup can. Non-SVG
  * uploads (png/jpg/etc.) fall back to a plain <img>, which just won't recolor
  * on hover - everything else about the hover effect (scale, glow, background)
  * still applies since those are on the wrapping .ic badge, not the icon itself.
- * Falls back to the built-in AMENITY_ICON_LIBRARY (matched against $title) once
- * no custom icon has been uploaded, rather than leaving the tile empty.
  */
-function render_policy_icon(?string $iconPath, string $title = ''): void
+function render_policy_icon(?string $iconPath): void
 {
-    if ($iconPath === null || $iconPath === '') {
-        echo amenity_icon_svg($title);
-        return;
-    }
+    if ($iconPath === null || $iconPath === '') return;
 
     $fsPath = UPLOADS_PATH . '/' . $iconPath;
     $ext = strtolower(pathinfo($fsPath, PATHINFO_EXTENSION));
@@ -579,25 +515,19 @@ function render_policy_icon(?string $iconPath, string $title = ''): void
 
     if (is_file($fsPath)) {
         echo '<img src="' . e(UPLOADS_URL . '/' . $iconPath) . '" alt="" width="22" height="22" loading="lazy">';
-        return;
     }
-
-    echo amenity_icon_svg($title);
 }
 
 /**
  * Renders a service card's icon. Same inline-SVG approach as render_policy_icon()
- * (so currentColor hover recoloring works), with the same built-in-library
- * fallback once no custom icon has been uploaded.
+ * (so currentColor hover recoloring works) - only outputs anything once the admin
+ * has uploaded a custom icon; otherwise the icon tile stays empty (still shows its
+ * background/hover styling).
  */
 function render_service_icon(array $svc): void
 {
     $iconPath = $svc['icon_path'] ?? null;
-    $title = (string) ($svc['title'] ?? '');
-    if (!$iconPath) {
-        echo amenity_icon_svg($title);
-        return;
-    }
+    if (!$iconPath) return;
 
     $fsPath = UPLOADS_PATH . '/' . $iconPath;
     $ext = strtolower(pathinfo($fsPath, PATHINFO_EXTENSION));
@@ -611,10 +541,7 @@ function render_service_icon(array $svc): void
     }
     if (is_file($fsPath)) {
         echo '<img src="' . e(UPLOADS_URL . '/' . $iconPath) . '" alt="" width="24" height="24" loading="lazy">';
-        return;
     }
-
-    echo amenity_icon_svg($title);
 }
 
 /** Strips scripting-capable content from an SVG before inlining it directly into the page. Returns null if it doesn't look like a safe, valid SVG. */
