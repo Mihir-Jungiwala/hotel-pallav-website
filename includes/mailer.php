@@ -349,7 +349,7 @@ function email_stay_band(string $checkIn, string $checkOut, string $nights, stri
         . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A7392;padding-top:3px;overflow-wrap:break-word;word-break:break-word;">' . $inTime . '</div>'
         . '</td>'
         . '<td class="ep-mid" width="12%" align="center" style="width:12%;padding:18px 0;">'
-        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#A886F7;letter-spacing:.5px;">' . $nightLabel . '</div>'
+        . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#A886F7;letter-spacing:.5px;white-space:nowrap;">' . $nightLabel . '</div>'
         . '</td>'
         . '<td class="ep-half" width="44%" align="center" style="width:44%;padding:18px 6px;box-sizing:border-box;">'
         . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#8B5CF6;padding-bottom:5px;overflow-wrap:break-word;word-break:break-word;">Check-out</div>'
