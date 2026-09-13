@@ -1,12 +1,15 @@
 <?php
 /**
  * Shared nav definition for both desktop sidebar and mobile drawer.
- * Grouped for scannability, ordered top-to-bottom to match how the site
- * itself flows: Overview first, Guest Activity (checked daily) next, then
- * every content-editing page in the order that content actually appears on
- * the homepage (hero, rooms, services/about, gallery, policies), Site
- * Settings on its own since it's global config rather than one page section,
- * and Administration as the bookend at the very bottom.
+ * Grouped for scannability, ordered top-to-bottom by importance: Overview
+ * first, Guest Activity (checked daily, drives revenue) next, then every
+ * content-editing page ranked by how directly it affects bookings and how
+ * often it actually changes - Rooms (the core product) and Pricing & Rates /
+ * Rate Calendar (revenue-critical, touched constantly) ahead of general
+ * Website Content and Services, with Gallery, Policies and Nearby Places
+ * last since they're set-and-forget. Site Settings stands alone as global
+ * config rather than one page section, and Administration is the bookend at
+ * the very bottom.
  */
 function admin_nav_groups(): array
 {
@@ -21,11 +24,11 @@ function admin_nav_groups(): array
             ['href' => 'admin/bookings.php', 'match' => 'bookings.php', 'label' => 'Guest Activity', 'icon' => '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8.5 3v3.4M15.5 3v3.4"/>', 'badge' => $pendingCount],
         ],
         'Homepage Content' => [
-            ['href' => 'admin/content.php', 'match' => 'content.php', 'label' => 'Website Content', 'icon' => '<path d="M6 3.5h8l4 4V20a1 1 0 01-1 1H6a1 1 0 01-1-1V4.5a1 1 0 011-1z"/><path d="M13.5 3.6V8h4.3M8.5 13h7M8.5 16.5h4.5"/>'],
             ['href' => 'admin/rooms.php', 'match' => 'rooms.php', 'label' => 'Rooms', 'icon' => '<path d="M4 20v-9M4 14.4h16V20M20 14.4v-2.6a2 2 0 00-2-2h-5.4v4.6"/><circle cx="8.1" cy="12" r="1.9"/>'],
-            ['href' => 'admin/services.php', 'match' => 'services.php', 'label' => 'Services & Facilities', 'icon' => '<path d="M4 21V9.5L12 4l8 5.5V21"/><path d="M9 21v-6h6v6"/>'],
             ['href' => 'admin/pricing.php', 'match' => 'pricing.php', 'label' => 'Pricing & Rates', 'icon' => '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
             ['href' => 'admin/calendar.php', 'match' => 'calendar.php', 'label' => 'Rate Calendar', 'icon' => '<rect x="3.5" y="5" width="17" height="15" rx="2.6"/><path d="M3.5 10h17M8.5 3v3.4M15.5 3v3.4"/>'],
+            ['href' => 'admin/content.php', 'match' => 'content.php', 'label' => 'Website Content', 'icon' => '<path d="M6 3.5h8l4 4V20a1 1 0 01-1 1H6a1 1 0 01-1-1V4.5a1 1 0 011-1z"/><path d="M13.5 3.6V8h4.3M8.5 13h7M8.5 16.5h4.5"/>'],
+            ['href' => 'admin/services.php', 'match' => 'services.php', 'label' => 'Services & Facilities', 'icon' => '<path d="M4 21V9.5L12 4l8 5.5V21"/><path d="M9 21v-6h6v6"/>'],
             ['href' => 'admin/gallery.php', 'match' => 'gallery.php', 'label' => 'Gallery', 'icon' => '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="9.6" r="1.3"/><path d="M3.5 15.5l4.4-4a2 2 0 012.7 0l5.6 5"/>'],
             ['href' => 'admin/policies.php', 'match' => 'policies.php', 'label' => 'Hotel Policies', 'icon' => '<path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/>'],
             ['href' => 'admin/nearby-places.php', 'match' => 'nearby-places.php', 'label' => 'Nearby Places', 'icon' => '<path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>'],
