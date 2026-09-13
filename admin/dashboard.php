@@ -69,14 +69,41 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <p class="text-sm text-pallav-500 mt-1">Here's what's happening at Hotel Pallav today.</p>
     </div>
     <div class="flex items-center gap-3">
-      <form method="GET" action="<?= e(APP_URL) ?>/admin/dashboard.php" class="flex items-center gap-1.5 text-xs text-pallav-500">
+      <?php
+        // A native <select> has no way to fully hide its own dropdown popup's
+        // scrollbar in any browser - that popup is drawn outside the page's DOM,
+        // so CSS on the <select> element itself can't reach it. With the FY range
+        // now spanning back to the hotel's opened year (often 20+ options), that
+        // scrollbar was always visible no matter what CSS was applied. A small
+        // Alpine-driven dropdown (same pattern as the Role picker in
+        // admin/user-edit.php) renders its own menu as a real, styleable div, so
+        // .no-scrollbar actually works on it.
+        $fyOpts = [];
+        foreach ($fyOptions as $y) {
+            $fyOpts[] = ['v' => $y, 'label' => 'FY ' . $y . '-' . substr((string) ($y + 1), 2) . ($y === $currentFy ? ' (Current)' : '')];
+        }
+      ?>
+      <div x-data="{
+            open: false, value: <?= (int) $fy ?>,
+            opts: <?= e(json_encode($fyOpts)) ?>,
+            label(v){ var o = this.opts.find(function(o){ return o.v === v; }); return o ? o.label : v; },
+            go(v){ this.value = v; this.open = false; document.getElementById('fyGoto').value = v; document.getElementById('fyForm').submit(); }
+          }" @click.outside="open = false" class="relative flex items-center gap-1.5 text-xs text-pallav-500">
         Financial Year
-        <select name="fy" id="fy-select" onchange="this.form.submit()" class="no-scrollbar rounded-lg border border-pallav-200 text-xs font-bold text-pallav-700 py-1.5 pl-2 pr-6 focus:border-pallav-500 outline-none">
-          <?php foreach ($fyOptions as $y): ?>
-            <option value="<?= $y ?>" <?= $y === $fy ? 'selected' : '' ?>>FY <?= $y ?>-<?= substr((string) ($y + 1), 2) ?><?= $y === $currentFy ? ' (Current)' : '' ?></option>
-          <?php endforeach; ?>
-        </select>
-      </form>
+        <button type="button" @click="open = !open" class="flex items-center gap-1.5 rounded-lg border border-pallav-200 bg-white text-xs font-bold text-pallav-700 py-1.5 pl-3 pr-2 hover:border-pallav-300 transition" :class="open ? 'border-pallav-500 ring-4 ring-pallav-100' : ''">
+          <span x-text="label(value)"></span>
+          <svg aria-hidden="true" focusable="false" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div x-show="open" x-cloak x-transition.origin.top class="no-scrollbar absolute right-0 top-full mt-1.5 w-44 max-h-64 overflow-y-auto rounded-xl bg-white ring-1 ring-pallav-100 shadow-lg shadow-pallav-900/10 py-1.5 z-30">
+          <template x-for="o in opts" :key="o.v">
+            <button type="button" @click="go(o.v)" class="w-full flex items-center justify-between gap-2 px-4 py-2 text-sm text-left transition" :class="o.v === value ? 'bg-pallav-50 text-pallav-700 font-bold' : 'hover:bg-pallav-50 text-pallav-900'">
+              <span x-text="o.label"></span>
+              <svg x-show="o.v === value" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-600 shrink-0"><path d="M20 6L9 17l-5-5"/></svg>
+            </button>
+          </template>
+        </div>
+      </div>
+      <form method="GET" action="<?= e(APP_URL) ?>/admin/dashboard.php" id="fyForm" class="hidden"><input type="hidden" name="fy" id="fyGoto" value="<?= (int) $fy ?>"></form>
       <a href="<?= e(APP_URL) ?>/admin/bookings.php?filter=pending" class="hidden sm:inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition">
         Review Pending
         <?php if ($statPending): ?><span class="inline-flex items-center justify-center w-[19px] h-[19px] shrink-0 text-[10px] bg-gold-500 text-pallav-900 rounded-full font-extrabold leading-none"><?= $statPending ?></span><?php endif; ?>
