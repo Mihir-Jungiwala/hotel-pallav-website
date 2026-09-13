@@ -42,7 +42,9 @@ if (!empty($_FILES['icon']['name']) && $_FILES['icon']['error'] === UPLOAD_ERR_O
         if ($iconPath) { $f = UPLOADS_PATH . '/' . $iconPath; if (is_file($f)) unlink($f); }
         if (!is_dir(UPLOADS_PATH . '/policies')) mkdir(UPLOADS_PATH . '/policies', 0755, true);
         $filename = bin2hex(random_bytes(16)) . '.' . $ext;
-        if (move_uploaded_file($_FILES['icon']['tmp_name'], UPLOADS_PATH . '/policies/' . $filename)) {
+        $dest = UPLOADS_PATH . '/policies/' . $filename;
+        if (move_uploaded_file($_FILES['icon']['tmp_name'], $dest)) {
+            if ($ext === 'svg') file_put_contents($dest, sanitize_svg_content(file_get_contents($dest)));
             $iconPath = 'policies/' . $filename;
         }
     }

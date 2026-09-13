@@ -1,3 +1,11 @@
+  <?php
+    // Partial template, always included by an already-authenticated parent (activity.php,
+    // activity-log-search.php) - but this file lives in a web-accessible directory, so it
+    // must still refuse a direct request on its own rather than relying on the include-
+    // path's require_admin() to have already run.
+    require_once __DIR__ . '/../includes/helpers.php';
+    require_admin();
+  ?>
   <?php if (!$logs): ?>
     <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-10 text-center text-pallav-400">
       <?= $hasFilters ? 'No activity matches these filters.' : 'No activity recorded yet.' ?>

@@ -9,6 +9,14 @@ if (!empty($_GET['error'])) {
     redirect('admin/settings.php');
 }
 
+$state = $_GET['state'] ?? '';
+$expectedState = $_SESSION['gbp_oauth_state'] ?? '';
+unset($_SESSION['gbp_oauth_state']);
+if ($state === '' || $expectedState === '' || !hash_equals($expectedState, $state)) {
+    flash('error', 'Google sign-in could not be verified - please try connecting again.');
+    redirect('admin/settings.php');
+}
+
 $code = $_GET['code'] ?? '';
 if ($code === '') {
     flash('error', 'No authorization code returned by Google.');

@@ -5,6 +5,16 @@ require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/availability.php';
 require_once __DIR__ . '/sanitize.php';
 
+/**
+ * A fixed, valid bcrypt hash with no real corresponding password - used only so
+ * login can run password_verify() against *something* of the same cost when a
+ * submitted username doesn't exist, rather than skipping straight to "invalid" and
+ * responding measurably faster than a real "wrong password" case would (a timing
+ * side-channel that would otherwise let an attacker find valid usernames by
+ * comparing response times, even though both cases show the same error message).
+ */
+const PASSWORD_DUMMY_HASH = '$2y$12$lkvXKKAeQTbuoUsntxnSRevBSnxw8zjNMFy1WcZWhmHlRs2svPZtW';
+
 if (session_status() === PHP_SESSION_NONE) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
         || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
@@ -253,6 +263,38 @@ function record_login_failure(string $identifier): void
 function clear_login_failures(string $identifier): void
 {
     db_run('DELETE FROM login_attempts WHERE identifier = ? AND ip = ?', [strtolower($identifier), client_ip()]);
+}
+
+const ENQUIRY_MAX_PER_WINDOW = 5;
+const ENQUIRY_WINDOW_SECONDS = 600;
+
+/**
+ * Reuses the login_attempts table (identifier/ip/attempts/locked_until) to throttle
+ * the public booking form - each submission inserts a row and, when SMTP is
+ * configured, sends a real email, so an unthrottled endpoint is an easy spam/cost
+ * lever for a script even with the honeypot in place.
+ */
+function is_enquiry_rate_limited(): bool
+{
+    $row = db_one('SELECT locked_until FROM login_attempts WHERE identifier = ? AND ip = ?', ['enquiry_submit', client_ip()]);
+    return $row && $row['locked_until'] && strtotime($row['locked_until']) > time();
+}
+
+function record_enquiry_submission(): void
+{
+    $ip = client_ip();
+    $identifier = 'enquiry_submit';
+    $row = db_one('SELECT * FROM login_attempts WHERE identifier = ? AND ip = ?', [$identifier, $ip]);
+    // A window that already unlocked starts counting fresh instead of accumulating
+    // forever and re-locking on the very next submission after it expires.
+    $windowExpired = $row && $row['locked_until'] && strtotime($row['locked_until']) <= time();
+    $attempts = (!$row || $windowExpired) ? 1 : (int) $row['attempts'] + 1;
+    $lockedUntil = $attempts >= ENQUIRY_MAX_PER_WINDOW ? date('Y-m-d H:i:s', time() + ENQUIRY_WINDOW_SECONDS) : null;
+    if ($row) {
+        db_run('UPDATE login_attempts SET attempts = ?, locked_until = ? WHERE identifier = ? AND ip = ?', [$attempts, $lockedUntil, $identifier, $ip]);
+    } else {
+        db_run('INSERT INTO login_attempts (identifier, ip, attempts, locked_until) VALUES (?, ?, ?, ?)', [$identifier, $ip, $attempts, $lockedUntil]);
+    }
 }
 
 function flash(string $type, string $message): void

@@ -30,7 +30,9 @@ if (!empty($_FILES['icon_file']['name']) && $_FILES['icon_file']['error'] === UP
         if ($iconPath) { $f = UPLOADS_PATH . '/' . $iconPath; if (is_file($f)) unlink($f); }
         if (!is_dir(UPLOADS_PATH . '/services')) mkdir(UPLOADS_PATH . '/services', 0755, true);
         $filename = bin2hex(random_bytes(16)) . '.' . $ext;
-        if (move_uploaded_file($_FILES['icon_file']['tmp_name'], UPLOADS_PATH . '/services/' . $filename)) {
+        $dest = UPLOADS_PATH . '/services/' . $filename;
+        if (move_uploaded_file($_FILES['icon_file']['tmp_name'], $dest)) {
+            if ($ext === 'svg') file_put_contents($dest, sanitize_svg_content(file_get_contents($dest)));
             $iconPath = 'services/' . $filename;
         }
     }

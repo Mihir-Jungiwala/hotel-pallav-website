@@ -29,7 +29,9 @@ if (!empty($_FILES['logo']['name']) && $_FILES['logo']['error'] === UPLOAD_ERR_O
         if ($logoPath) { $f = UPLOADS_PATH . '/' . $logoPath; if (is_file($f)) unlink($f); }
         if (!is_dir(UPLOADS_PATH . '/branding')) mkdir(UPLOADS_PATH . '/branding', 0755, true);
         $filename = bin2hex(random_bytes(16)) . '.' . $ext;
-        if (move_uploaded_file($_FILES['logo']['tmp_name'], UPLOADS_PATH . '/branding/' . $filename)) {
+        $dest = UPLOADS_PATH . '/branding/' . $filename;
+        if (move_uploaded_file($_FILES['logo']['tmp_name'], $dest)) {
+            if ($ext === 'svg') file_put_contents($dest, sanitize_svg_content(file_get_contents($dest)));
             $logoPath = 'branding/' . $filename;
         }
     }
@@ -47,7 +49,9 @@ if (!empty($_FILES['favicon']['name']) && $_FILES['favicon']['error'] === UPLOAD
         if ($faviconPath) { $f = UPLOADS_PATH . '/' . $faviconPath; if (is_file($f)) unlink($f); }
         if (!is_dir(UPLOADS_PATH . '/branding')) mkdir(UPLOADS_PATH . '/branding', 0755, true);
         $filename = bin2hex(random_bytes(16)) . '.' . $ext;
-        if (move_uploaded_file($_FILES['favicon']['tmp_name'], UPLOADS_PATH . '/branding/' . $filename)) {
+        $dest = UPLOADS_PATH . '/branding/' . $filename;
+        if (move_uploaded_file($_FILES['favicon']['tmp_name'], $dest)) {
+            if ($ext === 'svg') file_put_contents($dest, sanitize_svg_content(file_get_contents($dest)));
             $faviconPath = 'branding/' . $filename;
         }
     }

@@ -45,6 +45,12 @@ function gbp_auth_url(): ?string
 {
     $s = get_settings();
     if (empty($s['gbp_oauth_client_id'])) return null;
+    // A random state, checked against the session on callback, stops an attacker
+    // from crafting their own authorization link and tricking an admin into
+    // completing it - which would otherwise connect the site to the attacker's
+    // Google account instead of the hotel's.
+    $state = bin2hex(random_bytes(32));
+    $_SESSION['gbp_oauth_state'] = $state;
     $params = [
         'client_id' => $s['gbp_oauth_client_id'],
         'redirect_uri' => gbp_redirect_uri(),
@@ -52,6 +58,7 @@ function gbp_auth_url(): ?string
         'scope' => GBP_SCOPE,
         'access_type' => 'offline',
         'prompt' => 'consent',
+        'state' => $state,
     ];
     return GBP_OAUTH_AUTH_URL . '?' . http_build_query($params);
 }

@@ -1,4 +1,13 @@
-  <?php $tabLabel = ['pending' => 'Pending', 'confirmed' => 'Confirmed', 'declined' => 'Cancelled']; $sn = $offset; ?>
+  <?php
+    // Partial template, always included by an already-authenticated parent (bookings.php,
+    // activity-search.php) - but this file lives in a web-accessible directory, so it must
+    // still refuse a direct request on its own rather than relying on the include-path's
+    // require_admin() to have already run. It renders on undefined $rows/$offset/etc. as a
+    // harmless "no results" shell either way, but should never even get that far unauthenticated.
+    require_once __DIR__ . '/../includes/helpers.php';
+    require_admin();
+    $tabLabel = ['pending' => 'Pending', 'confirmed' => 'Confirmed', 'declined' => 'Cancelled']; $sn = $offset;
+  ?>
   <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-sm min-w-[1560px]">

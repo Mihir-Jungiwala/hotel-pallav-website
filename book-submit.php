@@ -12,6 +12,12 @@ if (trim($_POST['company'] ?? '') !== '') {
     redirect('index.php#mainMsg');
 }
 
+if (is_enquiry_rate_limited()) {
+    flash('error', "You've submitted several enquiries recently, please wait a few minutes before trying again.");
+    redirect('index.php#mainMsg');
+}
+record_enquiry_submission();
+
 $name = trim($_POST['name'] ?? '');
 $phone = trim($_POST['phone'] ?? '');
 $email = trim($_POST['email'] ?? '');

@@ -17,7 +17,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $user = db_one('SELECT * FROM users WHERE username = ?', [$username]);
 
-        if (!$user || !password_verify($password, $user['password'])) {
+        // Always run password_verify(), even for a username that doesn't exist -
+        // bcrypt verification takes measurably longer than skipping straight to
+        // "invalid", so without this an attacker timing responses could tell a real
+        // username (slow) apart from a made-up one (fast) despite the identical error
+        // message above. PASSWORD_DUMMY_HASH is just some fixed bcrypt hash - its
+        // plaintext is irrelevant, it only exists to give this branch the same shape
+        // of work as a real check.
+        $hashToCheck = $user['password'] ?? PASSWORD_DUMMY_HASH;
+        $passwordOk = password_verify($password, $hashToCheck);
+        if (!$user || !$passwordOk) {
             if ($username !== '') record_login_failure($username);
             $errors[] = 'We could not verify those credentials, please check and try again';
         } else {

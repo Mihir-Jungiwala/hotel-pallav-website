@@ -144,3 +144,34 @@ function sanitize_rich_text(?string $html): string
     $out = mb_decode_numericentity($out, [0x80, 0x10FFFF, 0, 0x10FFFF], 'UTF-8');
     return trim($out);
 }
+
+/**
+ * Strips executable content from an uploaded SVG before it's saved to disk.
+ *
+ * Every uploaded SVG is always displayed via <img src="...">, which browsers never
+ * execute scripts inside regardless of what the file contains - but the file also
+ * sits at a public, directly-navigable URL (just an unguessable one, from the random
+ * upload filename), and a browser that's pointed at that URL *directly* renders the
+ * SVG as a full document, scripts and all. Unlike the HTML rich-text fields, this
+ * isn't parsed as a DOM: SVG is picky about namespaces and self-closing tags in ways
+ * DOMDocument's HTML parser mangles, so this is a narrower, string-level strip of
+ * exactly the constructs that can execute something - good enough for what's meant to
+ * be a static icon/logo file, not a place to defend arbitrary attacker-crafted SVG.
+ */
+function sanitize_svg_content(string $svg): string
+{
+    // <script>...</script> and everything inside, however it's cased or spaced.
+    $svg = preg_replace('/<script\b[^>]*>.*?<\/script\s*>/is', '', $svg) ?? $svg;
+    // Self-closing or unclosed <script ... /> some malformed uploads might use.
+    $svg = preg_replace('/<script\b[^>]*\/?>/i', '', $svg) ?? $svg;
+    // <foreignObject> can carry arbitrary embedded HTML (including its own <script>).
+    $svg = preg_replace('/<foreignObject\b[^>]*>.*?<\/foreignObject\s*>/is', '', $svg) ?? $svg;
+    // Any on*="..." event-handler attribute, single- or double-quoted.
+    $svg = preg_replace('/\s+on[a-z]+\s*=\s*"[^"]*"/i', '', $svg) ?? $svg;
+    $svg = preg_replace("/\\s+on[a-z]+\\s*=\\s*'[^']*'/i", '', $svg) ?? $svg;
+    // href/xlink:href pointing at javascript: (SVG <a>/<use> can carry either).
+    $svg = preg_replace('/((?:xlink:)?href\s*=\s*)"javascript:[^"]*"/i', '$1""', $svg) ?? $svg;
+    $svg = preg_replace("/((?:xlink:)?href\\s*=\\s*)'javascript:[^']*'/i", "\$1''", $svg) ?? $svg;
+
+    return $svg;
+}
