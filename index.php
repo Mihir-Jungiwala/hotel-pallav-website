@@ -887,7 +887,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     </div>
   </div>
   <div class="wrap foot-bar" style="flex-direction:column;align-items:center;text-align:center;gap:10px">
-    <div>© <?= date('Y') ?> <?= e(APP_NAME) ?>. All rights reserved.</div>
+    <div>© <?= date('Y') ?> <?= e(APP_NAME) ?>. All rights reserved. &nbsp;·&nbsp; <a href="<?= e(APP_URL) ?>/privacy-policy.php" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Privacy Policy</a> &nbsp;·&nbsp; <a href="<?= e(APP_URL) ?>/terms-conditions.php" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Terms &amp; Conditions</a></div>
     <div class="dev"><i></i><span class="dev-tx">Developed and managed by <b><a href="https://mihirjungi.com" target="_blank" rel="noopener" style="color:var(--gold)">Mihir Jungi</a></b></span>
       <span class="dev-soc">
         <a href="https://mihirjungi.com" target="_blank" rel="noopener" aria-label="Mihir Jungi - Portfolio">
