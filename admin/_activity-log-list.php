@@ -14,7 +14,7 @@
 
   <!-- Desktop / tablet: table -->
   <div class="hidden sm:block rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto no-scrollbar">
       <table class="w-full text-sm">
         <thead>
           <tr class="text-left text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">

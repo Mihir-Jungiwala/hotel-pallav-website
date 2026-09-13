@@ -321,7 +321,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       </a>
     </div>
 
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto no-scrollbar">
       <table class="w-full text-sm border-collapse min-w-[860px]">
         <thead>
           <tr class="bg-pallav-900 text-white">
@@ -414,7 +414,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <?php if (!$blockedRanges): ?>
       <p class="text-sm text-pallav-400 text-center py-6">No blocked dates right now.</p>
     <?php else: ?>
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto no-scrollbar">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">

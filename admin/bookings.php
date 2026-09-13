@@ -32,7 +32,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
   <!-- ============ VIEW DETAILS MODAL ============ -->
   <div id="viewModal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4">
     <div id="viewModalBg" class="absolute inset-0 bg-pallav-950/50 backdrop-blur-sm"></div>
-    <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-pallav-100 p-6 scale-95 opacity-0 transition-all duration-150 max-h-[85vh] overflow-y-auto" id="viewModalCard">
+    <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-pallav-100 p-6 scale-95 opacity-0 transition-all duration-150 max-h-[85vh] overflow-y-auto no-scrollbar" id="viewModalCard">
       <button type="button" id="viewModalClose" class="absolute top-4 right-4 w-8 h-8 rounded-lg text-pallav-400 hover:bg-pallav-50 hover:text-pallav-700 flex items-center justify-center transition">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>

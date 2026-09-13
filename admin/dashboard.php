@@ -139,7 +139,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       </div>
     </div>
 
-    <div x-show="arrTab === 'today'" class="overflow-x-auto">
+    <div x-show="arrTab === 'today'" class="overflow-x-auto no-scrollbar">
       <table class="w-full text-sm">
         <thead>
           <tr class="text-left text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">
@@ -170,7 +170,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       </table>
     </div>
 
-    <div x-show="arrTab === 'week'" x-cloak class="overflow-x-auto">
+    <div x-show="arrTab === 'week'" x-cloak class="overflow-x-auto no-scrollbar">
       <table class="w-full text-sm">
         <thead>
           <tr class="text-left text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">
@@ -204,7 +204,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <h2 class="font-display font-bold text-lg text-pallav-900">Recent Enquiry</h2>
         <a href="<?= e(APP_URL) ?>/admin/bookings.php?filter=all" class="inline-flex text-xs font-bold text-pallav-700 bg-pallav-50 hover:bg-pallav-100 rounded-lg px-3 py-1.5 transition hover:-translate-y-0.5">View All</a>
       </div>
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto no-scrollbar">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">
@@ -270,7 +270,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
       <h2 class="font-display font-bold text-lg text-pallav-900">Blocked Dates</h2>
       <a href="<?= e(APP_URL) ?>/admin/calendar.php" class="inline-flex text-xs font-bold text-pallav-700 bg-pallav-50 hover:bg-pallav-100 rounded-lg px-3 py-1.5 transition hover:-translate-y-0.5">Manage</a>
     </div>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto no-scrollbar">
       <table class="w-full text-sm">
         <thead>
           <tr class="text-left text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">

@@ -9,7 +9,7 @@
     $tabLabel = ['pending' => 'Pending', 'confirmed' => 'Confirmed', 'declined' => 'Cancelled']; $sn = $offset;
   ?>
   <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto no-scrollbar">
       <table class="w-full text-sm min-w-[1560px]">
         <thead>
           <tr class="text-xs font-bold uppercase tracking-wide text-pallav-400 border-b border-pallav-100">

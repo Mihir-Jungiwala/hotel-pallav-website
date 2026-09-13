@@ -41,7 +41,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <span x-text="label(value)" class="text-pallav-900 truncate"></span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''"><path d="M6 9l6 6 6-6"/></svg>
       </button>
-      <div x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top class="absolute z-20 mt-1.5 w-full max-h-64 overflow-y-auto rounded-xl bg-white ring-1 ring-pallav-100 shadow-lg shadow-pallav-900/10 py-1.5">
+      <div x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top class="absolute z-20 mt-1.5 w-full max-h-64 overflow-y-auto no-scrollbar rounded-xl bg-white ring-1 ring-pallav-100 shadow-lg shadow-pallav-900/10 py-1.5">
         <template x-for="o in opts" :key="o.v">
           <button type="button" @click="value = o.v; open = false" class="w-full text-left px-4 py-2 text-sm transition" :class="o.v === value ? 'bg-pallav-50 text-pallav-700 font-bold' : 'text-pallav-700 hover:bg-pallav-50'" x-text="o.label"></button>
         </template>
@@ -57,7 +57,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <span x-text="label(value)" class="text-pallav-900 truncate"></span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="text-pallav-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''"><path d="M6 9l6 6 6-6"/></svg>
       </button>
-      <div x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top class="absolute z-20 mt-1.5 w-full max-h-64 overflow-y-auto rounded-xl bg-white ring-1 ring-pallav-100 shadow-lg shadow-pallav-900/10 py-1.5">
+      <div x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top class="absolute z-20 mt-1.5 w-full max-h-64 overflow-y-auto no-scrollbar rounded-xl bg-white ring-1 ring-pallav-100 shadow-lg shadow-pallav-900/10 py-1.5">
         <template x-for="o in opts" :key="o.v">
           <button type="button" @click="value = o.v; open = false" class="w-full text-left px-4 py-2 text-sm transition" :class="o.v === value ? 'bg-pallav-50 text-pallav-700 font-bold' : 'text-pallav-700 hover:bg-pallav-50'" x-text="o.label"></button>
         </template>
