@@ -28,7 +28,16 @@ if (!$room) {
 }
 
 $existing = db_one('SELECT * FROM room_date_inventory WHERE room_id = ? AND date = ?', [$roomId, $date]);
-$goingToBlock = !($existing && $existing['blocked']);
+
+// A date beyond the rolling open-booking window shows as "blocked" (and offers an
+// "Unblock" button) even with no override row yet - that's the default, not a real
+// block. Deciding the action from $existing alone missed this: clicking "Unblock" on
+// such a date used to insert a brand-new blocked=1 row (matching what was already
+// the effective state, so nothing visibly changed) and only the second click, now
+// that a row existed, actually flipped it open. Basing the decision on the same
+// effective state the button's own label is drawn from fixes that in one click.
+$currentlyBlocked = room_availability($roomId, [$date])[$date]['blocked'] ?? false;
+$goingToBlock = !$currentlyBlocked;
 
 // A date with real confirmed bookings isn't "blockable" - it's already unavailable
 // because guests are actually staying, not because an admin closed it. Only stops
@@ -43,14 +52,13 @@ if ($goingToBlock) {
     }
 }
 
+$blocked = $goingToBlock ? 1 : 0;
 if ($existing) {
-    $blocked = $existing['blocked'] ? 0 : 1;
     db_run('UPDATE room_date_inventory SET blocked = ? WHERE id = ?', [$blocked, $existing['id']]);
 } else {
     // rooms_left here only matters if this row is later unblocked without also
     // setting a specific count - it should fall back to the room's real total, not
     // the separate (and easily stale) rooms.rooms_left column.
-    $blocked = 1;
     db_insert('INSERT INTO room_date_inventory (room_id, date, rooms_left, blocked, created_at, updated_at) VALUES (?,?,?,?,NOW(),NOW())', [$roomId, $date, $room['total_count'], $blocked]);
 }
 

@@ -7,9 +7,14 @@ require_admin();
 // enquiry reference numbers). Upcoming Arrivals stays unfiltered further down - it's
 // "what's happening right now", not a historical report, so a past FY selection
 // wouldn't mean anything there.
-$earliestYear = (int) date('Y', strtotime(db_one("SELECT MIN(created_at) m FROM enquiries")['m'] ?? 'now'));
 $currentFy = (int) date('n') >= 4 ? (int) date('Y') : (int) date('Y') - 1;
-$earliestFy = min($earliestYear, $currentFy);
+// The dropdown always reaches back to the year the hotel itself opened (Settings ->
+// "Opened Year"), not just the oldest enquiry on record - so it still offers every
+// year the hotel has been running even for a year with zero enquiries logged in this
+// system, rather than silently hiding it. A future-dated opened_year (typo) can't
+// push the floor past the current FY either way, since range() below is capped there.
+$openedYear = (int) (get_settings()['opened_year'] ?? $currentFy);
+$earliestFy = min($openedYear, $currentFy);
 $fyOptions = range($currentFy, $earliestFy, -1);
 $fy = (int) ($_GET['fy'] ?? $currentFy);
 if (!in_array($fy, $fyOptions, true)) $fy = $currentFy;
@@ -66,7 +71,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
     <div class="flex items-center gap-3">
       <form method="GET" action="<?= e(APP_URL) ?>/admin/dashboard.php" class="flex items-center gap-1.5 text-xs text-pallav-500">
         Financial Year
-        <select name="fy" id="fy-select" onchange="this.form.submit()" class="rounded-lg border border-pallav-200 text-xs font-bold text-pallav-700 py-1.5 pl-2 pr-6 focus:border-pallav-500 outline-none">
+        <select name="fy" id="fy-select" onchange="this.form.submit()" class="no-scrollbar rounded-lg border border-pallav-200 text-xs font-bold text-pallav-700 py-1.5 pl-2 pr-6 focus:border-pallav-500 outline-none">
           <?php foreach ($fyOptions as $y): ?>
             <option value="<?= $y ?>" <?= $y === $fy ? 'selected' : '' ?>>FY <?= $y ?>-<?= substr((string) ($y + 1), 2) ?><?= $y === $currentFy ? ' (Current)' : '' ?></option>
           <?php endforeach; ?>

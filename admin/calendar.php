@@ -355,7 +355,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
                      cancelled/deleted, at which point this reverts to normal. -->
                 <span class="text-[10px] font-bold text-pallav-500 mt-0.5 inline-block" title="<?= $sold ?> room<?= $sold === 1 ? '' : 's' ?> already booked for this date - cancel the booking to free it up.">📅 Booked</span>
               <?php elseif (can_edit_site()): ?>
-              <button type="button" class="cal-block text-[10px] font-bold <?= $inv['blocked'] ? 'text-rose-500' : 'text-pallav-300 hover:text-pallav-600' ?> mt-0.5" data-room="<?= $room['id'] ?>" data-date="<?= $d ?>">
+              <button type="button" class="cal-block text-[10px] font-bold <?= $inv['blocked'] ? 'text-rose-500' : 'text-pallav-300 hover:text-pallav-600' ?> mt-0.5" data-room="<?= $room['id'] ?>" data-date="<?= $d ?>" data-blocked="<?= $inv['blocked'] ? '1' : '0' ?>" data-room-name="<?= e($room['name']) ?>" data-date-label="<?= e(date('d M Y', strtotime($d))) ?>">
                 <?= $inv['blocked'] ? '🔒 Unblock' : 'Block' ?>
               </button>
               <?php endif; ?>
@@ -663,12 +663,16 @@ include __DIR__ . '/../includes/admin-layout-top.php';
   });
   document.querySelectorAll('.cal-block').forEach(function(btn){
     btn.addEventListener('click', function(){
-      post(APP_URL + '/admin/calendar-block.php', {
-        room_id: btn.getAttribute('data-room'),
-        date: btn.getAttribute('data-date')
-      }).then(function(d){
-        if(d.ok){ flash(d.blocked ? 'Date blocked' : 'Date unblocked'); location.reload(); }
-        else { flash(d.error || 'Could not update that date.', 'error'); }
+      var blocked = btn.getAttribute('data-blocked') === '1';
+      var msg = (blocked ? 'Unblock ' : 'Block ') + btn.getAttribute('data-room-name') + ' for ' + btn.getAttribute('data-date-label') + '?';
+      confirmAction(msg, function(){
+        post(APP_URL + '/admin/calendar-block.php', {
+          room_id: btn.getAttribute('data-room'),
+          date: btn.getAttribute('data-date')
+        }).then(function(d){
+          if(d.ok){ flash(d.blocked ? 'Date blocked' : 'Date unblocked'); location.reload(); }
+          else { flash(d.error || 'Could not update that date.', 'error'); }
+        });
       });
     });
   });
