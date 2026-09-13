@@ -34,6 +34,7 @@ foreach ($rooms as &$room) {
 unset($room);
 
 $galleryPhotos = db_all('SELECT * FROM gallery_photos ORDER BY sort_order, id');
+$nearbyPlaces = db_all('SELECT * FROM nearby_places ORDER BY sort_order, id');
 $policyCards = db_all('SELECT * FROM policy_cards ORDER BY sort_order, id');
 foreach ($policyCards as &$pc) { $pc['lines'] = json_decode_field($pc['policy_lines'] ?? null); }
 unset($pc);
@@ -694,6 +695,20 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       <h2 id="h-location">Easy to reach, <em>easy to leave</em></h2>
       <p>On Kalavad Road, in Rajkot's commercial belt at KKV Chowk - with the railway station, bus stand and airport all an easy drive away.</p>
     </div>
+    <?php if ($nearbyPlaces): ?>
+    <div class="near-strip rv">
+      <?php foreach ($nearbyPlaces as $np):
+        $origin = $np['map_query'] ?: $np['title'];
+        $directionsUrl = 'https://www.google.com/maps/dir/?api=1&origin=' . urlencode($origin) . '&destination=' . urlencode($mapLat . ',' . $mapLng) . '&travelmode=driving';
+      ?>
+      <a href="<?= e($directionsUrl) ?>" target="_blank" rel="noopener" class="near-chip" title="Directions from <?= e($np['title']) ?> to <?= e(APP_NAME) ?>">
+        <span class="ic"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+        <span class="tx"><b><?= e($np['title']) ?></b><span><?= e($np['distance_label']) ?></span></span>
+        <svg aria-hidden="true" focusable="false" class="go" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+      </a>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
     <div class="loc">
       <div class="loc-card rv-l">
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></i><div><b>Address</b><span><?= e($settings['address'] ?? '') ?></span></div></div>

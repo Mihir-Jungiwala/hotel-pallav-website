@@ -115,6 +115,19 @@ CREATE TABLE IF NOT EXISTS page_content (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Prime locations shown above the homepage map (airport, railway station, etc.)
+-- with their distance from the hotel - admin-managed, ordered by sort_order,
+-- each linking to Google Maps directions FROM that place TO the hotel.
+CREATE TABLE IF NOT EXISTS nearby_places (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(80) NOT NULL,
+  distance_label VARCHAR(40) NOT NULL,
+  map_query VARCHAR(255) NULL,
+  sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS policy_cards (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(60) NOT NULL,

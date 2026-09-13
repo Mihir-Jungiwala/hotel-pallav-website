@@ -422,6 +422,12 @@ section{ position:relative; }
 .pol-dots button.on{ background:var(--p600); width:26px; border-radius:100px; box-shadow:0 0 0 4px var(--p100); }
 @media (max-width:1080px){ .pol>*{ flex-basis:calc((100% - 16px)/2); max-width:calc((100% - 16px)/2); } }
 @media (max-width:640px){
+  .near-strip{ gap:9px; margin-bottom:22px; }
+  .near-chip{ flex:1 1 140px; min-width:140px; padding:11px 12px; gap:9px; }
+  .near-chip .ic{ width:32px; height:32px; }
+  .near-chip .tx b{ font-size:12.5px; }
+  .near-chip .tx span{ font-size:11px; }
+  .near-chip .go{ display:none; }
   /* Same swipeable-carousel treatment as the reviews section on mobile — one card
      per view, scroll-snap, dot indicators — desktop's grid layout is untouched. */
   .pol,.svc-grid{ flex-wrap:nowrap; justify-content:flex-start; gap:12px; overflow-x:auto; overflow-y:visible; scroll-snap-type:x proximity; scroll-behavior:smooth; padding:26px 6% 42px; scroll-padding:0 6%; }
@@ -567,6 +573,16 @@ section{ position:relative; }
 .rev-more:hover{ color:var(--p800); }
 
 /* ============ LOCATION ============ */
+.near-strip{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
+.near-chip{ flex:1 1 200px; min-width:180px; display:flex; align-items:center; gap:11px; background:var(--white); border-radius:14px; padding:13px 15px; box-shadow:var(--sh-sm); text-decoration:none; transition:transform .25s var(--ease), box-shadow .25s ease; }
+.near-chip:hover{ transform:translateY(-4px); box-shadow:var(--sh-md); }
+.near-chip .ic{ flex:none; width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; background:linear-gradient(140deg,var(--p100),var(--p50)); color:var(--p600); transition:transform .3s cubic-bezier(.34,1.5,.64,1), background .25s ease, color .25s ease; }
+.near-chip:hover .ic{ transform:scale(1.08) rotate(-5deg); background:linear-gradient(140deg,var(--p500),var(--p700)); color:#fff; box-shadow:var(--glow); }
+.near-chip .tx{ min-width:0; flex:1; }
+.near-chip .tx b{ display:block; font-size:13.5px; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.near-chip .tx span{ display:block; font-size:12px; font-weight:700; color:var(--p600); margin-top:1px; }
+.near-chip .go{ flex:none; color:var(--p200); transition:color .25s ease, transform .25s ease; }
+.near-chip:hover .go{ color:var(--p500); transform:translate(2px,-2px); }
 .loc{ display:grid; grid-template-columns:minmax(0,1fr); gap:26px; align-items:start; }
 .loc>*{ min-width:0; }
 @media (min-width:1240px){ .loc{ grid-template-columns:minmax(0,1fr) minmax(0,.92fr); gap:34px; align-items:stretch; } .map{ height:auto; min-height:100%; } }
