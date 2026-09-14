@@ -702,7 +702,8 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
     </div>
     <div class="loc">
       <?php if ($nearbyPlaces): ?>
-      <div class="near-strip rv-l">
+      <div class="near-wrap rv-l">
+      <div class="near-strip" id="nearGrid">
         <?php foreach ($nearbyPlaces as $np):
           $destination = $hasPreciseMapPin ? ($mapLat . ',' . $mapLng) : ($settings['address'] ?? APP_NAME);
           if (!empty($np['origin_lat']) && !empty($np['origin_lng'])) {
@@ -725,6 +726,8 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
           <svg aria-hidden="true" focusable="false" class="go" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
         </a>
         <?php endforeach; ?>
+      </div>
+      <div class="pol-dots" id="nearDots"></div>
       </div>
       <?php endif; ?>
       <div class="loc-card rv-l">

@@ -329,6 +329,7 @@
   }
   initCarouselDots('polGrid', 'polDots', 'policy card');
   initCarouselDots('svcGrid', 'svcDots', 'service card');
+  initCarouselDots('nearGrid', 'nearDots', 'nearby place');
 
   var revealables = document.querySelectorAll('.rv,.rv-l,.rv-r');
   if('IntersectionObserver' in window && !reduce){
