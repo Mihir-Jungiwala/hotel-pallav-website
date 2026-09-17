@@ -38,13 +38,15 @@ if ($mapUrl !== null) {
 }
 
 // With coordinates resolved and no manually-typed distance, work the distance out
-// ourselves: straight-line distance from the hotel's own pin (Settings -> "Hotel's
-// Google Maps Link"). Needs that pin set first - without it there's nothing to
-// measure from, so the admin still has to type a distance by hand until they set it.
+// ourselves: real driving distance from the hotel's own pin (Settings -> "Hotel's
+// Google Maps Link"), same as what a guest would see on Google Maps - not a
+// straight-line figure, which always undershoots the real road distance. Needs
+// that pin set first - without it there's nothing to measure from, so the admin
+// still has to type a distance by hand until they set it.
 if ($distanceLabel === '' && $originLat !== null && $originLng !== null) {
     $settings = get_settings();
     if (!empty($settings['map_lat']) && !empty($settings['map_lng'])) {
-        $km = haversine_km((float) $settings['map_lat'], (float) $settings['map_lng'], $originLat, $originLng);
+        $km = road_distance_km((float) $settings['map_lat'], (float) $settings['map_lng'], $originLat, $originLng);
         $distanceLabel = '~' . format_km_label($km);
     }
 }

@@ -645,7 +645,8 @@ function resolve_maps_coordinates(string $url): ?array
 }
 
 /** Great-circle distance between two lat/lng points, in kilometers - a straight-line
- *  "as the crow flies" figure, not a driving distance (that needs a paid routing API). */
+ *  "as the crow flies" figure, not a driving distance. Used only as road_distance_km()'s
+ *  fallback when the routing service below can't be reached. */
 function haversine_km(float $lat1, float $lng1, float $lat2, float $lng2): float
 {
     $earthRadiusKm = 6371.0;
@@ -653,6 +654,43 @@ function haversine_km(float $lat1, float $lng1, float $lat2, float $lng2): float
     $dLng = deg2rad($lng2 - $lng1);
     $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
     return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
+}
+
+/**
+ * Actual driving distance between two lat/lng points, in kilometers - what a guest
+ * would see on Google Maps, not a straight-line figure (a straight line is always
+ * shorter than the road actually taken, which is why Nearby Places' auto-distance
+ * used to undershoot the real number). Uses OSRM's free public routing API, no key
+ * required; falls back to the straight-line haversine_km() if that request fails
+ * (network hiccup, the demo server down, etc.) so saving a place never hard-fails
+ * over this - the admin can always overwrite the distance by hand either way.
+ */
+function road_distance_km(float $lat1, float $lng1, float $lat2, float $lng2): float
+{
+    $url = 'https://router.project-osrm.org/route/v1/driving/'
+        . $lng1 . ',' . $lat1 . ';' . $lng2 . ',' . $lat2
+        . '?overview=false';
+    try {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 6,
+            CURLOPT_USERAGENT => 'Mozilla/5.0',
+        ]);
+        $body = curl_exec($ch);
+        $ok = curl_errno($ch) === 0;
+        curl_close($ch);
+        if ($ok && $body) {
+            $json = json_decode($body, true);
+            $meters = $json['routes'][0]['distance'] ?? null;
+            if (is_numeric($meters)) {
+                return $meters / 1000;
+            }
+        }
+    } catch (\Throwable $e) {
+        // fall through to the straight-line estimate below
+    }
+    return haversine_km($lat1, $lng1, $lat2, $lng2);
 }
 
 /** "3.2 km" style label from a raw kilometer figure - one decimal under 10km (where it
