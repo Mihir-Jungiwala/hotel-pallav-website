@@ -1,10 +1,25 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_admin();
-require_role(['master_admin', 'admin']);
 
-$users = db_all("SELECT * FROM users ORDER BY CASE role WHEN 'master_admin' THEN 0 WHEN 'admin' THEN 1 WHEN 'editor' THEN 2 WHEN 'viewer' THEN 3 ELSE 4 END, name");
 $me = current_user();
+
+// Who's visible here depends on rank, not just who's allowed to change anyone:
+// Master Admin sees everyone (including their own master_admin row); Admin sees
+// everyone else but the Master Admin row itself is left out entirely - not
+// masked, not shown with a hidden role, genuinely absent from the list; Editor
+// and Viewer aren't trusted with the roster at all and see only their own row.
+// Actions (Add User, edit/delete/promote) still separately require
+// can_manage_users(), so this only ever widens what's visible, never what's
+// editable.
+if (is_master_admin()) {
+    $users = db_all("SELECT * FROM users ORDER BY CASE role WHEN 'master_admin' THEN 0 WHEN 'admin' THEN 1 WHEN 'editor' THEN 2 WHEN 'viewer' THEN 3 ELSE 4 END, name");
+} elseif (can_manage_users()) {
+    $users = db_all("SELECT * FROM users WHERE role != 'master_admin' ORDER BY CASE role WHEN 'admin' THEN 0 WHEN 'editor' THEN 1 WHEN 'viewer' THEN 2 ELSE 3 END, name");
+} else {
+    $users = db_all("SELECT * FROM users WHERE id = ?", [$me['id']]);
+}
+
 $adminTierCount = (int) db_one("SELECT COUNT(*) c FROM users WHERE role IN ('master_admin','admin')")['c'];
 
 $roleBadge = [
@@ -14,17 +29,23 @@ $roleBadge = [
     'viewer' => 'bg-pallav-50 text-pallav-500',
 ];
 
-$title = 'Users Management';
+$title = can_manage_users() ? 'Users Management' : 'My Account';
 include __DIR__ . '/../includes/admin-layout-top.php';
 ?>
   <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
     <div class="min-w-0">
-      <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900">Users Management</h1>
+      <h1 class="font-display text-2xl sm:text-3xl font-bold text-pallav-900"><?= can_manage_users() ? 'Users Management' : 'My Account' ?></h1>
+      <?php if (can_manage_users()): ?>
       <p class="text-sm text-pallav-500 mt-1">Master Admin &amp; Admin can change and delete anything. Editor can change anything but never delete. Viewer can see the whole panel but not change anything.</p>
+      <?php else: ?>
+      <p class="text-sm text-pallav-500 mt-1">Your account and role.</p>
+      <?php endif; ?>
     </div>
+    <?php if (can_manage_users()): ?>
     <a href="<?= e(APP_URL) ?>/admin/user-create.php" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 text-white text-sm font-bold px-5 py-2.5 shadow-lg shadow-pallav-900/15 hover:-translate-y-0.5 transition whitespace-nowrap shrink-0">
       + Add User
     </a>
+    <?php endif; ?>
   </div>
 
   <?php
@@ -63,7 +84,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             <th class="px-6 py-3">Role</th>
             <th class="px-6 py-3">Email</th>
             <th class="px-6 py-3">Joined</th>
-            <th class="px-6 py-3">Actions</th>
+            <?php if (can_manage_users()): ?><th class="px-6 py-3">Actions</th><?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -82,9 +103,11 @@ include __DIR__ . '/../includes/admin-layout-top.php';
             <td class="px-6 py-3.5 whitespace-nowrap"><span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide <?= $roleBadge[$u['role']] ?? 'bg-pallav-50 text-pallav-500' ?>"><?= e(USER_ROLE_LABELS[$u['role']] ?? $u['role']) ?></span></td>
             <td class="px-6 py-3.5 text-pallav-600 text-left whitespace-nowrap"><?= e($u['email']) ?></td>
             <td class="px-6 py-3.5 text-pallav-500 whitespace-nowrap"><?= date('d M Y', strtotime($u['created_at'])) ?></td>
+            <?php if (can_manage_users()): ?>
             <td class="px-6 py-3.5">
               <div class="flex justify-center gap-2 flex-wrap"><?= $userActionsHtml($u, $isMaster, $isMe, $canDelete) ?></div>
             </td>
+            <?php endif; ?>
           </tr>
           <?php endforeach; ?>
         </tbody>
@@ -112,7 +135,9 @@ include __DIR__ . '/../includes/admin-layout-top.php';
         <div><?= e($u['email']) ?></div>
         <div>Joined <?= date('d M Y', strtotime($u['created_at'])) ?></div>
       </div>
+      <?php if (can_manage_users()): ?>
       <div class="flex gap-2 flex-wrap"><?= $userActionsHtml($u, $isMaster, $isMe, $canDelete) ?></div>
+      <?php endif; ?>
     </div>
     <?php endforeach; ?>
   </div>

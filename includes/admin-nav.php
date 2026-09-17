@@ -36,10 +36,14 @@ function admin_nav_groups(): array
         'Site Settings' => [
             ['href' => 'admin/settings.php', 'match' => 'settings.php', 'label' => 'Settings', 'icon' => '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
         ],
-        'Administration' => array_values(array_filter([
-            can_manage_users() ? ['href' => 'admin/users.php', 'match' => 'users.php', 'label' => 'Users Management', 'icon' => '<circle cx="9" cy="8" r="3.2"/><path d="M2.6 19.5c0-3.3 2.9-5.7 6.4-5.7s6.4 2.4 6.4 5.7M16 8.5a3 3 0 110 6M18.5 14.3c2 .5 3.4 2.1 3.4 4.5"/>'] : null,
+        'Administration' => [
+            // Everyone gets this link now, not just roles that can manage other
+            // accounts - Editor/Viewer land on a read-only view of just their own
+            // row (see admin/users.php), so the label reflects that narrower scope
+            // rather than promising a roster they won't actually see.
+            ['href' => 'admin/users.php', 'match' => 'users.php', 'label' => can_manage_users() ? 'Users Management' : 'My Account', 'icon' => '<circle cx="9" cy="8" r="3.2"/><path d="M2.6 19.5c0-3.3 2.9-5.7 6.4-5.7s6.4 2.4 6.4 5.7M16 8.5a3 3 0 110 6M18.5 14.3c2 .5 3.4 2.1 3.4 4.5"/>'],
             ['href' => 'admin/activity.php', 'match' => 'activity.php', 'label' => 'Activity Log', 'icon' => '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/>'],
-        ])),
+        ],
     ];
 }
 
