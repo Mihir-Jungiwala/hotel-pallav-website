@@ -740,14 +740,14 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
               <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>
-          <a class="dial-opt" id="dirPlace" href="#" target="_blank" rel="noopener">
-            <span class="av">A</span>
-            <span class="tx"><b id="dirPlaceName"></b><span>Route to the hotel</span></span>
-            <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
-          </a>
-          <a class="dial-opt second" id="dirMe" href="#" target="_blank" rel="noopener">
+          <a class="dial-opt" id="dirMe" href="#" target="_blank" rel="noopener">
             <span class="av">ME</span>
             <span class="tx"><b>My current location</b><span>Route to the hotel</span></span>
+            <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+          </a>
+          <a class="dial-opt second" id="dirPlace" href="#" target="_blank" rel="noopener">
+            <span class="av">A</span>
+            <span class="tx"><b id="dirPlaceName" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><span>Route to the hotel</span></span>
             <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
           </a>
         </div>
