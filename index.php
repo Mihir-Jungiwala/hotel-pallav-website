@@ -720,7 +720,8 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
             $directionsUrl = 'https://www.google.com/maps/dir/?api=1&origin=' . urlencode($origin) . '&destination=' . urlencode($destination) . '&travelmode=driving';
           }
         ?>
-        <a href="<?= e($directionsUrl) ?>" target="_blank" rel="noopener" class="near-chip" title="Directions from <?= e($np['title']) ?> to <?= e(APP_NAME) ?>">
+        <?php $fromMeUrl = 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($destination) . '&travelmode=driving'; ?>
+        <a href="<?= e($directionsUrl) ?>" target="_blank" rel="noopener" class="near-chip" data-place="<?= e($np['title']) ?>" data-from-me="<?= e($fromMeUrl) ?>" title="Directions from <?= e($np['title']) ?> to <?= e(APP_NAME) ?>">
           <span class="ic"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= nearby_place_icon($np['title']) ?></svg></span>
           <span class="tx"><b><?= e($np['title']) ?></b><span><?= e($np['distance_label']) ?></span></span>
           <svg aria-hidden="true" focusable="false" class="go" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
@@ -729,6 +730,48 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
       </div>
       <div class="pol-dots" id="nearDots"></div>
       </div>
+      <div class="dial" id="dirPick" role="dialog" aria-modal="true" aria-labelledby="dirTitle">
+        <div class="dial-bd" id="dirBd"></div>
+        <div class="dial-sheet">
+          <div class="dial-hd">
+            <i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></i>
+            <div><b id="dirTitle">Get directions</b><small>Choose where to start from</small></div>
+            <button type="button" id="dirX" aria-label="Close">
+              <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <a class="dial-opt" id="dirPlace" href="#" target="_blank" rel="noopener">
+            <span class="av">A</span>
+            <span class="tx"><b id="dirPlaceName"></b><span>Route to the hotel</span></span>
+            <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+          </a>
+          <a class="dial-opt second" id="dirMe" href="#" target="_blank" rel="noopener">
+            <span class="av">ME</span>
+            <span class="tx"><b>My current location</b><span>Route to the hotel</span></span>
+            <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+          </a>
+        </div>
+      </div>
+      <script>
+      (function(){
+        var pick=document.getElementById('dirPick'); if(!pick) return;
+        var place=document.getElementById('dirPlace'), me=document.getElementById('dirMe'), nm=document.getElementById('dirPlaceName'), av=place.querySelector('.av');
+        function close(){ pick.classList.remove('open'); document.body.style.overflow=''; }
+        document.querySelectorAll('.near-chip').forEach(function(c){
+          c.addEventListener('click',function(e){
+            e.preventDefault();
+            place.href=c.getAttribute('href');
+            nm.textContent=c.dataset.place;
+            av.textContent=c.dataset.place.trim().charAt(0).toUpperCase();
+            me.href=c.dataset.fromMe;
+            pick.classList.add('open');
+            document.body.style.overflow='hidden';
+          });
+        });
+        [place,me,document.getElementById('dirX'),document.getElementById('dirBd')].forEach(function(a){ a.addEventListener('click',close); });
+        document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+      })();
+      </script>
       <?php endif; ?>
       <div class="loc-card rv-l">
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></i><div><b>Address</b><span><?= e($settings['address'] ?? '') ?></span></div></div>

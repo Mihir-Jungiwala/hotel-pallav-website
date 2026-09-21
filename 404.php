@@ -3,7 +3,7 @@ require_once __DIR__ . '/includes/helpers.php';
 
 http_response_code(404);
 $settings = get_settings();
-$gm = $settings['gm_phone'] ?? '';
+$gm = $settings['reception_phone'] ?? '';
 $title = APP_NAME . ' - 404 Page Not Found';
 ?><!DOCTYPE html>
 <html lang="en">
