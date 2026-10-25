@@ -56,11 +56,11 @@ $title = 'Forgot Password';
 $hideAuthHeader = !empty($resetLinkFallback);
 include __DIR__ . '/../includes/guest-layout-top.php';
 ?>
-  <h1 class="auth-title font-display text-2xl font-bold text-pallav-900 mb-1 text-center">Reset Your Password</h1>
-  <p class="auth-subtitle text-sm text-pallav-500 mb-6 text-center">Enter your username or email and we will send you a secure reset link</p>
+  <h1 class="auth-title font-sans text-[26px] leading-tight font-extrabold tracking-[-0.01em] text-[#1B1235] mb-1.5">Reset Your Password</h1>
+  <p class="auth-subtitle text-sm leading-relaxed text-[#5B5470] mb-6">Enter your username or email and we will send you a secure reset link</p>
 
   <?php if ($status): ?>
-    <div class="auth-banner mb-5 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-4 py-3 text-sm font-semibold text-center"><?= e($status) ?></div>
+    <div class="auth-banner mb-5 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-4 py-3 text-[13px] font-semibold"><?= e($status) ?></div>
   <?php endif; ?>
 
   <?php if ($resetLinkFallback): ?>
@@ -70,17 +70,22 @@ include __DIR__ . '/../includes/guest-layout-top.php';
     </div>
   <?php endif; ?>
 
-  <form method="POST" class="auth-form space-y-4">
+  <form method="POST" class="auth-form space-y-5">
     <?= csrf_field() ?>
     <div>
-      <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Username or Email</label>
-      <input type="text" name="identifier" required autofocus autocapitalize="off" autocorrect="off"
-        class="w-full rounded-xl border border-pallav-200 px-4 py-3 text-sm font-semibold text-pallav-900 focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none transition">
+      <label for="forgot-identifier" class="block text-[13px] font-semibold text-[#2B2340] mb-1.5">Username or Email</label>
+      <div class="relative">
+        <svg class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-pallav-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        <input id="forgot-identifier" type="text" name="identifier" required autofocus autocapitalize="off" autocorrect="off"
+          class="w-full h-12 rounded-xl border border-pallav-200 bg-white pl-10 pr-4 text-sm font-medium text-[#1B1235] hover:border-pallav-300 focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none transition">
+      </div>
     </div>
-    <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 hover:from-pallav-700 hover:to-pallav-900 text-white font-bold py-3 shadow-lg shadow-pallav-900/20 transition">
+    <button type="submit" class="w-full h-12 rounded-xl bg-gradient-to-r from-pallav-600 to-pallav-800 hover:from-pallav-700 hover:to-pallav-900 text-white text-[15px] font-bold shadow-lg shadow-pallav-900/25 transition">
       Send Reset Link
     </button>
   </form>
 
-  <a href="<?= e(APP_URL) ?>/admin/login.php" class="block text-center text-xs font-bold text-pallav-600 hover:text-pallav-800 mt-6">Back to sign in</a>
+  <div class="border-t border-pallav-100 mt-6 pt-5 text-center">
+    <a href="<?= e(APP_URL) ?>/admin/login.php" class="text-[13px] font-semibold text-pallav-600 hover:text-pallav-800">Back to sign in</a>
+  </div>
 <?php include __DIR__ . '/../includes/guest-layout-bottom.php'; ?>

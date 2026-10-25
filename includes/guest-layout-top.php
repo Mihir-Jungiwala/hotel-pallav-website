@@ -27,4 +27,4 @@ $favicon = favicon_url();
       </div>
       <?php endif; ?>
 
-      <div class="auth-card bg-white rounded-3xl shadow-2xl p-8 sm:p-10">
+      <div class="auth-card bg-white rounded-[22px] shadow-[0_30px_70px_-24px_rgba(20,8,48,.6)] ring-1 ring-white/40 p-8 sm:p-9">
