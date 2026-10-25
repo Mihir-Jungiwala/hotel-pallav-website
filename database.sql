@@ -74,6 +74,10 @@ CREATE TABLE IF NOT EXISTS settings (
   notify_email TEXT NULL,
   notify_name VARCHAR(100) NULL,
   notify_recipients JSON NULL,
+  ga4_measurement_id VARCHAR(20) NULL,
+  gsc_verification VARCHAR(120) NULL,
+  ga4_property_id VARCHAR(20) NULL,
+  gsc_property VARCHAR(255) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

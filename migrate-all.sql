@@ -53,6 +53,11 @@ ALTER TABLE settings ADD COLUMN smtp_from_email VARCHAR(150) NULL;
 ALTER TABLE settings ADD COLUMN smtp_from_name VARCHAR(100) NULL;
 ALTER TABLE settings ADD COLUMN notify_email VARCHAR(150) NULL;
 ALTER TABLE settings ADD COLUMN reception_whatsapp VARCHAR(20) NULL;
+-- Google Analytics 4 + Search Console (same lines as migrate-analytics.sql)
+ALTER TABLE settings ADD COLUMN ga4_measurement_id VARCHAR(20) NULL;
+ALTER TABLE settings ADD COLUMN gsc_verification VARCHAR(120) NULL;
+ALTER TABLE settings ADD COLUMN ga4_property_id VARCHAR(20) NULL;
+ALTER TABLE settings ADD COLUMN gsc_property VARCHAR(255) NULL;
 
 -- new tables (safe to re-run, no-op if they already exist)
 CREATE TABLE IF NOT EXISTS login_attempts (

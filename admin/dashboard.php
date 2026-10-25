@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../includes/analytics.php';
 require_admin();
+
+// Website reports card: links straight to the Google Analytics and Search Console report pages
+// (Settings > Google Analytics & Search Console: property number and Search Console property).
+$reportLinks = analytics_report_links(get_settings());
 
 // Financial year filter for the stat tiles and Recent Enquiries below (1 April -
 // 31 March, same accounting year convention generate_reference() already uses for
@@ -261,6 +266,34 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           </a>
           <?php endforeach; ?>
         </div>
+      </div>
+
+      <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-display font-bold text-base text-pallav-900">Website Reports</h2>
+          <a href="<?= e(APP_URL) ?>/admin/settings.php" class="text-[11px] font-bold text-pallav-500 hover:text-pallav-700">Set up</a>
+        </div>
+        <?php if (!$reportLinks['ga'] && !$reportLinks['gsc']): ?>
+          <p class="text-xs text-pallav-400 leading-relaxed">Add your Google Analytics property number and Search Console property in <a href="<?= e(APP_URL) ?>/admin/settings.php" class="font-bold text-pallav-700">Settings</a> to open your website reports from here.</p>
+        <?php endif; ?>
+        <?php foreach ([['ga', 'Google Analytics'], ['gsc', 'Search Console']] as [$key, $groupLabel]): if (!$reportLinks[$key]) continue; ?>
+          <div class="text-[10px] font-extrabold uppercase tracking-wide text-pallav-400 mt-3 mb-1.5"><?= e($groupLabel) ?></div>
+          <div class="space-y-1.5">
+            <?php foreach ($reportLinks[$key] as $link): ?>
+            <a href="<?= e($link['url']) ?>" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between gap-3 rounded-xl bg-pallav-50 hover:bg-pallav-100 px-3.5 py-2.5 transition">
+              <span class="min-w-0">
+                <span class="block text-xs font-bold text-pallav-900"><?= e($link['label']) ?></span>
+                <span class="block text-[10px] text-pallav-500 truncate"><?= e($link['hint']) ?></span>
+              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-pallav-500" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg>
+              <span class="sr-only">(opens Google in a new tab)</span>
+            </a>
+            <?php endforeach; ?>
+          </div>
+        <?php endforeach; ?>
+        <?php if ($reportLinks['ga'] || $reportLinks['gsc']): ?>
+          <p class="text-[10px] text-pallav-400 mt-3">Opens Google; sign in with the Google account that has access.</p>
+        <?php endif; ?>
       </div>
     </div>
   </div>

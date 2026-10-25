@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/brand-mark.php';
+require_once __DIR__ . '/includes/analytics.php';
 
 $settings = get_settings();
 $content = get_page_content();
@@ -40,6 +41,10 @@ foreach ($policyCards as &$pc) { $pc['lines'] = json_decode_field($pc['policy_li
 unset($pc);
 
 $flashes = get_flashes();
+// The booking enquiry form (book-submit.php) is the only form on this page; its green
+// flash shows exactly once after a successful submit, so GA4 gets generate_lead once.
+$leadForm = ($flashes && $flashes[0]['type'] === 'success') ? 'booking' : null;
+$gaEnabled = analytics_ga4_id($settings) !== null;
 
 $years = max(1, (int) date('Y') - (int) ($settings['opened_year'] ?? date('Y')));
 $totalRooms = 0;
@@ -161,6 +166,8 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="theme-color" content="#6D28D9">
 <meta name="format-detection" content="telephone=yes">
+<?= analytics_verification_tag($settings) ?>
+<?= analytics_ga4_tag($settings, $leadForm) ?>
 <link rel="canonical" href="<?= e($canonical) ?>">
 <?php if ($favicon): ?>
 <link rel="icon" href="<?= e($favicon) ?>">
@@ -740,12 +747,12 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
               <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>
-          <a class="dial-opt" id="dirMe" href="#" target="_blank" rel="noopener">
+          <a class="dial-opt" id="dirMe" href="#" target="_blank" rel="noopener" data-ga="get_directions">
             <span class="av">ME</span>
             <span class="tx"><b>My current location</b><span>Route to the hotel</span></span>
             <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
           </a>
-          <a class="dial-opt second" id="dirPlace" href="#" target="_blank" rel="noopener">
+          <a class="dial-opt second" id="dirPlace" href="#" target="_blank" rel="noopener" data-ga="get_directions">
             <span class="av">A</span>
             <span class="tx"><b id="dirPlaceName" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><span>Route to the hotel</span></span>
             <span class="go"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
@@ -779,7 +786,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.5h3l1.5 4-2 1.4a13 13 0 006 6l1.4-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.6 5.7a2 2 0 012-2.2z"/></svg></i><div><b>Reception · 24 × 7</b><span><a href="tel:<?= e($rc) ?>"><?= e(phone_display($rc)) ?></a></span></div></div>
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.6 7l8.4 6 8.4-6"/></svg></i><div><b>Email</b><span><a href="mailto:<?= e($settings['email'] ?? '') ?>"><?= e($settings['email'] ?? '') ?></a></span></div></div>
         <div class="loc-row"><i><svg aria-hidden="true" focusable="false" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.4 2"/></svg></i><div><b>Check in / Check out</b><span><?= e($settings['checkin_time'] ?? '') ?> &nbsp; - &nbsp; <?= e($settings['checkout_time'] ?? '') ?></span></div></div>
-        <a href="<?= e($settings['gbp_link'] ?: ('https://www.google.com/maps/dir/?api=1&destination=' . urlencode($settings['address'] ?? APP_NAME))) ?>" target="_blank" rel="noopener" class="btn btn-p" style="margin-top:24px">
+        <a href="<?= e($settings['gbp_link'] ?: ('https://www.google.com/maps/dir/?api=1&destination=' . urlencode($settings['address'] ?? APP_NAME))) ?>" target="_blank" rel="noopener" data-ga="get_directions" class="btn btn-p" style="margin-top:24px">
           <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>
           Get Directions
         </a>
@@ -796,7 +803,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
           <span class="map-pin-ic"><svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
           <div><b><?= e(APP_NAME) ?></b><small><?php if ($rating !== null): ?><?= e(number_format((float) $rating, 1)) ?> ★ Google rating<?php else: ?>On Kalavad Road<?php endif; ?></small></div>
         </div>
-        <a class="map-open" href="<?= e($settings['gbp_link'] ?: ('https://www.google.com/maps/dir/?api=1&destination=' . urlencode($settings['address'] ?? APP_NAME))) ?>" target="_blank" rel="noopener">
+        <a class="map-open" href="<?= e($settings['gbp_link'] ?: ('https://www.google.com/maps/dir/?api=1&destination=' . urlencode($settings['address'] ?? APP_NAME))) ?>" target="_blank" rel="noopener" data-ga="get_directions">
           Open in Maps
           <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
         </a>
@@ -1001,7 +1008,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
   </div>
   <div class="cookie-body">
     <h4>A quick word about cookies</h4>
-    <p>We use one small cookie to save your enquiry form as you type, so a slow connection or an accidental reload never costs you the details you already entered. Nothing is tracked or sold.</p>
+    <p>We use one small cookie to save your enquiry form as you type, so a slow connection or an accidental reload never costs you the details you already entered. <?= $gaEnabled ? 'Nothing is sold.' : 'Nothing is tracked or sold.' ?></p>
     <div class="cookie-btns">
       <button type="button" class="btn btn-p" id="cookieAccept">Sounds good</button>
       <button type="button" class="btn btn-o" id="cookieDecline">No thanks</button>

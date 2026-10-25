@@ -1,10 +1,14 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
+require_once __DIR__ . '/includes/analytics.php';
 
 http_response_code(404);
 $settings = get_settings();
 $gm = $settings['reception_phone'] ?? '';
 $title = APP_NAME . ' - 404 Page Not Found';
+// .htaccess makes this the 404 page for every missing URL, admin/ ones included:
+// staff paths are never measured.
+$measure = analytics_allowed_path();
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +16,8 @@ $title = APP_NAME . ' - 404 Page Not Found';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= e($title) ?></title>
 <meta name="robots" content="noindex, nofollow">
+<?= $measure ? analytics_verification_tag($settings) : '' ?>
+<?= $measure ? analytics_ga4_tag($settings) : '' ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700;800&display=swap">

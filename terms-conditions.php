@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/brand-mark.php';
+require_once __DIR__ . '/includes/analytics.php';
 
 $settings = get_settings();
 $gm = $settings['gm_phone'] ?? '';
@@ -13,6 +14,8 @@ $updated = '13 September 2026';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= e($title) ?></title>
 <meta name="description" content="The terms and conditions that apply when you use the <?= e(APP_NAME) ?> website or submit a booking enquiry.">
+<?= analytics_verification_tag($settings) ?>
+<?= analytics_ga4_tag($settings) ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap">

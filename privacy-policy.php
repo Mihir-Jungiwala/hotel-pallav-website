@@ -1,11 +1,15 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/brand-mark.php';
+require_once __DIR__ . '/includes/analytics.php';
 
 $settings = get_settings();
 $gm = $settings['gm_phone'] ?? '';
 $title = APP_NAME . ' - Privacy Policy';
-$updated = '13 September 2026';
+// The "Analytics and cookies" section below only appears once a GA4 Measurement ID is
+// set in Admin > Settings - the policy describes what the site actually does.
+$gaEnabled = analytics_ga4_id($settings) !== null;
+$updated = $gaEnabled ? '25 October 2026' : '13 September 2026';
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,6 +17,8 @@ $updated = '13 September 2026';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= e($title) ?></title>
 <meta name="description" content="How <?= e(APP_NAME) ?> collects, uses and protects information from visitors and guests who use this website.">
+<?= analytics_verification_tag($settings) ?>
+<?= analytics_ga4_tag($settings) ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap">
@@ -125,7 +131,7 @@ $updated = '13 September 2026';
       <ul>
         <li><strong>Enquiry &amp; booking details</strong> - when you submit the enquiry form, we receive your name, phone number, email address (if provided), preferred check-in/check-out dates, number of guests, your chosen room, and any message you write.</li>
         <li><strong>Technical data</strong> - your IP address and submission time are stored against your enquiry, mainly to keep the form secure from spam and abuse.</li>
-        <li><strong>Cookies</strong> - a small session cookie so the site works correctly, and (only if you accept it) a cookie that saves your enquiry form as you type.</li>
+        <li><strong>Cookies</strong> - a small session cookie so the site works correctly, and (only if you accept it) a cookie that saves your enquiry form as you type.<?php if ($gaEnabled): ?> With your consent, Google Analytics cookies too (see <a href="#analytics">Analytics and cookies</a>).<?php endif; ?></li>
       </ul>
       <p>We do not require you to create an account to enquire or contact us, and we never ask for payment details through this website.</p>
     </div>
@@ -151,6 +157,20 @@ $updated = '13 September 2026';
       </ul>
       <p>We do not use third-party advertising or cross-site tracking cookies of our own. Some embedded content from Google (see below) may set its own cookies under Google's control.</p>
     </div>
+
+    <?php if ($gaEnabled): ?>
+    <div class="legal-card" id="analytics">
+      <div class="legal-card-head"><span class="legal-ic"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 16v-4M12 16V7M17 16v-6"/></svg></span><h2>Analytics and cookies</h2></div>
+      <p>We use <strong>Google Analytics</strong> to understand how visitors use this website, so we can make it better. It only runs <strong>after you press Accept</strong> on the cookie banner. Until then, and if you press Decline, Google Analytics is not loaded at all: nothing is sent to Google and no analytics cookies are stored on your device.</p>
+      <ul>
+        <li><strong>What it collects</strong> (only after Accept) - the pages you visit (the address without anything after the "?"), roughly where you are (city or region, never your exact location), your type of device and browser, and simple actions such as pressing a call, WhatsApp or directions button or sending the enquiry form. It never receives your name, phone number, email or stay dates.</li>
+        <li><strong>No advertising</strong> - advertising and personalisation signals stay switched off, even when you accept.</li>
+        <li><strong>Changing your choice</strong> - your choice is remembered on this device for 180 days. You can change it at any time with the button below, or by clearing this site's data in your browser, which shows the banner again so you can press Decline.</li>
+      </ul>
+      <p>Google processes this data under <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</p>
+      <p><button type="button" class="btn btn-o" onclick="if (window.pallavConsent) window.pallavConsent.reset();">Change my cookie choice</button></p>
+    </div>
+    <?php endif; ?>
 
     <div class="legal-card" id="third-party">
       <div class="legal-card-head"><span class="legal-ic"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 006.4 0l2.1-2.1a4.5 4.5 0 00-6.4-6.4L11 6.6"/><path d="M14 10a4.5 4.5 0 00-6.4 0l-2.1 2.1a4.5 4.5 0 006.4 6.4L13 17.4"/></svg></span><h2>Third-party services</h2></div>
@@ -186,7 +206,7 @@ $updated = '13 September 2026';
         <li>See what information we hold about you.</li>
         <li>Correct information that is inaccurate or out of date.</li>
         <li>Delete your enquiry/booking information from our records, subject to any legal record-keeping obligations.</li>
-        <li>Withdraw consent for the optional form-autosave cookie.</li>
+        <li>Withdraw consent for the optional form-autosave cookie<?= $gaEnabled ? ' or for Google Analytics' : '' ?>.</li>
       </ul>
       <p>To exercise any of these, contact us using the details below.</p>
     </div>

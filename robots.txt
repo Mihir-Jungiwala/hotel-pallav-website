@@ -6,4 +6,4 @@ Disallow: /book-submit.php
 Disallow: /enquire-submit.php
 Disallow: /check-availability.php
 
-Sitemap: https://hotelpallav.com/sitemap.xml
+Sitemap: https://hotelpallav.in/sitemap.xml

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../includes/analytics.php';
 require_admin();
 
 $settings = get_settings();
@@ -16,6 +17,11 @@ if (!is_array($notifyRecipients) || !$notifyRecipients) {
     $notifyRecipients = array_map(fn ($e) => ['name' => $legacyName, 'email' => $e], array_values($legacyEmails));
 }
 if (!$notifyRecipients) $notifyRecipients = [['name' => '', 'email' => '']];
+
+// GA4 / Search Console columns arrive with migrate-analytics.sql - until it has been run
+// the card below explains that instead of offering fields that could not be saved.
+$analyticsReady = array_key_exists('ga4_measurement_id', $settings) && array_key_exists('gsc_verification', $settings)
+    && array_key_exists('ga4_property_id', $settings) && array_key_exists('gsc_property', $settings);
 
 $title = 'Settings';
 include __DIR__ . '/../includes/admin-layout-top.php';
@@ -296,6 +302,56 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <input type="text" name="meta_keywords" value="<?= e($settings['meta_keywords'] ?? '') ?>" placeholder="hotel rajkot, deluxe rooms rajkot, kalavad road hotel" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
         </div>
       </div>
+    </div>
+
+    <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
+      <div class="flex items-center gap-2.5 mb-1">
+        <h2 class="font-display font-bold text-lg text-pallav-900">Google Analytics &amp; Search Console</h2>
+        <?php if (!$analyticsReady): ?>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 rounded-full px-2.5 py-1">Needs update</span>
+        <?php elseif (!empty($settings['ga4_measurement_id'])): ?>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-700 rounded-full px-2.5 py-1">Live</span>
+        <?php else: ?>
+          <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 rounded-full px-2.5 py-1">Not connected</span>
+        <?php endif; ?>
+      </div>
+      <p class="text-xs text-pallav-400 mb-5">Measures visits to the public website (never the admin panel) and proves to Google that you own the site. Leave a field empty to switch that part off. Visitors are only measured with cookies after they press Accept on the cookie banner.</p>
+      <?php if (!$analyticsReady): ?>
+      <div class="rounded-xl bg-amber-50 ring-1 ring-amber-100 p-4 text-xs text-amber-800 leading-relaxed">
+        <b>Run <code class="bg-white rounded px-1.5 py-0.5 ring-1 ring-amber-200">migrate-analytics.sql</code> first</b> in phpMyAdmin's SQL tab, then reload this page to enter your Google Analytics and Search Console IDs.
+      </div>
+      <?php else: ?>
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GA4 Measurement ID</label>
+          <input type="text" name="ga4_measurement_id" maxlength="20" value="<?= e($settings['ga4_measurement_id'] ?? '') ?>" placeholder="G-XXXXXXXXXX" autocomplete="off" spellcheck="false" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Google Analytics &gt; Admin &gt; Data streams &gt; your web stream - the ID starting with <b>G-</b>.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Search Console Verification Code</label>
+          <input type="text" name="gsc_verification" maxlength="300" value="<?= e($settings['gsc_verification'] ?? '') ?>" placeholder="abc123..." autocomplete="off" spellcheck="false" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Search Console &gt; Add property &gt; URL prefix &gt; HTML tag: paste only the <b>content</b> value (the whole tag also works). Using the Domain property with a DNS TXT record instead? Leave this empty.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">GA4 Property Number <span class="normal-case font-semibold text-pallav-400">(for the report links)</span></label>
+          <input type="text" name="ga4_property_id" maxlength="300" value="<?= e($settings['ga4_property_id'] ?? '') ?>" placeholder="516209206" autocomplete="off" spellcheck="false" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">Google Analytics &gt; the property list (top left): the number under your property's name. Pasting the Google Analytics page address also works.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-pallav-500 uppercase tracking-wide mb-1.5">Search Console Property <span class="normal-case font-semibold text-pallav-400">(for the report links)</span></label>
+          <input type="text" name="gsc_property" maxlength="300" value="<?= e($settings['gsc_property'] ?? '') ?>" placeholder="sc-domain:hotelpallav.in" autocomplete="off" spellcheck="false" class="w-full rounded-xl border border-pallav-200 px-4 py-2.5 text-sm font-semibold focus:border-pallav-500 focus:ring-4 focus:ring-pallav-100 outline-none">
+          <p class="text-[11px] text-pallav-400 mt-1">The site as Search Console shows it at the top left: <b>hotelpallav.in</b> for a Domain property, or <b>https://hotelpallav.in/</b> for a URL-prefix one. Pasting the Search Console page address also works.</p>
+        </div>
+      </div>
+      <?php $reportLinks = analytics_report_links($settings); if ($reportLinks['ga'] || $reportLinks['gsc']): ?>
+      <div class="mt-5 flex flex-wrap items-center gap-2 text-xs">
+        <span class="font-bold text-pallav-500 uppercase tracking-wide mr-1">Open reports</span>
+        <?php foreach (array_merge($reportLinks['ga'], $reportLinks['gsc']) as $i => $link): ?>
+          <a href="<?= e($link['url']) ?>" target="_blank" rel="noopener noreferrer" class="inline-flex font-bold text-pallav-700 bg-pallav-50 hover:bg-pallav-100 rounded-lg px-3 py-1.5 transition"><?= $i < count($reportLinks['ga']) ? 'Analytics' : 'Search Console' ?> · <?= e($link['label']) ?></a>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
+      <?php endif; ?>
     </div>
 
     <div class="rounded-2xl bg-white ring-1 ring-pallav-100 shadow-sm p-6 sm:p-8">
