@@ -1008,7 +1008,7 @@ $isLiveReviews = $liveReviews !== null && !empty($liveReviews['reviews']);
   </div>
   <div class="cookie-body">
     <h4>A quick word about cookies</h4>
-    <p>We use one small cookie to save your enquiry form as you type, so a slow connection or an accidental reload never costs you the details you already entered. <?= $gaEnabled ? 'Nothing is sold.' : 'Nothing is tracked or sold.' ?></p>
+    <p>We use one small cookie to save your enquiry form as you type, so a slow connection or an accidental reload never costs you the details you already entered.<?php if ($gaEnabled): ?> With your OK we also use Google Analytics cookies to see how visitors use the site. Nothing is sold. <a href="<?= e(rtrim(APP_URL, '/')) ?>/privacy-policy.php#analytics">Privacy policy</a><?php else: ?> Nothing is tracked or sold.<?php endif; ?></p>
     <div class="cookie-btns">
       <button type="button" class="btn btn-p" id="cookieAccept">Sounds good</button>
       <button type="button" class="btn btn-o" id="cookieDecline">No thanks</button>

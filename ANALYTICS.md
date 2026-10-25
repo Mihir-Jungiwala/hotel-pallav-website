@@ -48,7 +48,7 @@ If a value is invalid, an error is shown and nothing is saved. Emptying a field 
 
 1. **Search Console**: after saving the code, press **Verify** in Search Console. The tag `<meta name="google-site-verification" ...>` is in the `<head>` of the homepage (view source to check). Keep the code saved afterwards, because Google re-checks it.
 2. **Sitemap**: Search Console > **Sitemaps** > enter `sitemap.xml` > Submit. `robots.txt` already points to it.
-3. **GA4**: open https://hotelpallav.in in a private window, press **Accept** on the banner, then open Google Analytics > Reports > **Realtime**. You should appear within a minute. Test the events: press a Call or WhatsApp option, a directions button, or send a test enquiry.
+3. **GA4**: open https://hotelpallav.in in a private window, press **Sounds good** on the cookie notice, then open Google Analytics > Reports > **Realtime**. You should appear within a minute. Test the events: press a Call or WhatsApp option, a directions button, or send a test enquiry.
    - Before Accept (or after Decline), Google receives nothing at all, so those visits do not appear in GA. Expect GA numbers to be lower than the real number of visitors.
 4. Optional: in GA4 > Admin > Events, mark `generate_lead` as a **key event** (conversion).
 
@@ -57,7 +57,7 @@ If a value is invalid, an error is shown and nothing is saved. Emptying a field 
 - Google Consent Mode v2 in **basic** mode. The defaults are set first: `analytics_storage`, `ad_storage`, `ad_user_data` and `ad_personalization` are all `denied` (`wait_for_update: 500`). `gtag.js` is **not loaded from Google** until the visitor presses Accept (or accepted earlier). Before a choice and after Decline nothing is sent: no page view, no event, no cookieless ping. This is what the privacy policy says.
 - The page address is sent without its query string or `#` part (`page_location`, `page_referrer`), so a token in a mistyped link never reaches Google.
 - `404.php` is the error page for every missing URL, including `admin/...` ones. It adds neither GA nor the Search Console tag when the path starts with `/admin/` or `/includes/`.
-- A small bar at the bottom of the public pages reads "We use cookies to understand how visitors use our site." with a Privacy policy link and the buttons **Accept** and **Decline**. On phones it sits above the Call / WhatsApp / Enquire bar, so it never covers the booking button.
+- There is ONE cookie notice, in the site's own cookie-card design (`.cookie-card` in site.css). On the homepage it is the existing card (`#cookieCard`, which also covers the form-draft cookie); while GA4 is on, its text also mentions Google Analytics with a Privacy policy link, and its buttons answer both questions. Visitors who answered that card before GA4 existed see it once more. The privacy, terms and 404 pages get the same card (same markup and classes), built by `includes/analytics.php`. In the points below, Accept = **Sounds good** and Decline = **No thanks**.
 - **Accept** sets only `analytics_storage: granted`. The three ad signals always stay denied.
 - **Decline** keeps everything denied, does not load GA, and deletes any `_ga` cookies left from an earlier Accept. If GA was already running on that page (Change my cookie choice, then Decline), it is switched off at once (`ga-disable-<ID>`).
 - Events (`call_click`, `whatsapp_click`, `get_directions`, `generate_lead`) are only sent after Accept. `generate_lead` is also sent if the visitor presses Accept on the page that thanks them for the enquiry.

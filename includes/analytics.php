@@ -171,33 +171,7 @@ function analytics_ga4_tag(array $settings, ?string $leadForm = null): string
 
     ob_start();
     ?>
-<style>
-  .pc-consent{ position:fixed; left:50%; bottom:20px; z-index:150; transform:translateX(-50%);
-    width:680px; max-width:calc(100vw - 200px); display:flex; align-items:center; gap:14px;
-    background:var(--white,#fff); border-radius:16px; padding:12px 14px 12px 18px;
-    box-shadow:inset 0 0 0 1px var(--line2,#D9CEF6), var(--sh-xl,0 20px 50px rgba(74,26,143,.2));
-    font-family:'Manrope',system-ui,sans-serif; animation:pcIn .45s cubic-bezier(.2,.9,.25,1.1) both; }
-  .pc-consent[hidden]{ display:none !important; }
-  @keyframes pcIn{ from{ opacity:0; transform:translate(-50%,10px) } to{ opacity:1; transform:translateX(-50%) } }
-  .pc-consent p{ margin:0; flex:1; font-size:12.5px; line-height:1.5; font-weight:600; color:var(--ink2,#4A4262); }
-  .pc-consent p a{ color:var(--p700,#6D28D9); font-weight:800; text-decoration:underline; text-underline-offset:2px; }
-  .pc-consent .pc-btns{ display:flex; gap:8px; flex:none; }
-  .pc-consent .btn{ padding:9px 16px; font-size:12.5px; border-radius:10px; }
-  .pc-consent .btn:focus-visible, .pc-consent a:focus-visible{ outline:2px solid var(--p700,#6D28D9); outline-offset:2px; }
-  body.menu-open .pc-consent{ opacity:0; pointer-events:none; }
-  /* Up to 1080px the back-to-top button (.floats, right 14-20px, 50-54px wide) sits
-     just above the mobile bar: leave its column free so the bar never covers it. */
-  @media (max-width:1080px){
-    .pc-consent{ left:12px; right:80px; width:auto; max-width:none; transform:none; animation-name:pcInM; }
-    @keyframes pcInM{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
-  }
-  @media (max-width:520px){
-    .pc-consent{ flex-wrap:wrap; gap:10px; padding:12px 14px; }
-    .pc-consent .pc-btns{ width:100%; }
-    .pc-consent .pc-btns .btn{ flex:1; }
-  }
-  @media (prefers-reduced-motion:reduce){ .pc-consent{ animation:none; } }
-</style>
+<style>.cookie-body p a{ color:var(--p700,#6D28D9); font-weight:800; text-decoration:underline; text-underline-offset:2px; }</style>
 <script>
 window.dataLayer = window.dataLayer || [];
 function gtag(){ dataLayer.push(arguments); }
@@ -271,49 +245,61 @@ gtag('set', 'ads_data_redaction', true);
   // A visitor who already accepted (within 180 days) is measured from the first hit.
   if (read() === 'granted') grant();
 
-  var bar = null;
-  function placeAboveMobileBar(){
-    if (!bar) return;
-    var mbar = document.getElementById('mbar');
-    var h = (mbar && getComputedStyle(mbar).display !== 'none') ? mbar.offsetHeight : 0;
-    bar.style.bottom = h ? (h + 10) + 'px' : '';
+  // ONE cookie notice, in the site's own cookie-card design (site.css .cookie-card).
+  // The homepage already has it (#cookieCard, site.js, the form-draft cookie): its
+  // buttons answer analytics too. Pages without it (privacy, terms, 404) get the same
+  // card, built here with the same markup and classes.
+  var card = null;
+  var COOKIE_ICON = '<svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1010 10c-1.5 0-2.7-1.2-2.7-2.7 0-.5.1-.9.4-1.3-.4-.6-.6-1.3-.6-2 0-1.9 1.5-3.4 3.3-3.5A10 10 0 0012 2z"/><circle cx="8.3" cy="9.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="9.5" cy="14.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="13.5" cy="16" r="1.1" fill="currentColor" stroke="none"/></svg>';
+  function wire(c){
+    var ok = c.querySelector('#cookieAccept, .pc-ok'), no = c.querySelector('#cookieDecline, .pc-no');
+    if (ok) ok.addEventListener('click', function(){ decide('granted'); });
+    if (no) no.addEventListener('click', function(){ decide('denied'); });
   }
   function build(){
-    if (bar) return bar;
-    bar = document.createElement('div');
-    bar.className = 'pc-consent';
-    bar.setAttribute('role', 'region');
-    bar.setAttribute('aria-label', 'Cookie consent');
-    bar.hidden = true;
+    if (card) return card;
+    card = document.getElementById('cookieCard');
+    if (card) { wire(card); return card; }
+    card = document.createElement('div');
+    card.className = 'cookie-card';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-live', 'polite');
+    card.setAttribute('aria-label', 'Cookie notice');
+    card.hidden = true;
+    var ic = document.createElement('div');
+    ic.className = 'cookie-ic';
+    ic.innerHTML = COOKIE_ICON;
+    var body = document.createElement('div');
+    body.className = 'cookie-body';
+    var h = document.createElement('h4');
+    h.textContent = 'A quick word about cookies';
     var p = document.createElement('p');
-    p.appendChild(document.createTextNode('We use cookies to understand how visitors use our site. '));
+    p.appendChild(document.createTextNode('With your OK, we use Google Analytics cookies to see how visitors use the site. Nothing is sold. '));
     var a = document.createElement('a');
     a.href = PRIVACY_URL; a.textContent = 'Privacy policy';
     p.appendChild(a);
     var btns = document.createElement('div');
-    btns.className = 'pc-btns';
+    btns.className = 'cookie-btns';
     var ok = document.createElement('button');
-    ok.type = 'button'; ok.className = 'btn btn-p'; ok.textContent = 'Accept';
+    ok.type = 'button'; ok.className = 'btn btn-p pc-ok'; ok.textContent = 'Sounds good';
     var no = document.createElement('button');
-    no.type = 'button'; no.className = 'btn btn-o'; no.textContent = 'Decline';
-    ok.addEventListener('click', function(){ decide('granted'); });
-    no.addEventListener('click', function(){ decide('denied'); });
+    no.type = 'button'; no.className = 'btn btn-o pc-no'; no.textContent = 'No thanks';
     btns.appendChild(ok); btns.appendChild(no);
-    bar.appendChild(p); bar.appendChild(btns);
-    document.body.appendChild(bar);
-    window.addEventListener('resize', placeAboveMobileBar, { passive: true });
-    return bar;
+    body.appendChild(h); body.appendChild(p); body.appendChild(btns);
+    card.appendChild(ic); card.appendChild(body);
+    document.body.appendChild(card);
+    wire(card);
+    return card;
   }
   function show(){
     build();
-    placeAboveMobileBar();
-    bar.hidden = false;
+    card.hidden = false;
   }
   function decide(v){
     store(v);
     // Ads signals are never granted - only analytics.
     if (v === 'granted') grant(); else deny();
-    if (bar) bar.hidden = true;
+    if (card) card.hidden = true;
   }
 
   // Lets the privacy policy offer "Change my choice".
@@ -351,21 +337,12 @@ gtag('set', 'ads_data_redaction', true);
 
   function start(){
     if (read()) return;
-    // index.php has its own notice for the form-autosave cookie: never stack the two -
-    // wait until that one is answered, then ask about analytics. When storage is
-    // blocked, site.js shows that notice too, so wait for it as well.
-    var card = document.getElementById('cookieCard');
-    var cardPending = false;
-    if (card) { try { cardPending = !localStorage.getItem('hp_cookie_consent'); } catch (e) { cardPending = true; } }
-    if (cardPending) {
-      var later = function(){ setTimeout(function(){ if (!read()) show(); }, 400); };
-      ['cookieAccept', 'cookieDecline'].forEach(function(id){
-        var b = document.getElementById(id);
-        if (b) b.addEventListener('click', later, { once: true });
-      });
-      return;
-    }
-    setTimeout(show, 900);
+    // On the homepage site.js shows #cookieCard itself (after 900 ms) when the form-draft
+    // question is still open; its buttons now answer analytics too (wired here). If that
+    // question was answered before analytics existed, site.js keeps the card hidden, so
+    // show it once more - it now asks about analytics as well.
+    build();
+    setTimeout(function(){ if (!read()) card.hidden = false; }, 900);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();

@@ -260,7 +260,7 @@ include __DIR__ . '/../includes/admin-layout-top.php';
           <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 rounded-full px-2.5 py-1">Not connected</span>
         <?php endif; ?>
       </div>
-      <p class="text-xs text-pallav-400 mb-5">Measures visits to the public website (never the admin panel) and proves to Google that you own the site. Leave a field empty to switch that part off. Visitors are only measured with cookies after they press Accept on the cookie banner.</p>
+      <p class="text-xs text-pallav-400 mb-5">Measures visits to the public website (never the admin panel) and proves to Google that you own the site. Leave a field empty to switch that part off. Visitors are only measured after they press "Sounds good" on the website's cookie notice.</p>
       <?php if (!$analyticsReady): ?>
       <div class="rounded-xl bg-amber-50 ring-1 ring-amber-100 p-4 text-xs text-amber-800 leading-relaxed">
         <b>Run <code class="bg-white rounded px-1.5 py-0.5 ring-1 ring-amber-200">migrate-analytics.sql</code> first</b> in phpMyAdmin's SQL tab, then reload this page to enter your Google Analytics and Search Console IDs.
