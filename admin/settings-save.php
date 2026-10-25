@@ -103,7 +103,9 @@ if ($smtpPassword === '') {
  * and ignore these keys even if they're injected into a crafted request.
  */
 $secret = function (string $key) use ($settings) {
-    if (!can_view_secrets()) {
+    // A field that is not on the form (the Google Business Profile card was removed from
+    // Settings) keeps its saved value instead of being wiped.
+    if (!can_view_secrets() || !array_key_exists($key, $_POST)) {
         return $settings[$key] ?? null;
     }
     return trim($_POST[$key] ?? '') ?: null;
